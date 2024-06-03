@@ -14,6 +14,7 @@ import { fadeOnDesktopBackgrounded } from "~/styles";
 import { fadeIn } from "~/styles/animations";
 import Desktop from "~/utils/Desktop";
 import Avatar from "../Avatar";
+import IconEmoji from "../IconEmoji";
 import NotificationIcon from "../Notifications/NotificationIcon";
 import NotificationsPopover from "../Notifications/NotificationsPopover";
 import ResizeBorder from "./components/ResizeBorder";
@@ -191,6 +192,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, Props>(function _Sidebar(
         onPointerLeave={handlePointerLeave}
         column
       >
+        <IconEmoji />
         {children}
 
         {user && (
