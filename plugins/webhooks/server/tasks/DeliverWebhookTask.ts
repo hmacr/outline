@@ -1,5 +1,6 @@
 import { FetchError } from "node-fetch";
 import { Op } from "sequelize";
+import { colorPalette } from "@shared/utils/collections";
 import WebhookDisabledEmail from "@server/emails/templates/WebhookDisabledEmail";
 import env from "@server/env";
 import Logger from "@server/logging/Logger";
@@ -423,12 +424,17 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
       paranoid: false,
     });
 
+    const collection = model && (await presentCollection(undefined, model));
+    if (collection) {
+      collection.color = collection.color ?? colorPalette[0];
+    }
+
     await this.sendWebhook({
       event,
       subscription,
       payload: {
         id: event.collectionId,
-        model: model && (await presentCollection(undefined, model)),
+        model: collection,
       },
     });
   }
@@ -448,14 +454,19 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
       paranoid: false,
     });
 
+    const collection =
+      model && (await presentCollection(undefined, model.collection!));
+    if (collection) {
+      collection.color = collection.color ?? colorPalette[0];
+    }
+
     await this.sendWebhook({
       event,
       subscription,
       payload: {
         id: event.modelId,
         model: model && presentMembership(model),
-        collection:
-          model && (await presentCollection(undefined, model.collection!)),
+        collection,
         user: model && presentUser(model.user),
       },
     });
@@ -476,14 +487,19 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
       paranoid: false,
     });
 
+    const collection =
+      model && (await presentCollection(undefined, model.collection!));
+    if (collection) {
+      collection.color = collection.color ?? colorPalette[0];
+    }
+
     await this.sendWebhook({
       event,
       subscription,
       payload: {
         id: event.modelId,
         model: model && presentCollectionGroupMembership(model),
-        collection:
-          model && (await presentCollection(undefined, model.collection!)),
+        collection,
         group: model && presentGroup(model.group),
       },
     });

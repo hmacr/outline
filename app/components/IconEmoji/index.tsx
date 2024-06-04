@@ -13,6 +13,8 @@ import styled, { useTheme } from "styled-components";
 import { randomElement } from "@shared/random";
 import { IconLibrary } from "@shared/utils/IconLibrary";
 import { colorPalette } from "@shared/utils/collections";
+import useOnClickOutside from "~/hooks/useOnClickOutside";
+import { IconType, determineIconType } from "~/utils/icon";
 import Button from "../Button";
 import Flex from "../Flex";
 import EmojiIcon from "../Icons/EmojiIcon";
@@ -20,8 +22,6 @@ import NudeButton from "../NudeButton";
 import Popover from "../Popover";
 import EmojiPanel from "./EmojiPanel";
 import IconPanel from "./IconPanel";
-
-const outlineIconNames = new Set(Object.keys(IconLibrary.mapping));
 
 const IconDisclosure = ({ icon, color }: { icon?: string; color: string }) => {
   const Component = IconLibrary.getComponent(icon || "collection");
@@ -45,28 +45,34 @@ const StyledSmileyIcon = styled(SmileyIcon)`
   }
 `;
 
-type IconType = "outline" | "emoji";
-
-const determineIconType = (icon: string | null): IconType => {
-  if (!icon) {
-    return "outline";
-  }
-  return outlineIconNames.has(icon) ? "outline" : "emoji";
-};
-
 const tabIds = {
   outline: "outline",
   emoji: "emoji",
 } satisfies Record<IconType, string>;
 
-const IconEmoji = () => {
-  const [icon, setIcon] = React.useState<string | null>("😃");
-  const [color, setColor] = React.useState<string | null>(null);
+type Props = {
+  initial: string;
+  icon: string | null;
+  color: string | null;
+  onChange: (icon: string | null, color: string | null) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+  className?: string;
+};
 
+const IconEmoji = ({
+  initial,
+  icon,
+  color,
+  onChange,
+  onOpen,
+  onClose,
+  className,
+}: Props) => {
   const theme = useTheme();
   const { t } = useTranslation();
 
-  const iconType = determineIconType(icon);
+  const iconType = determineIconType(icon) ?? "outline";
   const defaultTab = tabIds[iconType];
   const randomColor = randomElement(colorPalette);
 
@@ -81,20 +87,44 @@ const IconEmoji = () => {
     outlineIcon: string | null,
     iconColor: string
   ) => {
-    setIcon(outlineIcon);
-    setColor(iconColor);
+    onChange(outlineIcon, iconColor);
   };
 
   const handleEmojiChange = (emoji: string | null) => {
-    setIcon(emoji);
-    setColor(null);
+    onChange(emoji, null);
   };
+
+  React.useEffect(() => {
+    if (popover.visible) {
+      onOpen?.();
+    } else {
+      onClose?.();
+    }
+  }, [onOpen, onClose, popover.visible]);
+
+  // Custom click outside handling rather than using `hideOnClickOutside` from reakit so that we can
+  // prevent event bubbling.
+  useOnClickOutside(
+    popover.unstable_popoverRef,
+    (event) => {
+      if (popover.visible) {
+        event.stopPropagation();
+        event.preventDefault();
+        popover.hide();
+      }
+    },
+    { capture: true }
+  );
 
   return (
     <>
       <PopoverDisclosure {...popover}>
         {(props) => (
-          <NudeButton aria-label={t("Show menu")} {...props}>
+          <NudeButton
+            aria-label={t("Show menu")}
+            className={className}
+            {...props}
+          >
             {iconType === "outline" ? (
               <IconDisclosure
                 icon={icon || "collection"}
@@ -129,7 +159,7 @@ const IconEmoji = () => {
           </Flex>
           <StyledTabPanel {...tab}>
             <IconPanel
-              initial="c"
+              initial={initial}
               color={color || randomColor}
               icon={icon || "collection"}
               onChange={handleOutlineIconChange}

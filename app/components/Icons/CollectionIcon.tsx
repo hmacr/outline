@@ -2,10 +2,14 @@ import { observer } from "mobx-react";
 import { CollectionIcon } from "outline-icons";
 import { getLuminance } from "polished";
 import * as React from "react";
+import { randomElement } from "@shared/random";
 import { IconLibrary } from "@shared/utils/IconLibrary";
+import { colorPalette } from "@shared/utils/collections";
 import Collection from "~/models/Collection";
 import useStores from "~/hooks/useStores";
 import Logger from "~/utils/Logger";
+import { determineIconType } from "~/utils/icon";
+import EmojiIcon from "./EmojiIcon";
 
 type Props = {
   /** The collection to show an icon for */
@@ -16,6 +20,7 @@ type Props = {
   size?: number;
   /** The color of the icon, defaults to the collection color */
   color?: string;
+  className?: string;
 };
 
 function ResolvedCollectionIcon({
@@ -23,27 +28,40 @@ function ResolvedCollectionIcon({
   color: inputColor,
   expanded,
   size,
+  className,
 }: Props) {
   const { ui } = useStores();
 
   // If the chosen icon color is very dark then we invert it in dark mode
   // otherwise it will be impossible to see against the dark background.
+  const collectionColor = collection.color ?? randomElement(colorPalette);
   const color =
     inputColor ||
-    (ui.resolvedTheme === "dark" && collection.color !== "currentColor"
-      ? getLuminance(collection.color) > 0.09
-        ? collection.color
+    (ui.resolvedTheme === "dark" && collectionColor !== "currentColor"
+      ? getLuminance(collectionColor) > 0.09
+        ? collectionColor
         : "currentColor"
-      : collection.color);
+      : collectionColor);
 
   if (collection.icon && collection.icon !== "collection") {
     try {
-      const Component = IconLibrary.getComponent(collection.icon);
-      return (
-        <Component color={color} size={size}>
-          {collection.initial}
-        </Component>
-      );
+      const iconType = determineIconType(collection.icon)!;
+      if (iconType === "outline") {
+        const Component = IconLibrary.getComponent(collection.icon);
+        return (
+          <Component color={color} size={size} className={className}>
+            {collection.initial}
+          </Component>
+        );
+      } else {
+        return (
+          <EmojiIcon
+            emoji={collection.icon}
+            size={size}
+            className={className}
+          />
+        );
+      }
     } catch (error) {
       Logger.warn("Failed to render custom icon", {
         icon: collection.icon,
@@ -51,7 +69,14 @@ function ResolvedCollectionIcon({
     }
   }
 
-  return <CollectionIcon color={color} expanded={expanded} size={size} />;
+  return (
+    <CollectionIcon
+      color={color}
+      expanded={expanded}
+      size={size}
+      className={className}
+    />
+  );
 }
 
 export default observer(ResolvedCollectionIcon);

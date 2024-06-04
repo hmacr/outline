@@ -51,7 +51,7 @@ export default class Collection extends ParanoidModel {
    */
   @Field
   @observable
-  color: string;
+  color?: string;
 
   /**
    * The default permission for workspace users.

@@ -11,7 +11,7 @@ import { CollectionValidation } from "@shared/validations";
 import Collection from "~/models/Collection";
 import Button from "~/components/Button";
 import Flex from "~/components/Flex";
-import IconPicker from "~/components/IconPicker";
+import IconEmoji from "~/components/IconEmoji";
 import Input from "~/components/Input";
 import InputSelectPermission from "~/components/InputSelectPermission";
 import Switch from "~/components/Switch";
@@ -77,7 +77,7 @@ export const CollectionForm = observer(function CollectionForm_({
   }, [setFocus]);
 
   const handleIconPickerChange = React.useCallback(
-    (color: string, icon: string) => {
+    (icon: string, color: string) => {
       if (icon !== values.icon) {
         setFocus("name");
       }
@@ -108,7 +108,7 @@ export const CollectionForm = observer(function CollectionForm_({
             <StyledIconPicker
               onOpen={setHasOpenedIconPicker}
               onChange={handleIconPickerChange}
-              initial={values.name[0]}
+              initial={values.name.length > 0 ? values.name[0] : ""}
               color={values.color}
               icon={values.icon}
             />
@@ -170,7 +170,7 @@ export const CollectionForm = observer(function CollectionForm_({
   );
 });
 
-const StyledIconPicker = styled(IconPicker)`
+const StyledIconPicker = styled(IconEmoji)`
   margin-left: 4px;
   margin-right: 4px;
 `;

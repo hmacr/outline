@@ -12,6 +12,7 @@ import Text from "~/components/Text";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import useRequest from "~/hooks/useRequest";
 import useStores from "~/hooks/useStores";
+import { determineIconType } from "~/utils/icon";
 import Avatar from "../../Avatar";
 import { AvatarSize } from "../../Avatar/Avatar";
 import CollectionIcon from "../../Icons/CollectionIcon";
@@ -54,15 +55,7 @@ export const OtherAccess = observer(({ document, children }: Props) => {
             />
           ) : usersInCollection ? (
             <ListItem
-              image={
-                <Squircle color={collection.color} size={AvatarSize.Medium}>
-                  <CollectionIcon
-                    collection={collection}
-                    color={theme.white}
-                    size={16}
-                  />
-                </Squircle>
-              }
+              image={<CollectionSquircle collection={collection} />}
               title={collection.name}
               subtitle={t("Everyone in the collection")}
               actions={<AccessTooltip>{t("Can view")}</AccessTooltip>}
@@ -133,6 +126,24 @@ const AccessTooltip = ({
         <QuestionMarkIcon size={18} />
       </Tooltip>
     </Flex>
+  );
+};
+
+const CollectionSquircle = ({ collection }: { collection: Collection }) => {
+  const theme = useTheme();
+  const collectionIconType = determineIconType(collection.icon)!;
+  const squircleColor =
+    collectionIconType === "outline" ? collection.color : theme.slateLight;
+  const iconSize = collectionIconType === "outline" ? 16 : 22;
+
+  return (
+    <Squircle color={squircleColor} size={AvatarSize.Medium}>
+      <CollectionIcon
+        collection={collection}
+        color={theme.white}
+        size={iconSize}
+      />
+    </Squircle>
   );
 };
 

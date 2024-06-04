@@ -6,6 +6,7 @@ type Props = {
   emoji: string;
   /** The size of the emoji, 24px is default to match standard icons */
   size?: number;
+  className?: string;
 };
 
 /**
@@ -28,6 +29,6 @@ const Span = styled.span<{ $size: number }>`
   flex-shrink: 0;
   width: ${(props) => props.$size}px;
   height: ${(props) => props.$size}px;
-  text-indent: -0.15em;
+  // text-indent: -0.15em;
   font-size: ${(props) => props.$size - 10}px;
 `;

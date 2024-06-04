@@ -306,8 +306,9 @@ const HeadingWithIcon = styled(Heading)`
 `;
 
 const HeadingIcon = styled(CollectionIcon)`
-  align-self: flex-start;
   flex-shrink: 0;
+  margin-left: -4px;
+  margin-right: 4px;
 `;
 
 export default observer(CollectionScene);
