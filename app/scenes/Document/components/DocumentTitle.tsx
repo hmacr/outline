@@ -252,7 +252,7 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
       ref={mergeRefs([ref, externalRef])}
     >
       {can.update && !readOnly ? (
-        <EmojiWrapper
+        <IconWrapper
           align="center"
           justify="center"
           $position={iconPosition}
@@ -270,16 +270,16 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
               // autoFocus
             />
           </React.Suspense>
-        </EmojiWrapper>
+        </IconWrapper>
       ) : icon ? (
-        <EmojiWrapper
+        <IconWrapper
           align="center"
           justify="center"
           $position={iconPosition}
           dir={dir}
         >
           {emojiIcon}
-        </EmojiWrapper>
+        </IconWrapper>
       ) : null}
     </Title>
   );
@@ -289,7 +289,7 @@ const StyledIconPicker = styled(IconEmoji)`
   ${extraArea(8)}
 `;
 
-const EmojiWrapper = styled(Flex)<{ $position: "top" | "side"; dir?: string }>`
+const IconWrapper = styled(Flex)<{ $position: "top" | "side"; dir?: string }>`
   height: 32px;
   width: 32px;
 

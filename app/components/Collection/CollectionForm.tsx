@@ -24,7 +24,7 @@ const IconEmoji = React.lazy(() => import("~/components/IconEmoji"));
 export interface FormData {
   name: string;
   icon: string;
-  color: string;
+  color: string | null;
   sharing: boolean;
   permission: CollectionPermission | undefined;
 }
@@ -39,6 +39,10 @@ export const CollectionForm = observer(function CollectionForm_({
   const team = useCurrentTeam();
   const { t } = useTranslation();
   const [hasOpenedIconPicker, setHasOpenedIconPicker] = useBoolean(false);
+  const iconColor = React.useMemo(
+    () => collection?.color ?? randomElement(colorPalette),
+    [collection?.color]
+  );
   const {
     register,
     handleSubmit: formHandleSubmit,
@@ -54,7 +58,7 @@ export const CollectionForm = observer(function CollectionForm_({
       icon: collection?.icon,
       sharing: collection?.sharing ?? true,
       permission: collection?.permission,
-      color: collection?.color ?? randomElement(colorPalette),
+      color: iconColor,
     },
   });
 
@@ -78,13 +82,13 @@ export const CollectionForm = observer(function CollectionForm_({
   }, [setFocus]);
 
   const handleIconChange = React.useCallback(
-    (icon: string, color: string) => {
-      if (icon !== values.icon) {
+    (icon: string, color: string | null) => {
+      if (icon !== values.icon || color !== values.icon) {
         setFocus("name");
       }
 
-      setValue("color", color);
       setValue("icon", icon);
+      setValue("color", color);
     },
     [setFocus, setValue, values.icon]
   );
@@ -109,8 +113,8 @@ export const CollectionForm = observer(function CollectionForm_({
             <React.Suspense fallback={"loading"}>
               <StyledIconPicker
                 icon={values.icon}
-                color={values.color}
-                initial={values.name.length > 0 ? values.name[0] : ""}
+                color={values.color ?? iconColor}
+                initial={values.name.length > 0 ? values.name[0] : "?"}
                 onOpen={setHasOpenedIconPicker}
                 onChange={handleIconChange}
               />

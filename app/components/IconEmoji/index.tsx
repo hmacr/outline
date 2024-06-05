@@ -158,7 +158,7 @@ const IconEmoji = ({
 type DisclosureIconProps = {
   iconType?: IconType;
   icon: string | null;
-  color: string;
+  color: string | null;
   size: number;
 };
 
@@ -177,7 +177,7 @@ const DisclosureIcon = ({
   if (iconType === "outline") {
     const Component = IconLibrary.getComponent(icon || "collection");
     return (
-      <Component color={color} size={size}>
+      <Component color={color!} size={size}>
         c
       </Component>
     );
