@@ -65,10 +65,14 @@ const IconEmoji = ({
     outlineIcon: string | null,
     iconColor: string
   ) => {
+    if (icon !== outlineIcon) {
+      popover.hide();
+    }
     onChange(outlineIcon, iconColor);
   };
 
   const handleEmojiChange = (emoji: string | null) => {
+    popover.hide();
     onChange(emoji, null);
   };
 
@@ -105,7 +109,6 @@ const IconEmoji = ({
           <NudeButton
             aria-label={t("Show menu")}
             className={className}
-            style={{ width: "32px", height: "32px" }}
             {...props}
           >
             <DisclosureIcon

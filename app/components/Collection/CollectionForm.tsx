@@ -83,7 +83,7 @@ export const CollectionForm = observer(function CollectionForm_({
 
   const handleIconChange = React.useCallback(
     (icon: string, color: string | null) => {
-      if (icon !== values.icon || color !== values.icon) {
+      if (icon !== values.icon) {
         setFocus("name");
       }
 
