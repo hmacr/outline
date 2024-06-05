@@ -40,14 +40,14 @@ export default class Collection extends ParanoidModel {
   data: ProsemirrorData;
 
   /**
-   * An emoji to use as the collection icon.
+   * An icon (or) emoji to use as the collection icon.
    */
   @Field
   @observable
   icon: string;
 
   /**
-   * A color to use for the collection icon and other highlights.
+   * The color to use for the collection icon (not emoji) and other highlights.
    */
   @Field
   @observable

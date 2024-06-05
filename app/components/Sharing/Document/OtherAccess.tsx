@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useTheme } from "styled-components";
 import Squircle from "@shared/components/Squircle";
 import { CollectionPermission } from "@shared/types";
+import { determineIconType } from "@shared/utils/icon";
 import type Collection from "~/models/Collection";
 import type Document from "~/models/Document";
 import Flex from "~/components/Flex";
@@ -12,7 +13,6 @@ import Text from "~/components/Text";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import useRequest from "~/hooks/useRequest";
 import useStores from "~/hooks/useStores";
-import { determineIconType } from "~/utils/icon";
 import Avatar from "../../Avatar";
 import { AvatarSize } from "../../Avatar/Avatar";
 import CollectionIcon from "../../Icons/CollectionIcon";
@@ -131,10 +131,10 @@ const AccessTooltip = ({
 
 const CollectionSquircle = ({ collection }: { collection: Collection }) => {
   const theme = useTheme();
-  const collectionIconType = determineIconType(collection.icon)!;
+  const iconType = determineIconType(collection.icon)!;
   const squircleColor =
-    collectionIconType === "outline" ? collection.color : theme.slateLight;
-  const iconSize = collectionIconType === "outline" ? 16 : 22;
+    iconType === "outline" ? collection.color : theme.slateLight;
+  const iconSize = iconType === "outline" ? 16 : 22;
 
   return (
     <Squircle color={squircleColor} size={AvatarSize.Medium}>

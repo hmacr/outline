@@ -25,7 +25,7 @@ import {
   useEditingFocus,
 } from "~/components/DocumentContext";
 import Header from "~/components/Header";
-import EmojiIcon from "~/components/Icons/EmojiIcon";
+import Icon from "~/components/Icon";
 import Star from "~/components/Star";
 import Tooltip from "~/components/Tooltip";
 import { publishDocument } from "~/actions/definitions/documents";
@@ -230,9 +230,9 @@ function DocumentHeader({
         }
         title={
           <>
-            {document.emoji && (
+            {document.icon && (
               <>
-                <EmojiIcon size={24} emoji={document.emoji} />{" "}
+                <Icon value={document.icon} color={document.color} size={24} />{" "}
               </>
             )}
             {document.title}{" "}

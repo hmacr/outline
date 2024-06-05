@@ -10,11 +10,9 @@ import {
   useTabState,
 } from "reakit";
 import styled, { useTheme } from "styled-components";
-import { randomElement } from "@shared/random";
 import { IconLibrary } from "@shared/utils/IconLibrary";
-import { colorPalette } from "@shared/utils/collections";
+import { IconType, determineIconType } from "@shared/utils/icon";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
-import { IconType, determineIconType } from "~/utils/icon";
 import Button from "../Button";
 import Flex from "../Flex";
 import EmojiIcon from "../Icons/EmojiIcon";
@@ -23,58 +21,36 @@ import Popover from "../Popover";
 import EmojiPanel from "./EmojiPanel";
 import IconPanel from "./IconPanel";
 
-const IconDisclosure = ({ icon, color }: { icon?: string; color: string }) => {
-  const Component = IconLibrary.getComponent(icon || "collection");
-  return <Component color={color}>c</Component>;
-};
-
-const EmojiDisclosure = ({
-  emoji,
-  color,
-}: {
-  emoji?: string | null;
-  color: string;
-}) =>
-  emoji ? <EmojiIcon emoji={emoji} /> : <StyledSmileyIcon color={color} />;
-
-const StyledSmileyIcon = styled(SmileyIcon)`
-  flex-shrink: 0;
-
-  @media print {
-    display: none;
-  }
-`;
-
 const tabIds = {
   outline: "outline",
   emoji: "emoji",
 } satisfies Record<IconType, string>;
 
 type Props = {
-  initial: string;
   icon: string | null;
-  color: string | null;
+  color: string;
+  size?: number;
+  initial?: string;
+  className?: string;
   onChange: (icon: string | null, color: string | null) => void;
   onOpen?: () => void;
   onClose?: () => void;
-  className?: string;
 };
 
 const IconEmoji = ({
-  initial,
   icon,
   color,
+  size = 24,
+  initial,
+  className,
   onChange,
   onOpen,
   onClose,
-  className,
 }: Props) => {
-  const theme = useTheme();
   const { t } = useTranslation();
 
-  const iconType = determineIconType(icon) ?? "outline";
-  const defaultTab = tabIds[iconType];
-  const randomColor = randomElement(colorPalette);
+  const iconType = determineIconType(icon);
+  const defaultTab = iconType ? tabIds[iconType] : tabIds["outline"];
 
   const popover = usePopoverState({
     placement: "right",
@@ -92,6 +68,10 @@ const IconEmoji = ({
 
   const handleEmojiChange = (emoji: string | null) => {
     onChange(emoji, null);
+  };
+
+  const handleRemove = () => {
+    onChange(null, null);
   };
 
   React.useEffect(() => {
@@ -123,16 +103,15 @@ const IconEmoji = ({
           <NudeButton
             aria-label={t("Show menu")}
             className={className}
+            style={{ width: "32px", height: "32px" }}
             {...props}
           >
-            {iconType === "outline" ? (
-              <IconDisclosure
-                icon={icon || "collection"}
-                color={color || randomColor}
-              />
-            ) : (
-              <EmojiDisclosure emoji={icon} color={theme.textTertiary} />
-            )}
+            <DisclosureIcon
+              iconType={iconType}
+              icon={icon}
+              color={color}
+              size={size}
+            />
           </NudeButton>
         )}
       </PopoverDisclosure>
@@ -155,13 +134,15 @@ const IconEmoji = ({
                 )}
               </Tab>
             </StyledTabList>
-            <NudeButton width="fit-content">Remove</NudeButton>
+            <NudeButton width="fit-content" onClick={handleRemove}>
+              Remove
+            </NudeButton>
           </Flex>
           <StyledTabPanel {...tab}>
             <IconPanel
-              initial={initial}
-              color={color || randomColor}
-              icon={icon || "collection"}
+              initial={initial ?? ""}
+              color={color}
+              icon={icon ?? "collection"}
               onChange={handleOutlineIconChange}
             />
           </StyledTabPanel>
@@ -173,6 +154,59 @@ const IconEmoji = ({
     </>
   );
 };
+
+type DisclosureIconProps = {
+  iconType?: IconType;
+  icon: string | null;
+  color: string;
+  size: number;
+};
+
+const DisclosureIcon = ({
+  iconType,
+  icon,
+  color,
+  size,
+}: DisclosureIconProps) => {
+  const theme = useTheme();
+
+  if (!iconType) {
+    return <StyledSmileyIcon color={theme.textTertiary} size={size} />;
+  }
+
+  if (iconType === "outline") {
+    const Component = IconLibrary.getComponent(icon || "collection");
+    return (
+      <Component color={color} size={size}>
+        c
+      </Component>
+    );
+  }
+
+  return <EmojiIcon emoji={icon!} size={32} />;
+};
+
+// const IconDisclosure = ({ icon, color }: { icon?: string; color: string }) => {
+//   const Component = IconLibrary.getComponent(icon || "collection");
+//   return <Component color={color}>c</Component>;
+// };
+
+// const EmojiDisclosure = ({
+//   emoji,
+//   color,
+// }: {
+//   emoji?: string | null;
+//   color: string;
+// }) =>
+//   emoji ? <EmojiIcon emoji={emoji} /> : <StyledSmileyIcon color={color} />;
+
+const StyledSmileyIcon = styled(SmileyIcon)`
+  flex-shrink: 0;
+
+  @media print {
+    display: none;
+  }
+`;
 
 const StyledTabList = styled(TabList)`
   display: flex;

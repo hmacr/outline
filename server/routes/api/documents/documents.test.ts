@@ -2812,7 +2812,7 @@ describe("#documents.create", () => {
     expect(res.status).toEqual(200);
     expect(newDocument!.parentDocumentId).toBe(null);
     expect(newDocument!.collectionId).toBe(collection.id);
-    expect(newDocument!.emoji).toBe("🚢");
+    expect(newDocument!.icon).toBe("🚢");
     expect(body.policies[0].abilities.update).toEqual(true);
   });
 

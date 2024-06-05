@@ -55,7 +55,7 @@ export default class DocumentImportTask extends BaseTask<Props> {
         return documentCreator({
           sourceMetadata,
           title,
-          emoji,
+          icon: emoji,
           text,
           state,
           publish,

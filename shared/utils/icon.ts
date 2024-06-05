@@ -1,11 +1,11 @@
-import { IconLibrary } from "@shared/utils/IconLibrary";
+import { IconLibrary } from "./IconLibrary";
 
 export type IconType = "outline" | "emoji";
 
 const outlineIconNames = new Set(Object.keys(IconLibrary.mapping));
 
 export const determineIconType = (
-  icon: string | null
+  icon?: string | null
 ): IconType | undefined => {
   if (!icon) {
     return;

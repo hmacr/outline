@@ -11,7 +11,6 @@ import { CollectionValidation } from "@shared/validations";
 import Collection from "~/models/Collection";
 import Button from "~/components/Button";
 import Flex from "~/components/Flex";
-import IconEmoji from "~/components/IconEmoji";
 import Input from "~/components/Input";
 import InputSelectPermission from "~/components/InputSelectPermission";
 import Switch from "~/components/Switch";
@@ -19,6 +18,8 @@ import Text from "~/components/Text";
 import useBoolean from "~/hooks/useBoolean";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import { Feature, FeatureFlags } from "~/utils/FeatureFlags";
+
+const IconEmoji = React.lazy(() => import("~/components/IconEmoji"));
 
 export interface FormData {
   name: string;
@@ -76,7 +77,7 @@ export const CollectionForm = observer(function CollectionForm_({
     setTimeout(() => setFocus("name", { shouldSelect: true }), 100);
   }, [setFocus]);
 
-  const handleIconPickerChange = React.useCallback(
+  const handleIconChange = React.useCallback(
     (icon: string, color: string) => {
       if (icon !== values.icon) {
         setFocus("name");
@@ -105,13 +106,15 @@ export const CollectionForm = observer(function CollectionForm_({
             maxLength: CollectionValidation.maxNameLength,
           })}
           prefix={
-            <StyledIconPicker
-              onOpen={setHasOpenedIconPicker}
-              onChange={handleIconPickerChange}
-              initial={values.name.length > 0 ? values.name[0] : ""}
-              color={values.color}
-              icon={values.icon}
-            />
+            <React.Suspense fallback={"loading"}>
+              <StyledIconPicker
+                icon={values.icon}
+                color={values.color}
+                initial={values.name.length > 0 ? values.name[0] : ""}
+                onOpen={setHasOpenedIconPicker}
+                onChange={handleIconChange}
+              />
+            </React.Suspense>
           }
           autoComplete="off"
           autoFocus

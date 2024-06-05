@@ -1,7 +1,7 @@
 import * as React from "react";
 import { NavigationNode } from "@shared/types";
 import Breadcrumb from "~/components/Breadcrumb";
-import EmojiIcon from "~/components/Icons/EmojiIcon";
+import Icon from "~/components/Icon";
 import { MenuInternalLink } from "~/types";
 import { sharedDocumentPath } from "~/utils/routeHelpers";
 
@@ -53,9 +53,10 @@ const PublicBreadcrumb: React.FC<Props> = ({
         .slice(0, -1)
         .map((item) => ({
           ...item,
-          title: item.emoji ? (
+          icon: undefined,
+          title: item.icon ? (
             <>
-              <EmojiIcon emoji={item.emoji} /> {item.title}
+              <Icon value={item.icon} color={item.color} /> {item.title}
             </>
           ) : (
             item.title

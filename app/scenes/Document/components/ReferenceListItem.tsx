@@ -5,9 +5,10 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { s, ellipsis } from "@shared/styles";
 import { NavigationNode } from "@shared/types";
+import { determineIconType } from "@shared/utils/icon";
 import Document from "~/models/Document";
 import Flex from "~/components/Flex";
-import EmojiIcon from "~/components/Icons/EmojiIcon";
+import Icon from "~/components/Icon";
 import { hover } from "~/styles";
 import { sharedDocumentPath } from "~/utils/routeHelpers";
 
@@ -58,7 +59,8 @@ function ReferenceListItem({
   shareId,
   ...rest
 }: Props) {
-  const { emoji } = document;
+  const { icon, color } = document;
+  const isEmoji = determineIconType(icon) === "emoji";
 
   return (
     <DocumentLink
@@ -74,9 +76,9 @@ function ReferenceListItem({
       {...rest}
     >
       <Content gap={4} dir="auto">
-        {emoji ? <EmojiIcon emoji={emoji} /> : <DocumentIcon />}
+        {icon ? <Icon value={icon} color={color} /> : <DocumentIcon />}
         <Title>
-          {emoji ? document.title.replace(emoji, "") : document.title}
+          {isEmoji ? document.title.replace(icon!, "") : document.title}
         </Title>
       </Content>
     </DocumentLink>

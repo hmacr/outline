@@ -4,16 +4,9 @@ import { z } from "zod";
 import { CollectionPermission, FileOperationFormat } from "@shared/types";
 import { IconLibrary } from "@shared/utils/IconLibrary";
 import { Collection } from "@server/models";
+import { zodEnumFromObjectKeys } from "@server/utils/zod";
 import { ValidateColor, ValidateIndex } from "@server/validation";
 import { BaseSchema, ProsemirrorSchema } from "../schema";
-
-function zodEnumFromObjectKeys<
-  TI extends Record<string, any>,
-  R extends string = TI extends Record<infer R, any> ? R : never
->(input: TI): z.ZodEnum<[R, ...R[]]> {
-  const [firstKey, ...otherKeys] = Object.keys(input) as [R, ...R[]];
-  return z.enum([firstKey, ...otherKeys]);
-}
 
 const BaseIdSchema = z.object({
   /** Id of the collection to be updated */
