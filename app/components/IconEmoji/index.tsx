@@ -113,8 +113,9 @@ const IconEmoji = ({
           >
             <DisclosureIcon
               iconType={iconType}
-              icon={icon}
-              color={color}
+              icon={icon ?? undefined}
+              color={color ?? undefined}
+              initial={initial ?? "?"}
               size={size}
             />
           </NudeButton>
@@ -162,8 +163,9 @@ const IconEmoji = ({
 
 type DisclosureIconProps = {
   iconType?: IconType;
-  icon: string | null;
-  color: string | null;
+  icon?: string;
+  color?: string;
+  initial?: string;
   size: number;
 };
 
@@ -171,6 +173,7 @@ const DisclosureIcon = ({
   iconType,
   icon,
   color,
+  initial,
   size,
 }: DisclosureIconProps) => {
   const theme = useTheme();
@@ -183,27 +186,13 @@ const DisclosureIcon = ({
     const Component = IconLibrary.getComponent(icon || "collection");
     return (
       <Component color={color!} size={size}>
-        c
+        {initial}
       </Component>
     );
   }
 
   return <EmojiIcon emoji={icon!} size={size} />;
 };
-
-// const IconDisclosure = ({ icon, color }: { icon?: string; color: string }) => {
-//   const Component = IconLibrary.getComponent(icon || "collection");
-//   return <Component color={color}>c</Component>;
-// };
-
-// const EmojiDisclosure = ({
-//   emoji,
-//   color,
-// }: {
-//   emoji?: string | null;
-//   color: string;
-// }) =>
-//   emoji ? <EmojiIcon emoji={emoji} /> : <StyledSmileyIcon color={color} />;
 
 const StyledSmileyIcon = styled(SmileyIcon)`
   flex-shrink: 0;
