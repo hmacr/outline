@@ -114,7 +114,8 @@ export const CollectionForm = observer(function CollectionForm_({
               <StyledIconPicker
                 icon={values.icon}
                 color={values.color ?? iconColor}
-                initial={values.name.length > 0 ? values.name[0] : "?"}
+                initial={values.name[0]}
+                popoverPosition="right"
                 onOpen={setHasOpenedIconPicker}
                 onChange={handleIconChange}
               />

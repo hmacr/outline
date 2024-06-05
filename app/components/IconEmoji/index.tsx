@@ -32,6 +32,7 @@ type Props = {
   size?: number;
   initial?: string;
   className?: string;
+  popoverPosition: "bottom-start" | "right";
   onChange: (icon: string | null, color: string | null) => void;
   onOpen?: () => void;
   onClose?: () => void;
@@ -43,6 +44,7 @@ const IconEmoji = ({
   size = 24,
   initial,
   className,
+  popoverPosition,
   onChange,
   onOpen,
   onClose,
@@ -53,7 +55,7 @@ const IconEmoji = ({
   const defaultTab = iconType ? tabIds[iconType] : tabIds["outline"];
 
   const popover = usePopoverState({
-    placement: "right",
+    placement: popoverPosition,
     modal: true,
     unstable_offset: [0, 0],
   });
@@ -140,7 +142,7 @@ const IconEmoji = ({
           </Flex>
           <StyledTabPanel {...tab}>
             <IconPanel
-              initial={initial ?? ""}
+              initial={initial ?? "?"}
               color={color}
               icon={icon ?? "collection"}
               onChange={handleOutlineIconChange}
@@ -183,7 +185,7 @@ const DisclosureIcon = ({
     );
   }
 
-  return <EmojiIcon emoji={icon!} size={32} />;
+  return <EmojiIcon emoji={icon!} size={size} />;
 };
 
 // const IconDisclosure = ({ icon, color }: { icon?: string; color: string }) => {

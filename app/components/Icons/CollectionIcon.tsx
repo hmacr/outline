@@ -54,7 +54,7 @@ function ResolvedCollectionIcon({
   return (
     <Icon
       value={collection.icon}
-      color={inputColor ?? collection.color}
+      color={inputColor ?? collection.color ?? undefined}
       size={size}
       initial={collection.initial}
       className={className}

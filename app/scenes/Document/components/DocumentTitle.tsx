@@ -263,6 +263,7 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
               icon={icon ?? null}
               color={color ?? randomElement(colorPalette)}
               size={32}
+              popoverPosition="bottom-start"
               onChange={handleIconChange}
               onOpen={handleOpen}
               onClose={handleClose}
