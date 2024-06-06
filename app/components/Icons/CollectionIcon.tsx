@@ -5,8 +5,8 @@ import * as React from "react";
 import { randomElement } from "@shared/random";
 import { colorPalette } from "@shared/utils/collections";
 import Collection from "~/models/Collection";
+import Icon from "~/components/Icon";
 import useStores from "~/hooks/useStores";
-import Icon from "../Icon";
 
 type Props = {
   /** The collection to show an icon for */
