@@ -272,10 +272,6 @@ class Collection extends ParanoidModel<
 
   @BeforeSave
   static async onBeforeSave(model: Collection) {
-    if (model.icon === "collection") {
-      model.icon = null;
-    }
-
     if (!model.content) {
       model.content = await DocumentHelper.toJSON(model);
     }
