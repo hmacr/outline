@@ -264,6 +264,7 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
               color={color ?? randomElement(colorPalette)}
               size={32}
               popoverPosition="bottom-start"
+              allowDelete={true}
               onChange={handleIconChange}
               onOpen={handleOpen}
               onClose={handleClose}

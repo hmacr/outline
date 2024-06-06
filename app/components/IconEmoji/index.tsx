@@ -33,6 +33,7 @@ type Props = {
   initial?: string;
   className?: string;
   popoverPosition: "bottom-start" | "right";
+  allowDelete?: boolean;
   onChange: (icon: string | null, color: string | null) => void;
   onOpen?: () => void;
   onClose?: () => void;
@@ -45,6 +46,7 @@ const IconEmoji = ({
   initial,
   className,
   popoverPosition,
+  allowDelete,
   onChange,
   onOpen,
   onClose,
@@ -77,6 +79,7 @@ const IconEmoji = ({
   };
 
   const handleRemove = () => {
+    popover.hide();
     onChange(null, null);
   };
 
@@ -110,6 +113,7 @@ const IconEmoji = ({
             aria-label={t("Show menu")}
             className={className}
             {...props}
+            size={size}
           >
             <DisclosureIcon
               iconType={iconType}
@@ -140,9 +144,11 @@ const IconEmoji = ({
                 )}
               </Tab>
             </StyledTabList>
-            <NudeButton width="fit-content" onClick={handleRemove}>
-              Remove
-            </NudeButton>
+            {allowDelete && icon && (
+              <NudeButton width="fit-content" onClick={handleRemove}>
+                Remove
+              </NudeButton>
+            )}
           </Flex>
           <StyledTabPanel {...tab}>
             <IconPanel
