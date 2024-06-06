@@ -36,6 +36,7 @@ type Props = {
 function DocumentCard(props: Props) {
   const { t } = useTranslation();
   const { collections } = useStores();
+  const theme = useTheme();
   const { document, pin, canUpdatePin, isDraggable } = props;
   const collection = document.collectionId
     ? collections.get(document.collectionId)
@@ -117,7 +118,7 @@ function DocumentCard(props: Props) {
                 color={document.color ?? undefined}
               />
             ) : (
-              <Squircle color={collection?.color}>
+              <Squircle color={collection?.color ?? theme.slateDark}>
                 {collection?.icon &&
                 collection?.icon !== "letter" &&
                 collection?.icon !== "collection" &&
