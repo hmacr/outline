@@ -16,6 +16,7 @@ type Props = PopoverProps & {
   tabIndex?: number;
   scrollable?: boolean;
   mobilePosition?: "top" | "bottom";
+  contentRef?: React.MutableRefObject<HTMLDivElement | null>;
   show: () => void;
   hide: () => void;
 };
@@ -27,6 +28,7 @@ const Popover: React.FC<Props> = ({
   scrollable = true,
   flex,
   mobilePosition,
+  contentRef,
   ...rest
 }: Props) => {
   const isMobile = useMobile();
@@ -50,6 +52,7 @@ const Popover: React.FC<Props> = ({
     return (
       <Dialog {...rest} modal>
         <Contents
+          ref={contentRef}
           $shrink={shrink}
           $scrollable={scrollable}
           $flex={flex}
@@ -64,6 +67,7 @@ const Popover: React.FC<Props> = ({
   return (
     <StyledPopover {...rest} hideOnEsc={false} hideOnClickOutside>
       <Contents
+        ref={contentRef}
         $shrink={shrink}
         $width={width}
         $scrollable={scrollable}

@@ -13,6 +13,7 @@ import styled, { css, useTheme } from "styled-components";
 import { s } from "@shared/styles";
 import { IconLibrary } from "@shared/utils/IconLibrary";
 import { IconType, determineIconType } from "@shared/utils/icon";
+import useComponentSize from "~/hooks/useComponentSize";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
 import { hover } from "~/styles";
 import Flex from "../Flex";
@@ -65,6 +66,10 @@ const IconEmoji = ({
   });
   const tab = useTabState({ selectedId: defaultTab });
 
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const { width: renderedWidth, height: renderedHeight } =
+    useComponentSize(contentRef);
+
   const handleOutlineIconChange = React.useCallback(
     (outlineIcon: string | null, iconColor: string) => {
       if (icon !== outlineIcon) {
@@ -111,7 +116,7 @@ const IconEmoji = ({
   // Custom click outside handling rather than using `hideOnClickOutside` from reakit so that we can
   // prevent event bubbling.
   useOnClickOutside(
-    popover.unstable_popoverRef,
+    contentRef,
     (event) => {
       if (popover.visible) {
         event.stopPropagation();
@@ -145,10 +150,12 @@ const IconEmoji = ({
       </PopoverDisclosure>
       <Popover
         {...popover}
+        contentRef={contentRef}
         width={430}
         shrink
         aria-label={t("Icon Picker")}
         onClick={(e) => e.stopPropagation()}
+        hideOnClickOutside={false}
       >
         <>
           <TabActionsWrapper justify="space-between" align="center">
