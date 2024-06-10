@@ -9,15 +9,17 @@ import {
   usePopoverState,
   useTabState,
 } from "reakit";
-import styled, { useTheme } from "styled-components";
+import styled, { css, useTheme } from "styled-components";
+import { s } from "@shared/styles";
 import { IconLibrary } from "@shared/utils/IconLibrary";
 import { IconType, determineIconType } from "@shared/utils/icon";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
-import Button from "../Button";
+import { hover } from "~/styles";
 import Flex from "../Flex";
 import EmojiIcon from "../Icons/EmojiIcon";
 import NudeButton from "../NudeButton";
 import Popover from "../Popover";
+import CustomPanel from "./CustomPanel";
 import EmojiPanel from "./EmojiPanel";
 import IconPanel from "./IconPanel";
 
@@ -63,25 +65,40 @@ const IconEmoji = ({
   });
   const tab = useTabState({ selectedId: defaultTab });
 
-  const handleOutlineIconChange = (
-    outlineIcon: string | null,
-    iconColor: string
-  ) => {
-    if (icon !== outlineIcon) {
+  const handleOutlineIconChange = React.useCallback(
+    (outlineIcon: string | null, iconColor: string) => {
+      if (icon !== outlineIcon) {
+        popover.hide();
+      }
+      onChange(outlineIcon, iconColor);
+    },
+    [popover, icon, onChange]
+  );
+
+  const handleEmojiChange = React.useCallback(
+    (emoji: string | null) => {
       popover.hide();
-    }
-    onChange(outlineIcon, iconColor);
-  };
+      onChange(emoji, null);
+    },
+    [popover, onChange]
+  );
 
-  const handleEmojiChange = (emoji: string | null) => {
-    popover.hide();
-    onChange(emoji, null);
-  };
-
-  const handleRemove = () => {
+  const handleRemove = React.useCallback(() => {
     popover.hide();
     onChange(null, null);
-  };
+  }, [popover, onChange]);
+
+  const handleClick = React.useCallback(
+    (ev: React.MouseEvent) => {
+      ev.stopPropagation();
+      if (popover.visible) {
+        popover.hide();
+      } else {
+        popover.show();
+      }
+    },
+    [popover]
+  );
 
   React.useEffect(() => {
     if (popover.visible) {
@@ -110,10 +127,11 @@ const IconEmoji = ({
       <PopoverDisclosure {...popover}>
         {(props) => (
           <NudeButton
+            {...props}
             aria-label={t("Show menu")}
             className={className}
-            {...props}
             size={size}
+            onClick={handleClick}
           >
             <DisclosureIcon
               iconType={iconType}
@@ -125,41 +143,60 @@ const IconEmoji = ({
           </NudeButton>
         )}
       </PopoverDisclosure>
-      <Popover {...popover} width={352} shrink aria-label={t("Choose an icon")}>
+      <Popover
+        {...popover}
+        width={430}
+        shrink
+        aria-label={t("Icon Picker")}
+        onClick={(e) => e.stopPropagation()}
+      >
         <>
-          <Flex justify="space-between" align="center">
+          <TabActionsWrapper justify="space-between" align="center">
             <StyledTabList {...tab}>
-              <Tab {...tab} id={tabIds.outline}>
-                {(props) => (
-                  <Button aria-label={t("Icons Tab")} {...props}>
-                    Icons
-                  </Button>
-                )}
-              </Tab>
-              <Tab {...tab} id={tabIds.emoji}>
-                {(props) => (
-                  <Button aria-label={t("Emojis Tab")} {...props}>
-                    Emojis
-                  </Button>
-                )}
-              </Tab>
+              <StyledTab
+                {...tab}
+                id={tabIds.outline}
+                aria-label={t("Icons Tab")}
+                active={tab.selectedId === tabIds.outline}
+              >
+                Icons
+              </StyledTab>
+              <StyledTab
+                {...tab}
+                id={tabIds.emoji}
+                aria-label={t("Emojis Tab")}
+                active={tab.selectedId === tabIds.emoji}
+              >
+                Emojis
+              </StyledTab>
+              <StyledTab
+                {...tab}
+                id="custom"
+                aria-label={t("Custom Tab")}
+                active={tab.selectedId === "custom"}
+              >
+                Custom
+              </StyledTab>
             </StyledTabList>
             {allowDelete && icon && (
-              <NudeButton width="fit-content" onClick={handleRemove}>
-                Remove
-              </NudeButton>
+              <RemoveButton onClick={handleRemove}>Remove</RemoveButton>
             )}
-          </Flex>
+          </TabActionsWrapper>
           <StyledTabPanel {...tab}>
-            <IconPanel
-              initial={initial ?? "?"}
-              color={color}
-              icon={icon ?? "collection"}
-              onChange={handleOutlineIconChange}
-            />
+            {tab.selectedId === tabIds.outline && (
+              <IconPanel
+                initial={initial ?? "?"}
+                color={color}
+                icon={icon ?? "collection"}
+                onChange={handleOutlineIconChange}
+              />
+            )}
           </StyledTabPanel>
           <StyledTabPanel {...tab}>
             <EmojiPanel onChange={handleEmojiChange} />
+          </StyledTabPanel>
+          <StyledTabPanel {...tab}>
+            <CustomPanel />
           </StyledTabPanel>
         </>
       </Popover>
@@ -208,12 +245,62 @@ const StyledSmileyIcon = styled(SmileyIcon)`
   }
 `;
 
+const RemoveButton = styled(NudeButton)`
+  width: auto;
+  height: 36px;
+  font-weight: 500;
+  font-size: 14px;
+  color: ${s("textTertiary")};
+  padding: 8px 12px;
+  transition: color 100ms ease-in-out;
+  &: ${hover} {
+    color: ${s("textSecondary")};
+  }
+`;
+
+const TabActionsWrapper = styled(Flex)`
+  padding: 0px 6px;
+  border-bottom: 1px solid ${s("inputBorder")};
+`;
+
 const StyledTabList = styled(TabList)`
   display: flex;
+  height: 36px;
+`;
+
+const StyledTab = styled(Tab)<{ active: boolean }>`
+  position: relative;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: var(--pointer);
+  background: none;
+  border: 0;
+  padding: 8px 12px;
+  user-select: none;
+  color: ${({ active }) => (active ? s("textSecondary") : s("textTertiary"))};
+  transition: color 100ms ease-in-out;
+
+  &: ${hover} {
+    color: ${s("textSecondary")};
+  }
+
+  ${({ active }) =>
+    active &&
+    css`
+      &:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: ${s("textSecondary")};
+      }
+    `}
 `;
 
 const StyledTabPanel = styled(TabPanel)`
-  height: 450px;
+  height: 440px;
   overflow-y: auto;
 `;
 
