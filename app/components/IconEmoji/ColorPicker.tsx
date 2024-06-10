@@ -115,7 +115,7 @@ const CustomColor = ({
 };
 
 const Container = styled(Flex)`
-  height: 50px;
+  height: 48px;
   padding: 8px 12px;
   border-bottom: 1px solid ${s("inputBorder")};
 `;

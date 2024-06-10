@@ -16,21 +16,22 @@ type Props = PopoverProps & {
   tabIndex?: number;
   scrollable?: boolean;
   mobilePosition?: "top" | "bottom";
-  contentRef?: React.MutableRefObject<HTMLDivElement | null>;
   show: () => void;
   hide: () => void;
 };
 
-const Popover: React.FC<Props> = ({
-  children,
-  shrink,
-  width = 380,
-  scrollable = true,
-  flex,
-  mobilePosition,
-  contentRef,
-  ...rest
-}: Props) => {
+const Popover: React.ForwardRefRenderFunction<HTMLDivElement, Props> = (
+  {
+    children,
+    shrink,
+    width = 380,
+    scrollable = true,
+    flex,
+    mobilePosition,
+    ...rest
+  }: Props,
+  ref
+) => {
   const isMobile = useMobile();
 
   // Custom Escape handler rather than using hideOnEsc from reakit so we can
@@ -52,7 +53,7 @@ const Popover: React.FC<Props> = ({
     return (
       <Dialog {...rest} modal>
         <Contents
-          ref={contentRef}
+          ref={ref}
           $shrink={shrink}
           $scrollable={scrollable}
           $flex={flex}
@@ -67,7 +68,7 @@ const Popover: React.FC<Props> = ({
   return (
     <StyledPopover {...rest} hideOnEsc={false} hideOnClickOutside>
       <Contents
-        ref={contentRef}
+        ref={ref}
         $shrink={shrink}
         $width={width}
         $scrollable={scrollable}
@@ -127,4 +128,4 @@ const Contents = styled.div<ContentsProps>`
   `};
 `;
 
-export default Popover;
+export default React.forwardRef(Popover);
