@@ -24,12 +24,12 @@ export enum EmojiCategory {
 }
 
 export enum EmojiSkin {
-  Default = "default",
-  Light = "1f3fb",
-  MediumLight = "1f3fc",
-  Medium = "1f3fd",
-  MediumDark = "1f3fe",
-  Dark = "1f3ff",
+  Default = "Default",
+  Light = "Light",
+  MediumLight = "MediumLight",
+  Medium = "Medium",
+  MediumDark = "MediumDark",
+  Dark = "Dark",
 }
 
 export type Emoji = {
@@ -37,18 +37,27 @@ export type Emoji = {
   value: string;
 };
 
-export type EmojiVariants = Record<EmojiSkin, Emoji>;
+export type EmojiVariants = {
+  [EmojiSkin.Default]: Emoji;
+  [EmojiSkin.Light]?: Emoji;
+  [EmojiSkin.MediumLight]?: Emoji;
+  [EmojiSkin.Medium]?: Emoji;
+  [EmojiSkin.MediumDark]?: Emoji;
+  [EmojiSkin.Dark]?: Emoji;
+};
 
-const SKIN_TO_ENUM = Object.keys(EmojiSkin).reduce((obj, skin: EmojiSkin) => {
-  const val = EmojiSkin[skin];
-  obj[val] = skin;
-  return obj;
-}, {} as Record<string, EmojiSkin>);
+const SKIN_CODE_TO_ENUM = {
+  "1f3fb": EmojiSkin.Light,
+  "1f3fc": EmojiSkin.MediumLight,
+  "1f3fd": EmojiSkin.Medium,
+  "1f3fe": EmojiSkin.MediumDark,
+  "1f3ff": EmojiSkin.Dark,
+};
 
 const getVariants = (name: string, skins: Skin[]): EmojiVariants =>
   skins.reduce((obj, skin) => {
-    const parts = skin.unified.split("-");
-    const skinType = SKIN_TO_ENUM[parts[1]] ?? EmojiSkin.Default;
+    const skinCode = skin.unified.split("-")[1];
+    const skinType = SKIN_CODE_TO_ENUM[skinCode] ?? EmojiSkin.Default;
     obj[skinType] = { name, value: skin.native };
     return obj;
   }, {} as EmojiVariants);
@@ -61,7 +70,7 @@ const EMOJI_ID_TO_VARIANTS = Object.entries(data.emojis).reduce(
   {} as Record<string, EmojiVariants>
 );
 
-const EMOJI_CATEGORY_TO_EMOJI_IDS: Record<EmojiCategory, string[]> =
+const CATEGORY_TO_EMOJI_IDS: Record<EmojiCategory, string[]> =
   data.categories.reduce((obj, { id, emojis: emojiIds }) => {
     const category = EmojiCategory[capitalize(id)] as EmojiCategory;
     if (!category) {
@@ -76,22 +85,25 @@ export const getEmojis = ({
 }: {
   skin: EmojiSkin;
 }): Record<EmojiCategory, Emoji[]> =>
-  Object.keys(EMOJI_CATEGORY_TO_EMOJI_IDS).reduce(
-    (obj, category: EmojiCategory) => {
-      const emojiIds = EMOJI_CATEGORY_TO_EMOJI_IDS[category];
-      const emojis = emojiIds.map(
-        (emojiId) => EMOJI_ID_TO_VARIANTS[emojiId][skin]
-      );
-      obj[category] = emojis;
-      return obj;
-    },
-    {} as Record<EmojiCategory, Emoji[]>
-  );
+  Object.keys(CATEGORY_TO_EMOJI_IDS).reduce((obj, category: EmojiCategory) => {
+    const emojiIds = CATEGORY_TO_EMOJI_IDS[category];
+    const emojis = emojiIds.map(
+      (emojiId) =>
+        EMOJI_ID_TO_VARIANTS[emojiId][skin] ??
+        EMOJI_ID_TO_VARIANTS[emojiId][EmojiSkin.Default]
+    );
+    obj[category] = emojis;
+    return obj;
+  }, {} as Record<EmojiCategory, Emoji[]>);
 
 export const getEmojiVariants = ({ id }: { id: string }) =>
   EMOJI_ID_TO_VARIANTS[id];
 
 export const search = ({ value, skin }: { value: string; skin: EmojiSkin }) => {
   const matchedEmojis = searcher.search(value);
-  return matchedEmojis.map((emoji) => EMOJI_ID_TO_VARIANTS[emoji.id][skin]);
+  return matchedEmojis.map(
+    (emoji) =>
+      EMOJI_ID_TO_VARIANTS[emoji.id][skin] ??
+      EMOJI_ID_TO_VARIANTS[emoji.id][EmojiSkin.Default]
+  );
 };

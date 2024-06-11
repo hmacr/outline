@@ -96,7 +96,7 @@ const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
   padding: 0px 12px;
 
   // Needed for the absolutely positioned children
-  // to respect the VirtualList's padding
+  // to respect this list's padding
   & > div {
     position: relative;
   }

@@ -10,22 +10,84 @@ import { hover } from "~/styles";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
 import Text from "../Text";
-import { EmojiCategory, EmojiSkin, getEmojis, search } from "./emoji-data";
+import SkinSelector from "./SkinSelector";
+import { EmojiCategory, getEmojis, search, EmojiSkin } from "./emoji-data";
 
-const emojiSkin = EmojiSkin.Default;
+type Props = {
+  width: number;
+  onChange: (emoji: string | null) => void | Promise<void>;
+};
+
+const CustomPanel = ({ width, onChange }: Props) => {
+  const [query, setQuery] = React.useState("");
+  const [skin, setSkin] = React.useState(EmojiSkin.Medium);
+  const { t } = useTranslation();
+
+  const handleFilter = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setQuery(event.target.value.toLowerCase());
+    },
+    [setQuery]
+  );
+
+  // 24px padding for the container
+  // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
+  const emojisPerRow = React.useMemo(
+    () => Math.floor((width - 24) / 32),
+    [width]
+  );
+
+  const isSearch = query !== "";
+  const dataChunks = isSearch
+    ? getSearchResults({
+        query,
+        skin,
+        emojisPerRow,
+        onClick: onChange,
+      })
+    : getAllEmojis({ skin, emojisPerRow, onClick: onChange });
+
+  return (
+    <Flex column>
+      <UserInputContainer align="center" gap={12}>
+        <StyledInputSearch
+          value={query}
+          placeholder={`${t("Search emoji")}…`}
+          onChange={handleFilter}
+        />
+        <SkinSelector
+          skin={skin}
+          onChange={(es: EmojiSkin) => {
+            console.log("setSkin called");
+            setSkin(es);
+          }}
+        />
+      </UserInputContainer>
+      <StyledVirtualList
+        width={width}
+        height={358}
+        itemCount={dataChunks.length}
+        itemSize={32}
+        itemData={{ dataChunks }}
+      >
+        {DataRow}
+      </StyledVirtualList>
+    </Flex>
+  );
+};
 
 const getSearchResults = ({
   query,
+  skin,
   emojisPerRow,
   onClick,
 }: {
   query: string;
+  skin: EmojiSkin;
   emojisPerRow: number;
   onClick: (emoji: string | null) => void | Promise<void>;
 }) => {
-  const emojis = search({ value: query, skin: emojiSkin }).map(
-    (emoji) => emoji.value
-  );
+  const emojis = search({ value: query, skin }).map((emoji) => emoji.value);
 
   const category = (
     <CategoryName
@@ -53,9 +115,11 @@ const getSearchResults = ({
 };
 
 const getAllEmojis = ({
+  skin,
   emojisPerRow,
   onClick,
 }: {
+  skin: EmojiSkin;
   emojisPerRow: number;
   onClick: (emoji: string | null) => void | Promise<void>;
 }): React.ReactNode[][] => {
@@ -71,13 +135,11 @@ const getAllEmojis = ({
       </CategoryName>
     );
 
-    const emojiButtons = getEmojis({ skin: emojiSkin })[emojiCategory].map(
-      (emoji) => (
-        <EmojiButton key={emoji.name} onClick={() => onClick(emoji.value)}>
-          <Emoji>{emoji.value}</Emoji>
-        </EmojiButton>
-      )
-    );
+    const emojiButtons = getEmojis({ skin })[emojiCategory].map((emoji) => (
+      <EmojiButton key={emoji.value} onClick={() => onClick(emoji.value)}>
+        <Emoji>{emoji.value}</Emoji>
+      </EmojiButton>
+    ));
 
     const emojiChunks = chunk(emojiButtons, emojisPerRow);
 
@@ -96,58 +158,6 @@ const getAllEmojis = ({
     getCategoryData(EmojiCategory.Objects),
     getCategoryData(EmojiCategory.Symbols),
     getCategoryData(EmojiCategory.Flags)
-  );
-};
-
-type Props = {
-  width: number;
-  onChange: (emoji: string | null) => void | Promise<void>;
-};
-
-const CustomPanel = ({ width, onChange }: Props) => {
-  const [query, setQuery] = React.useState("");
-  const { t } = useTranslation();
-
-  const handleFilter = React.useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setQuery(event.target.value.toLowerCase());
-    },
-    [setQuery]
-  );
-
-  // 24px padding for the container
-  // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
-  const emojisPerRow = React.useMemo(
-    () => Math.floor((width - 24) / 32),
-    [width]
-  );
-
-  const isSearch = query !== "";
-  const dataChunks = isSearch
-    ? getSearchResults({
-        query,
-        emojisPerRow,
-        onClick: onChange,
-      })
-    : getAllEmojis({ emojisPerRow, onClick: onChange });
-
-  return (
-    <Flex column gap={4}>
-      <StyledInputSearch
-        value={query}
-        placeholder={`${t("Search emoji")}…`}
-        onChange={handleFilter}
-      />
-      <StyledVirtualList
-        width={width}
-        height={358}
-        itemCount={dataChunks.length}
-        itemSize={32}
-        itemData={{ dataChunks }}
-      >
-        {DataRow}
-      </StyledVirtualList>
-    </Flex>
   );
 };
 
@@ -180,8 +190,13 @@ const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
   }
 `;
 
+const UserInputContainer = styled(Flex)`
+  height: 48px;
+  padding: 6px 12px 0px;
+`;
+
 const StyledInputSearch = styled(InputSearch)`
-  padding: 12px 12px 0px;
+  flex-grow: 1;
 `;
 
 const CategoryName = styled(Text)`
