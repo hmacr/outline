@@ -1,6 +1,7 @@
-import data, { type EmojiMartData, Emoji, Skin } from "@emoji-mart/data";
-import { init, SearchIndex } from "emoji-mart";
-import { capitalize } from "lodash";
+import data, { type EmojiMartData, Skin } from "@emoji-mart/data";
+import { init } from "emoji-mart";
+import FuzzySearch from "fuzzy-search";
+import capitalize from "lodash/capitalize";
 
 init({ data });
 
@@ -58,17 +59,30 @@ const getEmoji = ({ id, skin }: { id: string; skin: EmojiSkin }) =>
   emojiIdToVariants[id][skin] ?? emojiIdToVariants[id][EmojiSkin.Default];
 
 // category name to emojis
-export const emojiData = emojiMartData.categories.reduce(
-  (obj, { id, emojis }) => {
-    const category = EmojiCategory[capitalize(id)];
-    if (!category) {
-      return obj;
-    }
-    const mappedEmojis = emojis.map((emojiId) =>
-      getEmoji({ id: emojiId, skin: activeSkin })
-    );
-    obj[category] = mappedEmojis;
+const emojiData = emojiMartData.categories.reduce((obj, { id, emojis }) => {
+  const category = EmojiCategory[capitalize(id)];
+  if (!category) {
     return obj;
-  },
-  {} as Record<EmojiCategory, string[]>
+  }
+  const mappedEmojis = emojis.map((emojiId) =>
+    getEmoji({ id: emojiId, skin: activeSkin })
+  );
+  obj[category] = mappedEmojis;
+  return obj;
+}, {} as Record<EmojiCategory, string[]>);
+
+const searcher = new FuzzySearch(
+  Object.values(emojiMartData.emojis),
+  ["search"],
+  {
+    caseSensitive: false,
+    sort: true,
+  }
 );
+
+const search = (value: string) => {
+  const matchedEmojis = searcher.search(value);
+  return matchedEmojis.map((emoji) => emojiIdToVariants[emoji.id][activeSkin]);
+};
+
+export { emojiData, search };

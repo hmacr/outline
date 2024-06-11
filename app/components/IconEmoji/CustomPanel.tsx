@@ -10,32 +10,71 @@ import { hover } from "~/styles";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
 import Text from "../Text";
-import { EmojiCategory, emojiData } from "./emoji-data";
+import { EmojiCategory, emojiData, search } from "./emoji-data";
 
-const getDataForVirtualList = ({
+const getSearchResults = ({
+  emojis,
+  emojisPerRow,
+  onClick,
+}: {
+  emojis: string[];
+  emojisPerRow: number;
+  onClick: (emoji: string | null) => void | Promise<void>;
+}) => {
+  const category = (
+    <CategoryName
+      key={"search_results"}
+      type="tertiary"
+      size="xsmall"
+      weight="bold"
+    >
+      Search Results
+    </CategoryName>
+  );
+
+  const emojiButtons = emojis.map((emoji) => (
+    <EmojiButton key={emoji} onClick={() => onClick(emoji)}>
+      <Emoji>{emoji}</Emoji>
+    </EmojiButton>
+  ));
+
+  const emojiChunks = chunk(emojiButtons, emojisPerRow);
+
+  const data: React.ReactNode[][] = [];
+  data.push([category]);
+  emojiChunks.forEach((emojiChunk) => data.push(emojiChunk));
+  return data;
+};
+
+const getAllEmojis = ({
   emojisPerRow,
   onClick,
 }: {
   emojisPerRow: number;
   onClick: (emoji: string | null) => void | Promise<void>;
 }): React.ReactNode[][] => {
-  const getCategoryData = (category: EmojiCategory) => {
-    const data: React.ReactNode[][] = [];
-
-    const categoryComp = (
-      <CategoryName key={category} type="tertiary" size="xsmall" weight="bold">
-        {category}
+  const getCategoryData = (emojiCategory: EmojiCategory) => {
+    const category = (
+      <CategoryName
+        key={emojiCategory}
+        type="tertiary"
+        size="xsmall"
+        weight="bold"
+      >
+        {emojiCategory}
       </CategoryName>
     );
 
-    const ss = emojiData[category].map((emoji) => (
+    const emojiButtons = emojiData[emojiCategory].map((emoji) => (
       <EmojiButton key={emoji} onClick={() => onClick(emoji)}>
         <Emoji>{emoji}</Emoji>
       </EmojiButton>
     ));
 
-    const emojiChunks = chunk(ss, emojisPerRow);
-    data.push([categoryComp]);
+    const emojiChunks = chunk(emojiButtons, emojisPerRow);
+
+    const data: React.ReactNode[][] = [];
+    data.push([category]);
     emojiChunks.forEach((emojiChunk) => data.push(emojiChunk));
     return data;
   };
@@ -61,7 +100,6 @@ const CustomPanel = ({ width, onChange }: Props) => {
   const [query, setQuery] = React.useState("");
   const { t } = useTranslation();
 
-  // TODO: Search
   const handleFilter = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setQuery(event.target.value.toLowerCase());
@@ -76,7 +114,14 @@ const CustomPanel = ({ width, onChange }: Props) => {
     [width]
   );
 
-  const dataChunks = getDataForVirtualList({ emojisPerRow, onClick: onChange });
+  const isSearch = query !== "";
+  const dataChunks = isSearch
+    ? getSearchResults({
+        emojis: search(query),
+        emojisPerRow,
+        onClick: onChange,
+      })
+    : getAllEmojis({ emojisPerRow, onClick: onChange });
 
   return (
     <Flex column gap={4}>
