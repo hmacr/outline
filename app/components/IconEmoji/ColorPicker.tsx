@@ -39,7 +39,7 @@ const ColorPicker = ({
   return (
     <Container justify="space-between" gap={12}>
       {panel === Panel.Builtin ? (
-        <BuiltinColors activeColor={activeColor} />
+        <BuiltinColors activeColor={activeColor} onClick={onChange} />
       ) : (
         <CustomColor value={activeColor} onValidHex={onChange} />
       )}
@@ -52,10 +52,21 @@ const ColorPicker = ({
   );
 };
 
-const BuiltinColors = ({ activeColor }: { activeColor: string }) => (
+const BuiltinColors = ({
+  activeColor,
+  onClick,
+}: {
+  activeColor: string;
+  onClick: (color: string) => void;
+}) => (
   <Flex justify="space-between" align="center" auto>
     {colorPalette.map((color) => (
-      <ColorButton key={color} color={color} active={color === activeColor}>
+      <ColorButton
+        key={color}
+        color={color}
+        active={color === activeColor}
+        onClick={() => onClick(color)}
+      >
         <Selected />
       </ColorButton>
     ))}
@@ -138,7 +149,7 @@ const ColorButton = styled(NudeButton)<{ color: string; active: boolean }>`
   background-color: ${({ color }) => color};
 
   &: ${hover} {
-    outline: 2px solid ${s("menuBackground")};
+    outline: 2px solid ${s("menuBackground")} !important;
     box-shadow: ${({ color }) => `0px 0px 3px 3px ${color}`};
   }
 
