@@ -19,7 +19,6 @@ import Flex from "../Flex";
 import EmojiIcon from "../Icons/EmojiIcon";
 import NudeButton from "../NudeButton";
 import Popover from "../Popover";
-import CustomPanel from "./CustomPanel";
 import EmojiPanel from "./EmojiPanel";
 import IconPanel from "./IconPanel";
 
@@ -54,6 +53,8 @@ const IconEmoji = ({
   onClose,
 }: Props) => {
   const { t } = useTranslation();
+
+  const [query, setQuery] = React.useState("");
 
   const iconType = determineIconType(icon);
   const defaultTab = iconType ? tabIds[iconType] : tabIds["outline"];
@@ -91,7 +92,12 @@ const IconEmoji = ({
     onChange(null, null);
   }, [popover, onChange, tab]);
 
-  const handleClick = React.useCallback(
+  const handleQueryChange = React.useCallback(
+    (q: string) => setQuery(q),
+    [setQuery]
+  );
+
+  const handlePopoverButtonClick = React.useCallback(
     (ev: React.MouseEvent) => {
       ev.stopPropagation();
       if (popover.visible) {
@@ -134,7 +140,7 @@ const IconEmoji = ({
             aria-label={t("Show menu")}
             className={className}
             size={size}
-            onClick={handleClick}
+            onClick={handlePopoverButtonClick}
           >
             <DisclosureIcon
               iconType={iconType}
@@ -174,14 +180,6 @@ const IconEmoji = ({
               >
                 Emojis
               </StyledTab>
-              <StyledTab
-                {...tab}
-                id="custom"
-                aria-label={t("Custom Tab")}
-                active={tab.selectedId === "custom"}
-              >
-                Custom
-              </StyledTab>
             </StyledTabList>
             {allowDelete && icon && (
               <RemoveButton onClick={handleRemove}>Remove</RemoveButton>
@@ -194,16 +192,20 @@ const IconEmoji = ({
                 initial={initial ?? "?"}
                 color={color}
                 icon={icon ?? "collection"}
-                onChange={handleOutlineIconChange}
+                query={query}
+                onIconChange={handleOutlineIconChange}
+                onQueryChange={handleQueryChange}
               />
             )}
           </StyledTabPanel>
           <StyledTabPanel {...tab}>
-            <EmojiPanel onChange={handleEmojiChange} />
-          </StyledTabPanel>
-          <StyledTabPanel {...tab}>
-            {tab.selectedId === "custom" && (
-              <CustomPanel width={408} onChange={handleEmojiChange} />
+            {tab.selectedId === tabIds.emoji && (
+              <EmojiPanel
+                width={408}
+                query={query}
+                onEmojiChange={handleEmojiChange}
+                onQueryChange={handleQueryChange}
+              />
             )}
           </StyledTabPanel>
         </>

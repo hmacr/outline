@@ -19,19 +19,31 @@ type Props = {
   initial: string;
   icon: string;
   color: string;
-  onChange: (icon: string, color: string) => void;
+  query: string;
+  onIconChange: (icon: string, color: string) => void;
+  onQueryChange: (query: string) => void;
 };
 
-const IconPanel = ({ width, initial, icon, color, onChange }: Props) => {
-  const [query, setQuery] = React.useState("");
+const IconPanel = ({
+  width,
+  initial,
+  icon,
+  color,
+  query,
+  onIconChange,
+  onQueryChange,
+}: Props) => {
   const { t } = useTranslation();
 
-  const filteredIcons = IconLibrary.findIcons(query);
+  const filteredIcons = React.useMemo(
+    () => IconLibrary.findIcons(query),
+    [query]
+  );
   const handleFilter = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setQuery(event.target.value.toLowerCase());
+      onQueryChange(event.target.value.toLowerCase());
     },
-    [setQuery]
+    [onQueryChange]
   );
 
   // 24px padding for the container
@@ -44,7 +56,7 @@ const IconPanel = ({ width, initial, icon, color, onChange }: Props) => {
   const icons = filteredIcons.map((name, index) => (
     <IconButton
       key={name}
-      onClick={() => onChange(name, color)}
+      onClick={() => onIconChange(name, color)}
       delay={Math.round(index * delayPerIcon)}
     >
       <Icon as={IconLibrary.getComponent(name)} color={color}>
@@ -57,7 +69,10 @@ const IconPanel = ({ width, initial, icon, color, onChange }: Props) => {
 
   return (
     <Flex column gap={8}>
-      <ColorPicker activeColor={color} onChange={(c) => onChange(icon, c)} />
+      <ColorPicker
+        activeColor={color}
+        onSelect={(c) => onIconChange(icon, c)}
+      />
       <StyledInputSearch
         value={query}
         placeholder={`${t("Search icons")}…`}

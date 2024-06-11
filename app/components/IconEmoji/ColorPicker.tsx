@@ -21,13 +21,12 @@ const colorWheel = `conic-gradient(
 	rgb(250, 96, 122)
 )`;
 
-const ColorPicker = ({
-  activeColor,
-  onChange,
-}: {
+type Props = {
   activeColor: string;
-  onChange: (color: string) => void;
-}) => {
+  onSelect: (color: string) => void;
+};
+
+const ColorPicker = ({ activeColor, onSelect }: Props) => {
   const [panel, setPanel] = React.useState(
     colorPalette.includes(activeColor) ? Panel.Builtin : Panel.Hex
   );
@@ -39,9 +38,9 @@ const ColorPicker = ({
   return (
     <Container justify="space-between" gap={12}>
       {panel === Panel.Builtin ? (
-        <BuiltinColors activeColor={activeColor} onClick={onChange} />
+        <BuiltinColors activeColor={activeColor} onClick={onSelect} />
       ) : (
-        <CustomColor value={activeColor} onValidHex={onChange} />
+        <CustomColor value={activeColor} onValidHex={onSelect} />
       )}
       <PanelSwitcher justify="flex-end" align="center">
         <SwitcherButton panel={panel} onClick={handleSwitcherClick}>

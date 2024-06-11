@@ -1,94 +1,222 @@
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
+import chunk from "lodash/chunk";
+import concat from "lodash/concat";
 import * as React from "react";
-import styled, { useTheme } from "styled-components";
+import { useTranslation } from "react-i18next";
+import { FixedSizeList, ListChildComponentProps } from "react-window";
+import styled from "styled-components";
 import { s } from "@shared/styles";
-import { toRGB } from "@shared/utils/color";
-import useStores from "~/hooks/useStores";
-import useUserLocale from "~/hooks/useUserLocale";
-
-/* Locales supported by emoji-mart */
-const supportedLocales = [
-  "en",
-  "ar",
-  "be",
-  "cs",
-  "de",
-  "es",
-  "fa",
-  "fi",
-  "fr",
-  "hi",
-  "it",
-  "ja",
-  "ko",
-  "nl",
-  "pl",
-  "pt",
-  "ru",
-  "sa",
-  "tr",
-  "uk",
-  "vi",
-  "zh",
-];
-
-/**
- * React hook to derive emoji picker's theme from UI theme
- *
- * @returns {string} Theme to use for emoji picker
- */
-function usePickerTheme(): string {
-  const { ui } = useStores();
-  const { theme } = ui;
-
-  if (theme === "system") {
-    return "auto";
-  }
-
-  return theme;
-}
+import Flex from "~/components/Flex";
+import { hover } from "~/styles";
+import InputSearch from "../InputSearch";
+import NudeButton from "../NudeButton";
+import Text from "../Text";
+import SkinPicker from "./SkinPicker";
+import { EmojiCategory, getEmojis, search, EmojiSkin } from "./emoji-data";
 
 type Props = {
-  onChange: (emoji: string | null) => void | Promise<void>;
+  width: number;
+  query: string;
+  onEmojiChange: (emoji: string | null) => void | Promise<void>;
+  onQueryChange: (query: string) => void;
 };
 
-const EmojiPanel = ({ onChange }: Props) => {
-  const pickerRef = React.useRef<HTMLDivElement>(null);
+const EmojiPanel = ({ width, query, onEmojiChange, onQueryChange }: Props) => {
+  const [skin, setSkin] = React.useState(EmojiSkin.Medium);
+  const { t } = useTranslation();
 
-  const theme = useTheme();
-  const pickerTheme = usePickerTheme();
-  const locale = useUserLocale(true) ?? "en";
-
-  const handleEmojiChange = React.useCallback(
-    async (emoji) => {
-      await onChange(emoji ? emoji.native : null);
+  const handleFilter = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      onQueryChange(event.target.value.toLowerCase());
     },
-    [onChange]
+    [onQueryChange]
   );
+
+  const handleSkinChange = React.useCallback((emojiSkin: EmojiSkin) => {
+    setSkin(emojiSkin);
+  }, []);
+
+  // 24px padding for the container
+  // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
+  const emojisPerRow = React.useMemo(
+    () => Math.floor((width - 24) / 32),
+    [width]
+  );
+
+  const isSearch = query !== "";
+  const dataChunks = isSearch
+    ? getSearchResults({
+        query,
+        skin,
+        emojisPerRow,
+        onClick: onEmojiChange,
+      })
+    : getAllEmojis({ skin, emojisPerRow, onClick: onEmojiChange });
 
   return (
-    <PickerStyles ref={pickerRef}>
-      <Picker
-        data={data}
-        locale={supportedLocales.includes(locale) ? locale : "en"}
-        onEmojiSelect={handleEmojiChange}
-        theme={pickerTheme}
-        previewPosition="none"
-      />
-    </PickerStyles>
+    <Flex column>
+      <UserInputContainer align="center" gap={12}>
+        <StyledInputSearch
+          value={query}
+          placeholder={`${t("Search emoji")}…`}
+          onChange={handleFilter}
+        />
+        <SkinPicker skin={skin} onChange={handleSkinChange} />
+      </UserInputContainer>
+      <StyledVirtualList
+        width={width}
+        height={358}
+        itemCount={dataChunks.length}
+        itemSize={32}
+        itemData={{ dataChunks }}
+      >
+        {DataRow}
+      </StyledVirtualList>
+    </Flex>
   );
 };
 
-const PickerStyles = styled.div`
-  em-emoji-picker {
-    width: 100%;
-    --shadow: none;
-    --font-family: ${s("fontFamily")};
-    --rgb-background: ${(props) => toRGB(props.theme.menuBackground)};
-    --rgb-accent: ${(props) => toRGB(props.theme.accent)};
-    --border-radius: 6px;
+const getSearchResults = ({
+  query,
+  skin,
+  emojisPerRow,
+  onClick,
+}: {
+  query: string;
+  skin: EmojiSkin;
+  emojisPerRow: number;
+  onClick: (emoji: string | null) => void | Promise<void>;
+}) => {
+  const emojis = search({ value: query, skin }).map((emoji) => emoji.value);
+
+  const category = (
+    <CategoryName
+      key={"search_results"}
+      type="tertiary"
+      size="xsmall"
+      weight="bold"
+    >
+      Search Results
+    </CategoryName>
+  );
+
+  const emojiButtons = emojis.map((emoji) => (
+    <EmojiButton key={emoji} onClick={() => onClick(emoji)}>
+      <Emoji>{emoji}</Emoji>
+    </EmojiButton>
+  ));
+
+  const emojiChunks = chunk(emojiButtons, emojisPerRow);
+
+  const data: React.ReactNode[][] = [];
+  data.push([category]);
+  emojiChunks.forEach((emojiChunk) => data.push(emojiChunk));
+  return data;
+};
+
+const getAllEmojis = ({
+  skin,
+  emojisPerRow,
+  onClick,
+}: {
+  skin: EmojiSkin;
+  emojisPerRow: number;
+  onClick: (emoji: string | null) => void | Promise<void>;
+}): React.ReactNode[][] => {
+  const getCategoryData = (emojiCategory: EmojiCategory) => {
+    const category = (
+      <CategoryName
+        key={emojiCategory}
+        type="tertiary"
+        size="xsmall"
+        weight="bold"
+      >
+        {emojiCategory}
+      </CategoryName>
+    );
+
+    const emojis = getEmojis({ skin })[emojiCategory];
+    const emojiButtons = emojis.map((emoji) => (
+      <EmojiButton key={emoji.value} onClick={() => onClick(emoji.value)}>
+        <Emoji>{emoji.value}</Emoji>
+      </EmojiButton>
+    ));
+
+    const emojiChunks = chunk(emojiButtons, emojisPerRow);
+
+    const data: React.ReactNode[][] = [];
+    data.push([category]);
+    emojiChunks.forEach((emojiChunk) => data.push(emojiChunk));
+    return data;
+  };
+
+  return concat(
+    getCategoryData(EmojiCategory.People),
+    getCategoryData(EmojiCategory.Nature),
+    getCategoryData(EmojiCategory.Foods),
+    getCategoryData(EmojiCategory.Activity),
+    getCategoryData(EmojiCategory.Places),
+    getCategoryData(EmojiCategory.Objects),
+    getCategoryData(EmojiCategory.Symbols),
+    getCategoryData(EmojiCategory.Flags)
+  );
+};
+
+type DataRowProps = {
+  dataChunks: React.ReactNode[][];
+};
+
+const DataRow = ({
+  index: rowIdx,
+  style,
+  data,
+}: ListChildComponentProps<DataRowProps>) => {
+  const { dataChunks } = data;
+  const row = dataChunks[rowIdx];
+
+  return (
+    <Flex style={style} align="center">
+      {row}
+    </Flex>
+  );
+};
+
+const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
+  padding: 0px 12px;
+
+  // Needed for the absolutely positioned children
+  // to respect the VirtualList's padding
+  & > div {
+    position: relative;
   }
+`;
+
+const UserInputContainer = styled(Flex)`
+  height: 48px;
+  padding: 6px 12px 0px;
+`;
+
+const StyledInputSearch = styled(InputSearch)`
+  flex-grow: 1;
+`;
+
+const CategoryName = styled(Text)`
+  padding-left: 6px;
+`;
+
+const EmojiButton = styled(NudeButton)`
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+
+  &: ${hover} {
+    background: ${s("listItemHoverBackground")};
+  }
+`;
+
+const Emoji = styled.span`
+  width: 24px;
+  height: 24px;
+  font-family: ${s("fontFamilyEmoji")};
 `;
 
 export default EmojiPanel;
