@@ -27,12 +27,15 @@ const IconPanel = ({ width, initial, icon, color, onChange }: Props) => {
   const { t } = useTranslation();
 
   const filteredIcons = IconLibrary.findIcons(query);
-  const handleFilter = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value.toLowerCase());
-  };
+  const handleFilter = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setQuery(event.target.value.toLowerCase());
+    },
+    [setQuery]
+  );
 
   // 24px padding for the container
-  // icon size is 24px by default; and we add 4px padding on all sides => 32px.
+  // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
   const iconsPerRow = React.useMemo(
     () => Math.floor((width - 24) / 32),
     [width]
@@ -42,7 +45,6 @@ const IconPanel = ({ width, initial, icon, color, onChange }: Props) => {
     <IconButton
       key={name}
       onClick={() => onChange(name, color)}
-      opacity={query ? (filteredIcons.includes(name) ? 1 : 0.3) : 1}
       delay={Math.round(index * delayPerIcon)}
     >
       <Icon as={IconLibrary.getComponent(name)} color={color}>
@@ -51,61 +53,63 @@ const IconPanel = ({ width, initial, icon, color, onChange }: Props) => {
     </IconButton>
   ));
 
-  const iconChunks = chunk(icons, iconsPerRow);
+  const dataChunks = chunk(icons, iconsPerRow);
 
   return (
-    <Container column gap={8}>
+    <Flex column gap={8}>
       <ColorPicker activeColor={color} onChange={(c) => onChange(icon, c)} />
       <StyledInputSearch
         value={query}
         placeholder={`${t("Search icons")}…`}
         onChange={handleFilter}
-        autoFocus
       />
-      <IconContainer>
-        <FixedSizeList<{ iconChunks: React.ReactNode[][] }>
-          width={width}
-          height={314}
-          itemCount={iconChunks.length}
-          itemSize={32}
-          itemData={{ iconChunks }}
-        >
-          {IconRow}
-        </FixedSizeList>
-      </IconContainer>
-    </Container>
+      <StyledVirtualList
+        width={width}
+        height={314}
+        itemCount={dataChunks.length}
+        itemSize={32}
+        itemData={{ dataChunks }}
+        style={{ padding: "0px 12px" }}
+      >
+        {DataRow}
+      </StyledVirtualList>
+    </Flex>
   );
 };
 
-const IconRow = ({
+type DataRowProps = {
+  dataChunks: React.ReactNode[][];
+};
+
+const DataRow = ({
   index: rowIdx,
   style,
   data,
-}: ListChildComponentProps<{ iconChunks: React.ReactNode[][] }>) => {
-  const { iconChunks } = data;
-  const icons = iconChunks[rowIdx];
+}: ListChildComponentProps<DataRowProps>) => {
+  const { dataChunks } = data;
+  const row = dataChunks[rowIdx];
 
-  return <Flex style={style}>{icons}</Flex>;
+  return <Flex style={style}>{row}</Flex>;
 };
 
-const Container = styled(Flex)`
-  position: relative;
+const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
+  padding: 0px 12px;
+
+  // Needed for the absolutely positioned children
+  // to respect the VirtualList's padding
+  & > div {
+    position: relative;
+  }
 `;
 
 const StyledInputSearch = styled(InputSearch)`
   padding: 0px 12px;
 `;
 
-const IconContainer = styled.div`
-  padding: 0px 12px;
-  overflow-x: hidden;
-`;
-
-const IconButton = styled(NudeButton)<{ opacity: number; delay: number }>`
-  width: auto;
-  height: auto;
+const IconButton = styled(NudeButton)<{ delay: number }>`
+  width: 32px;
+  height: 32px;
   padding: 4px;
-  opacity: ${({ opacity }) => opacity};
   --delay: ${({ delay }) => `${delay}ms`};
 
   &: ${hover} {

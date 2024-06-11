@@ -201,7 +201,7 @@ const IconEmoji = ({
             <EmojiPanel onChange={handleEmojiChange} />
           </StyledTabPanel>
           <StyledTabPanel {...tab}>
-            <CustomPanel />
+            <CustomPanel width={408} onChange={handleEmojiChange} />
           </StyledTabPanel>
         </>
       </Popover>
