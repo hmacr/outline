@@ -87,8 +87,9 @@ const IconEmoji = ({
 
   const handleRemove = React.useCallback(() => {
     popover.hide();
+    tab.setCurrentId(tabIds.outline);
     onChange(null, null);
-  }, [popover, onChange]);
+  }, [popover, onChange, tab]);
 
   const handleClick = React.useCallback(
     (ev: React.MouseEvent) => {
@@ -201,7 +202,9 @@ const IconEmoji = ({
             <EmojiPanel onChange={handleEmojiChange} />
           </StyledTabPanel>
           <StyledTabPanel {...tab}>
-            <CustomPanel width={408} onChange={handleEmojiChange} />
+            {tab.selectedId === "custom" && (
+              <CustomPanel width={408} onChange={handleEmojiChange} />
+            )}
           </StyledTabPanel>
         </>
       </Popover>

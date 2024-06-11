@@ -1,11 +1,16 @@
-import data, { type EmojiMartData, Skin } from "@emoji-mart/data";
+import rawData, { type EmojiMartData, Skin } from "@emoji-mart/data";
 import { init } from "emoji-mart";
 import FuzzySearch from "fuzzy-search";
 import capitalize from "lodash/capitalize";
 
-init({ data });
+init({ rawData });
 
-const emojiMartData = data as EmojiMartData;
+const data = rawData as EmojiMartData;
+
+const searcher = new FuzzySearch(Object.values(data.emojis), ["search"], {
+  caseSensitive: false,
+  sort: true,
+});
 
 export enum EmojiCategory {
   People = "Smileys & People",
@@ -27,62 +32,66 @@ export enum EmojiSkin {
   Dark = "1f3ff",
 }
 
-const activeSkin = EmojiSkin.Default;
+export type Emoji = {
+  name: string;
+  value: string;
+};
 
-const skinToEnum = Object.keys(EmojiSkin).reduce((obj, skin: EmojiSkin) => {
+export type EmojiVariants = Record<EmojiSkin, Emoji>;
+
+const SKIN_TO_ENUM = Object.keys(EmojiSkin).reduce((obj, skin: EmojiSkin) => {
   const val = EmojiSkin[skin];
   obj[val] = skin;
   return obj;
 }, {} as Record<string, EmojiSkin>);
 
-const mapSkinsToNativeEmojis = (skins: Skin[]): Record<EmojiSkin, string> =>
+const getVariants = (name: string, skins: Skin[]): EmojiVariants =>
   skins.reduce((obj, skin) => {
     const parts = skin.unified.split("-");
-    const skinType = skinToEnum[parts[1]] ?? EmojiSkin.Default;
-    obj[skinType] = skin.native;
+    const skinType = SKIN_TO_ENUM[parts[1]] ?? EmojiSkin.Default;
+    obj[skinType] = { name, value: skin.native };
     return obj;
-  }, {} as Record<EmojiSkin, string>);
+  }, {} as EmojiVariants);
 
-type EmojiToVariants = Record<string, Record<EmojiSkin, string>>;
-
-// emoji id => variants of emoji
-const emojiIdToVariants = Object.entries(emojiMartData.emojis).reduce(
+const EMOJI_ID_TO_VARIANTS = Object.entries(data.emojis).reduce(
   (obj, [id, emoji]) => {
-    const mappedEmojis = mapSkinsToNativeEmojis(emoji.skins);
-    obj[id] = mappedEmojis;
+    obj[id] = getVariants(emoji.name, emoji.skins);
     return obj;
   },
-  {} as EmojiToVariants
+  {} as Record<string, EmojiVariants>
 );
 
-const getEmoji = ({ id, skin }: { id: string; skin: EmojiSkin }) =>
-  emojiIdToVariants[id][skin] ?? emojiIdToVariants[id][EmojiSkin.Default];
-
-// category name to emojis
-const emojiData = emojiMartData.categories.reduce((obj, { id, emojis }) => {
-  const category = EmojiCategory[capitalize(id)];
-  if (!category) {
+const EMOJI_CATEGORY_TO_EMOJI_IDS: Record<EmojiCategory, string[]> =
+  data.categories.reduce((obj, { id, emojis: emojiIds }) => {
+    const category = EmojiCategory[capitalize(id)] as EmojiCategory;
+    if (!category) {
+      return obj;
+    }
+    obj[category] = emojiIds;
     return obj;
-  }
-  const mappedEmojis = emojis.map((emojiId) =>
-    getEmoji({ id: emojiId, skin: activeSkin })
+  }, {} as Record<EmojiCategory, string[]>);
+
+export const getEmojis = ({
+  skin,
+}: {
+  skin: EmojiSkin;
+}): Record<EmojiCategory, Emoji[]> =>
+  Object.keys(EMOJI_CATEGORY_TO_EMOJI_IDS).reduce(
+    (obj, category: EmojiCategory) => {
+      const emojiIds = EMOJI_CATEGORY_TO_EMOJI_IDS[category];
+      const emojis = emojiIds.map(
+        (emojiId) => EMOJI_ID_TO_VARIANTS[emojiId][skin]
+      );
+      obj[category] = emojis;
+      return obj;
+    },
+    {} as Record<EmojiCategory, Emoji[]>
   );
-  obj[category] = mappedEmojis;
-  return obj;
-}, {} as Record<EmojiCategory, string[]>);
 
-const searcher = new FuzzySearch(
-  Object.values(emojiMartData.emojis),
-  ["search"],
-  {
-    caseSensitive: false,
-    sort: true,
-  }
-);
+export const getEmojiVariants = ({ id }: { id: string }) =>
+  EMOJI_ID_TO_VARIANTS[id];
 
-const search = (value: string) => {
+export const search = ({ value, skin }: { value: string; skin: EmojiSkin }) => {
   const matchedEmojis = searcher.search(value);
-  return matchedEmojis.map((emoji) => emojiIdToVariants[emoji.id][activeSkin]);
+  return matchedEmojis.map((emoji) => EMOJI_ID_TO_VARIANTS[emoji.id][skin]);
 };
-
-export { emojiData, search };

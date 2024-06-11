@@ -10,17 +10,23 @@ import { hover } from "~/styles";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
 import Text from "../Text";
-import { EmojiCategory, emojiData, search } from "./emoji-data";
+import { EmojiCategory, EmojiSkin, getEmojis, search } from "./emoji-data";
+
+const emojiSkin = EmojiSkin.Default;
 
 const getSearchResults = ({
-  emojis,
+  query,
   emojisPerRow,
   onClick,
 }: {
-  emojis: string[];
+  query: string;
   emojisPerRow: number;
   onClick: (emoji: string | null) => void | Promise<void>;
 }) => {
+  const emojis = search({ value: query, skin: emojiSkin }).map(
+    (emoji) => emoji.value
+  );
+
   const category = (
     <CategoryName
       key={"search_results"}
@@ -65,11 +71,13 @@ const getAllEmojis = ({
       </CategoryName>
     );
 
-    const emojiButtons = emojiData[emojiCategory].map((emoji) => (
-      <EmojiButton key={emoji} onClick={() => onClick(emoji)}>
-        <Emoji>{emoji}</Emoji>
-      </EmojiButton>
-    ));
+    const emojiButtons = getEmojis({ skin: emojiSkin })[emojiCategory].map(
+      (emoji) => (
+        <EmojiButton key={emoji.name} onClick={() => onClick(emoji.value)}>
+          <Emoji>{emoji.value}</Emoji>
+        </EmojiButton>
+      )
+    );
 
     const emojiChunks = chunk(emojiButtons, emojisPerRow);
 
@@ -117,7 +125,7 @@ const CustomPanel = ({ width, onChange }: Props) => {
   const isSearch = query !== "";
   const dataChunks = isSearch
     ? getSearchResults({
-        emojis: search(query),
+        query,
         emojisPerRow,
         onClick: onChange,
       })
