@@ -20,6 +20,7 @@ type Props = {
   icon: string;
   color: string;
   query: string;
+  panelActive: boolean;
   onIconChange: (icon: string, color: string) => void;
   onQueryChange: (query: string) => void;
 };
@@ -30,10 +31,12 @@ const IconPanel = ({
   icon,
   color,
   query,
+  panelActive,
   onIconChange,
   onQueryChange,
 }: Props) => {
   const { t } = useTranslation();
+  const scrollableRef = React.useRef<HTMLDivElement | null>(null);
 
   const filteredIcons = React.useMemo(
     () => IconLibrary.findIcons(query),
@@ -67,6 +70,12 @@ const IconPanel = ({
 
   const dataChunks = chunk(icons, iconsPerRow);
 
+  React.useEffect(() => {
+    if (scrollableRef.current) {
+      scrollableRef.current.scrollTop = 0;
+    }
+  }, [panelActive]);
+
   return (
     <Flex column gap={8}>
       <ColorPicker
@@ -85,6 +94,7 @@ const IconPanel = ({
         itemSize={32}
         itemData={{ dataChunks }}
         style={{ padding: "0px 12px" }}
+        outerRef={scrollableRef}
       >
         {DataRow}
       </StyledVirtualList>

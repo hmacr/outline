@@ -57,7 +57,10 @@ const IconEmoji = ({
   const [query, setQuery] = React.useState("");
 
   const iconType = determineIconType(icon);
-  const defaultTab = iconType ? tabIds[iconType] : tabIds["outline"];
+  const defaultTab = React.useMemo(
+    () => (iconType ? tabIds[iconType] : tabIds["outline"]),
+    [iconType]
+  );
 
   const popover = usePopoverState({
     placement: popoverPosition,
@@ -67,6 +70,11 @@ const IconEmoji = ({
   const tab = useTabState({ selectedId: defaultTab });
 
   const contentRef = React.useRef<HTMLDivElement | null>(null);
+
+  const resetDefaultTab = React.useCallback(() => {
+    tab.select(defaultTab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultTab]);
 
   const handleOutlineIconChange = React.useCallback(
     (outlineIcon: string | null, iconColor: string) => {
@@ -88,9 +96,8 @@ const IconEmoji = ({
 
   const handleRemove = React.useCallback(() => {
     popover.hide();
-    tab.setCurrentId(tabIds.outline);
     onChange(null, null);
-  }, [popover, onChange, tab]);
+  }, [popover, onChange]);
 
   const handleQueryChange = React.useCallback(
     (q: string) => setQuery(q),
@@ -113,9 +120,11 @@ const IconEmoji = ({
     if (popover.visible) {
       onOpen?.();
     } else {
+      setQuery("");
+      resetDefaultTab();
       onClose?.();
     }
-  }, [onOpen, onClose, popover.visible]);
+  }, [popover.visible, onOpen, onClose, resetDefaultTab]);
 
   // Custom click outside handling rather than using `hideOnClickOutside` from reakit so that we can
   // prevent event bubbling.
@@ -186,23 +195,23 @@ const IconEmoji = ({
             )}
           </TabActionsWrapper>
           <StyledTabPanel {...tab}>
-            {tab.selectedId === tabIds.outline && (
-              <IconPanel
-                width={408}
-                initial={initial ?? "?"}
-                color={color}
-                icon={icon ?? "collection"}
-                query={query}
-                onIconChange={handleOutlineIconChange}
-                onQueryChange={handleQueryChange}
-              />
-            )}
+            <IconPanel
+              width={408}
+              initial={initial ?? "?"}
+              color={color}
+              icon={icon ?? "collection"}
+              query={query}
+              panelActive={popover.visible && tab.selectedId === tabIds.outline}
+              onIconChange={handleOutlineIconChange}
+              onQueryChange={handleQueryChange}
+            />
           </StyledTabPanel>
           <StyledTabPanel {...tab}>
             {tab.selectedId === tabIds.emoji && (
               <EmojiPanel
                 width={408}
                 query={query}
+                panelActive={popover.visible && tab.selectedId === tabIds.emoji}
                 onEmojiChange={handleEmojiChange}
                 onQueryChange={handleQueryChange}
               />

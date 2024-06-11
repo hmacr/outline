@@ -16,13 +16,21 @@ import { EmojiCategory, getEmojis, search, EmojiSkin } from "./emoji-data";
 type Props = {
   width: number;
   query: string;
+  panelActive: boolean;
   onEmojiChange: (emoji: string | null) => void | Promise<void>;
   onQueryChange: (query: string) => void;
 };
 
-const EmojiPanel = ({ width, query, onEmojiChange, onQueryChange }: Props) => {
-  const [skin, setSkin] = React.useState(EmojiSkin.Medium);
+const EmojiPanel = ({
+  width,
+  query,
+  panelActive,
+  onEmojiChange,
+  onQueryChange,
+}: Props) => {
   const { t } = useTranslation();
+  const [skin, setSkin] = React.useState(EmojiSkin.Medium);
+  const scrollableRef = React.useRef<HTMLDivElement | null>(null);
 
   const handleFilter = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,6 +60,12 @@ const EmojiPanel = ({ width, query, onEmojiChange, onQueryChange }: Props) => {
       })
     : getAllEmojis({ skin, emojisPerRow, onClick: onEmojiChange });
 
+  React.useEffect(() => {
+    if (scrollableRef.current) {
+      scrollableRef.current.scrollTop = 0;
+    }
+  }, [panelActive]);
+
   return (
     <Flex column>
       <UserInputContainer align="center" gap={12}>
@@ -68,6 +82,7 @@ const EmojiPanel = ({ width, query, onEmojiChange, onQueryChange }: Props) => {
         itemCount={dataChunks.length}
         itemSize={32}
         itemData={{ dataChunks }}
+        outerRef={scrollableRef}
       >
         {DataRow}
       </StyledVirtualList>
