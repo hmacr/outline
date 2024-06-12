@@ -124,6 +124,7 @@ const IconEmoji = ({
     if (popover.visible) {
       return;
     }
+
     if (icon !== null && color !== chosenColor) {
       onChange(icon, chosenColor);
     }
