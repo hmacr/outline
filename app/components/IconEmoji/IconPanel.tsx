@@ -101,6 +101,8 @@ const IconPanel = ({
   onQueryChange,
 }: Props) => {
   const { t } = useTranslation();
+
+  const searchRef = React.useRef<HTMLInputElement | null>(null);
   const scrollableRef = React.useRef<HTMLDivElement | null>(null);
 
   const { incrementIconCount, getFreqIcons } = useIconState();
@@ -152,12 +154,16 @@ const IconPanel = ({
     if (scrollableRef.current) {
       scrollableRef.current.scrollTop = 0;
     }
+    if (searchRef.current) {
+      searchRef.current.focus();
+    }
   }, [panelActive]);
 
   return (
     <Flex column gap={8}>
       <ColorPicker activeColor={color} onSelect={(c) => onColorChange(c)} />
       <StyledInputSearch
+        ref={searchRef}
         value={query}
         placeholder={`${t("Search icons")}…`}
         onChange={handleFilter}

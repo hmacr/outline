@@ -107,6 +107,8 @@ const EmojiPanel = ({
   onQueryChange,
 }: Props) => {
   const { t } = useTranslation();
+
+  const searchRef = React.useRef<HTMLInputElement | null>(null);
   const scrollableRef = React.useRef<HTMLDivElement | null>(null);
 
   const {
@@ -166,12 +168,16 @@ const EmojiPanel = ({
     if (scrollableRef.current) {
       scrollableRef.current.scrollTop = 0;
     }
+    if (searchRef.current) {
+      searchRef.current.focus();
+    }
   }, [panelActive]);
 
   return (
     <Flex column>
       <UserInputContainer align="center" gap={12}>
         <StyledInputSearch
+          ref={searchRef}
           value={query}
           placeholder={`${t("Search emoji")}…`}
           onChange={handleFilter}
