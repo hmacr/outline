@@ -1,15 +1,18 @@
-import data, { type Emoji as TEmoji } from "@emoji-mart/data";
-import { init, Data } from "emoji-mart";
+import RawData, {
+  type Emoji as TEmoji,
+  type EmojiMartData,
+} from "@emoji-mart/data";
 import FuzzySearch from "fuzzy-search";
 import capitalize from "lodash/capitalize";
 import sortBy from "lodash/sortBy";
 import React from "react";
 import { emojiMartToGemoji, snakeCase } from "@shared/editor/lib/emoji";
-import { isMac } from "@shared/utils/browser";
 import EmojiMenuItem from "./EmojiMenuItem";
 import SuggestionsMenu, {
   Props as SuggestionsMenuProps,
 } from "./SuggestionsMenu";
+
+const Data = RawData as EmojiMartData;
 
 type Emoji = {
   name: string;
@@ -18,11 +21,6 @@ type Emoji = {
   description: string;
   attrs: { markup: string; "data-name": string };
 };
-
-init({
-  data,
-  noCountryFlags: isMac() ? false : undefined,
-});
 
 let searcher: FuzzySearch<TEmoji>;
 

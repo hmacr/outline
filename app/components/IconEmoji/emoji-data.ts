@@ -1,13 +1,10 @@
-import rawData, { type EmojiMartData, Skin } from "@emoji-mart/data";
-import { init } from "emoji-mart";
+import RawData, { type EmojiMartData, Skin } from "@emoji-mart/data";
 import FuzzySearch from "fuzzy-search";
 import capitalize from "lodash/capitalize";
 
-init({ rawData });
+const Data = RawData as EmojiMartData;
 
-const data = rawData as EmojiMartData;
-
-const searcher = new FuzzySearch(Object.values(data.emojis), ["search"], {
+const searcher = new FuzzySearch(Object.values(Data.emojis), ["search"], {
   caseSensitive: false,
   sort: true,
 });
@@ -69,7 +66,7 @@ const getVariants = ({ id, name, skins }: GetVariantsProps): EmojiVariants =>
     return obj;
   }, {} as EmojiVariants);
 
-const EMOJI_ID_TO_VARIANTS = Object.entries(data.emojis).reduce(
+const EMOJI_ID_TO_VARIANTS = Object.entries(Data.emojis).reduce(
   (obj, [id, emoji]) => {
     obj[id] = getVariants({
       id: emoji.id,
@@ -82,7 +79,7 @@ const EMOJI_ID_TO_VARIANTS = Object.entries(data.emojis).reduce(
 );
 
 const CATEGORY_TO_EMOJI_IDS: Record<EmojiCategory, string[]> =
-  data.categories.reduce((obj, { id, emojis: emojiIds }) => {
+  Data.categories.reduce((obj, { id, emojis: emojiIds }) => {
     const category = EmojiCategory[capitalize(id)] as EmojiCategory;
     if (!category) {
       return obj;
