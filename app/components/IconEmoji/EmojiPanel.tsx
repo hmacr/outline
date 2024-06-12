@@ -6,6 +6,7 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import styled from "styled-components";
 import { s } from "@shared/styles";
 import Flex from "~/components/Flex";
+import useIconState from "~/hooks/useIconState";
 import { hover } from "~/styles";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
@@ -29,8 +30,10 @@ const EmojiPanel = ({
   onQueryChange,
 }: Props) => {
   const { t } = useTranslation();
-  const [skin, setSkin] = React.useState(EmojiSkin.Medium);
   const scrollableRef = React.useRef<HTMLDivElement | null>(null);
+
+  const [iconState, { setEmojiSkin }] = useIconState();
+  const skin = iconState.emojiSkin;
 
   const handleFilter = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,9 +42,12 @@ const EmojiPanel = ({
     [onQueryChange]
   );
 
-  const handleSkinChange = React.useCallback((emojiSkin: EmojiSkin) => {
-    setSkin(emojiSkin);
-  }, []);
+  const handleSkinChange = React.useCallback(
+    (emojiSkin: EmojiSkin) => {
+      setEmojiSkin(emojiSkin);
+    },
+    [setEmojiSkin]
+  );
 
   // 24px padding for the container
   // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.

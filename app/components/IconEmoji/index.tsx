@@ -54,8 +54,8 @@ const IconEmoji = ({
 }: Props) => {
   const { t } = useTranslation();
 
-  const [chosenColor, setChosenColor] = React.useState(color);
   const [query, setQuery] = React.useState("");
+  const [chosenColor, setChosenColor] = React.useState(color);
 
   const iconType = determineIconType(icon);
   const defaultTab = React.useMemo(
