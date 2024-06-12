@@ -33,6 +33,7 @@ export enum EmojiSkin {
 }
 
 export type Emoji = {
+  id: string;
   name: string;
   value: string;
 };
@@ -54,17 +55,27 @@ const SKIN_CODE_TO_ENUM = {
   "1f3ff": EmojiSkin.Dark,
 };
 
-const getVariants = (name: string, skins: Skin[]): EmojiVariants =>
+type GetVariantsProps = {
+  id: string;
+  name: string;
+  skins: Skin[];
+};
+
+const getVariants = ({ id, name, skins }: GetVariantsProps): EmojiVariants =>
   skins.reduce((obj, skin) => {
     const skinCode = skin.unified.split("-")[1];
     const skinType = SKIN_CODE_TO_ENUM[skinCode] ?? EmojiSkin.Default;
-    obj[skinType] = { name, value: skin.native };
+    obj[skinType] = { id, name, value: skin.native } satisfies Emoji;
     return obj;
   }, {} as EmojiVariants);
 
 const EMOJI_ID_TO_VARIANTS = Object.entries(data.emojis).reduce(
   (obj, [id, emoji]) => {
-    obj[id] = getVariants(emoji.name, emoji.skins);
+    obj[id] = getVariants({
+      id: emoji.id,
+      name: emoji.name,
+      skins: emoji.skins,
+    });
     return obj;
   },
   {} as Record<string, EmojiVariants>

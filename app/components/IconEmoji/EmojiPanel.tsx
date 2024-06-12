@@ -6,11 +6,11 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import styled from "styled-components";
 import { s } from "@shared/styles";
 import Flex from "~/components/Flex";
-import useIconState from "~/hooks/useIconState";
 import { hover } from "~/styles";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
 import Text from "../Text";
+import { useIconPickerContext } from "./IconPickerContext";
 import SkinPicker from "./SkinPicker";
 import { EmojiCategory, getEmojis, search, EmojiSkin } from "./emoji-data";
 
@@ -32,8 +32,10 @@ const EmojiPanel = ({
   const { t } = useTranslation();
   const scrollableRef = React.useRef<HTMLDivElement | null>(null);
 
-  const [iconState, { setEmojiSkin }] = useIconState();
-  const skin = iconState.emojiSkin;
+  const { getEmojiSkin, setEmojiSkin, incrementEmojiCount } =
+    useIconPickerContext();
+
+  const skin = React.useMemo(() => getEmojiSkin(), [getEmojiSkin]);
 
   const handleFilter = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,6 +51,14 @@ const EmojiPanel = ({
     [setEmojiSkin]
   );
 
+  const handleEmojiClick = React.useCallback(
+    (id: string, emoji: string) => {
+      void onEmojiChange(emoji);
+      incrementEmojiCount(id);
+    },
+    [onEmojiChange, incrementEmojiCount]
+  );
+
   // 24px padding for the container
   // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
   const emojisPerRow = React.useMemo(
@@ -62,9 +72,9 @@ const EmojiPanel = ({
         query,
         skin,
         emojisPerRow,
-        onClick: onEmojiChange,
+        onClick: handleEmojiClick,
       })
-    : getAllEmojis({ skin, emojisPerRow, onClick: onEmojiChange });
+    : getAllEmojis({ skin, emojisPerRow, onClick: handleEmojiClick });
 
   React.useEffect(() => {
     if (scrollableRef.current) {
@@ -105,9 +115,9 @@ const getSearchResults = ({
   query: string;
   skin: EmojiSkin;
   emojisPerRow: number;
-  onClick: (emoji: string | null) => void | Promise<void>;
+  onClick: (id: string, emoji: string) => void | Promise<void>;
 }) => {
-  const emojis = search({ value: query, skin }).map((emoji) => emoji.value);
+  const emojis = search({ value: query, skin });
 
   const category = (
     <CategoryName
@@ -121,8 +131,8 @@ const getSearchResults = ({
   );
 
   const emojiButtons = emojis.map((emoji) => (
-    <EmojiButton key={emoji} onClick={() => onClick(emoji)}>
-      <Emoji>{emoji}</Emoji>
+    <EmojiButton key={emoji.id} onClick={() => onClick(emoji.id, emoji.value)}>
+      <Emoji>{emoji.value}</Emoji>
     </EmojiButton>
   ));
 
@@ -141,7 +151,7 @@ const getAllEmojis = ({
 }: {
   skin: EmojiSkin;
   emojisPerRow: number;
-  onClick: (emoji: string) => void | Promise<void>;
+  onClick: (id: string, emoji: string) => void | Promise<void>;
 }): React.ReactNode[][] => {
   const getCategoryData = (emojiCategory: EmojiCategory) => {
     const category = (
@@ -157,7 +167,10 @@ const getAllEmojis = ({
 
     const emojis = getEmojis({ skin })[emojiCategory];
     const emojiButtons = emojis.map((emoji) => (
-      <EmojiButton key={emoji.value} onClick={() => onClick(emoji.value)}>
+      <EmojiButton
+        key={emoji.id}
+        onClick={() => onClick(emoji.id, emoji.value)}
+      >
         <Emoji>{emoji.value}</Emoji>
       </EmojiButton>
     ));

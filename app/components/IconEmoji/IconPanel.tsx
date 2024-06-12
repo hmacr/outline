@@ -10,6 +10,7 @@ import Flex from "../Flex";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
 import ColorPicker from "./ColorPicker";
+import { useIconPickerContext } from "./IconPickerContext";
 
 const iconNames = Object.keys(IconLibrary.mapping);
 const delayPerIcon = 250 / iconNames.length;
@@ -38,15 +39,26 @@ const IconPanel = ({
   const { t } = useTranslation();
   const scrollableRef = React.useRef<HTMLDivElement | null>(null);
 
+  const { incrementIconCount } = useIconPickerContext();
+
   const filteredIcons = React.useMemo(
     () => IconLibrary.findIcons(query),
     [query]
   );
+
   const handleFilter = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       onQueryChange(event.target.value.toLowerCase());
     },
     [onQueryChange]
+  );
+
+  const handleIconClick = React.useCallback(
+    (icon: string) => {
+      onIconChange(icon);
+      incrementIconCount(icon);
+    },
+    [onIconChange, incrementIconCount]
   );
 
   // 24px padding for the container
@@ -59,7 +71,7 @@ const IconPanel = ({
   const icons = filteredIcons.map((name, index) => (
     <IconButton
       key={name}
-      onClick={() => onIconChange(name)}
+      onClick={() => handleIconClick(name)}
       delay={Math.round(index * delayPerIcon)}
     >
       <Icon as={IconLibrary.getComponent(name)} color={color}>
