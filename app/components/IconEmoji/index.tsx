@@ -21,7 +21,6 @@ import NudeButton from "../NudeButton";
 import Popover from "../Popover";
 import EmojiPanel from "./EmojiPanel";
 import IconPanel from "./IconPanel";
-import { IconPickerProvider } from "./IconPickerContext";
 
 const tabIds = {
   outline: "outline",
@@ -156,7 +155,7 @@ const IconEmoji = ({
   );
 
   return (
-    <IconPickerProvider>
+    <>
       <PopoverDisclosure {...popover}>
         {(props) => (
           <NudeButton
@@ -234,7 +233,7 @@ const IconEmoji = ({
           </StyledTabPanel>
         </>
       </Popover>
-    </IconPickerProvider>
+    </>
   );
 };
 

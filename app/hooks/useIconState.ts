@@ -2,7 +2,15 @@ import React from "react";
 import { EmojiSkin } from "~/components/IconEmoji/emoji-data";
 import usePersistedState from "./usePersistedState";
 
-const STORAGE_KEY = "icon-state";
+const STORAGE_KEYS = {
+  Base: "icon-state",
+  EmojiSkin: "emoji-skin",
+  IconsFrequency: "icons-freq",
+  EmojisFrequency: "emojis-freq",
+  LastIcon: "last-icon",
+  LastEmoji: "last-emoji",
+};
+
 const FREQUENTLY_USED_COUNT = {
   Get: 24,
   Track: 30,
@@ -10,14 +18,6 @@ const FREQUENTLY_USED_COUNT = {
 
 type State = {
   emojiSkin: EmojiSkin;
-  iconsFrequency: Record<string, number>;
-  emojisFrequency: Record<string, number>;
-  lastUsedIcon?: string;
-  lastUsedEmoji?: string;
-};
-
-type Actions = {
-  getEmojiSkin: () => EmojiSkin;
   setEmojiSkin: (skin: EmojiSkin) => void;
   incrementIconCount: (icon: string) => void;
   incrementEmojiCount: (emoji: string) => void;
@@ -25,67 +25,62 @@ type Actions = {
   getFrequentlyUsedEmojis: () => string[];
 };
 
-export default function useIconState(): Actions {
-  const [iconState, setIconState] = usePersistedState<State>(STORAGE_KEY, {
-    emojiSkin: EmojiSkin.Default,
-    iconsFrequency: {},
-    emojisFrequency: {},
-  });
-
-  const getEmojiSkin = React.useCallback(
-    () => iconState.emojiSkin,
-    [iconState.emojiSkin]
+export default function useIconState(): State {
+  const [emojiSkin, setEmojiSkin] = usePersistedState<EmojiSkin>(
+    getStorageKey(STORAGE_KEYS.EmojiSkin),
+    EmojiSkin.Default
   );
 
-  const setEmojiSkin = React.useCallback(
-    (skin: EmojiSkin) => {
-      setIconState({ ...iconState, emojiSkin: skin });
-    },
-    [iconState, setIconState]
+  const [iconsFreq, setIconsFreq] = usePersistedState<Record<string, number>>(
+    getStorageKey(STORAGE_KEYS.IconsFrequency),
+    {}
+  );
+
+  const [emojisFreq, setEmojisFreq] = usePersistedState<Record<string, number>>(
+    getStorageKey(STORAGE_KEYS.EmojisFrequency),
+    {}
+  );
+
+  const [lastIcon, setLastIcon] = usePersistedState<string | undefined>(
+    getStorageKey(STORAGE_KEYS.LastIcon),
+    undefined
+  );
+
+  const [lastEmoji, setLastEmoji] = usePersistedState<string | undefined>(
+    getStorageKey(STORAGE_KEYS.LastEmoji),
+    undefined
   );
 
   const incrementIconCount = React.useCallback(
     (icon: string) => {
-      const iconsFrequency = iconState.iconsFrequency ?? {};
-      iconsFrequency[icon] = (iconsFrequency[icon] ?? 0) + 1;
-      setIconState({ ...iconState });
+      iconsFreq[icon] = (iconsFreq[icon] ?? 0) + 1;
+      setIconsFreq({ ...iconsFreq });
     },
-    [iconState, setIconState]
+    [iconsFreq, setIconsFreq]
   );
 
   const incrementEmojiCount = React.useCallback(
     (emoji: string) => {
-      const emojisFrequency = iconState.emojisFrequency ?? {};
-      emojisFrequency[emoji] = (emojisFrequency[emoji] ?? 0) + 1;
-      setIconState({ ...iconState });
+      emojisFreq[emoji] = (emojisFreq[emoji] ?? 0) + 1;
+      setEmojisFreq({ ...emojisFreq });
     },
-    [iconState, setIconState]
+    [emojisFreq, setEmojisFreq]
   );
 
   const getFrequentlyUsedIcons = React.useCallback(() => {
-    const freqArr = sortAndTrimFrequencies(iconState.iconsFrequency);
-
-    setIconState({
-      ...iconState,
-      iconsFrequency: Object.fromEntries(freqArr),
-    });
-
+    const freqArr = sortAndTrimFrequencies(iconsFreq);
+    setIconsFreq(Object.fromEntries(freqArr));
     return freqArr.splice(FREQUENTLY_USED_COUNT.Get).map(([icon, _]) => icon);
-  }, [iconState, setIconState]);
+  }, [iconsFreq, setIconsFreq]);
 
   const getFrequentlyUsedEmojis = React.useCallback(() => {
-    const freqArr = sortAndTrimFrequencies(iconState.emojisFrequency);
-
-    setIconState({
-      ...iconState,
-      emojisFrequency: Object.fromEntries(freqArr),
-    });
-
+    const freqArr = sortAndTrimFrequencies(emojisFreq);
+    setEmojisFreq(Object.fromEntries(freqArr));
     return freqArr.splice(FREQUENTLY_USED_COUNT.Get).map(([emoji, _]) => emoji);
-  }, [iconState, setIconState]);
+  }, [emojisFreq, setEmojisFreq]);
 
   return {
-    getEmojiSkin,
+    emojiSkin,
     setEmojiSkin,
     incrementIconCount,
     incrementEmojiCount,
@@ -93,6 +88,8 @@ export default function useIconState(): Actions {
     getFrequentlyUsedEmojis,
   };
 }
+
+const getStorageKey = (key: string) => `${STORAGE_KEYS.Base}.${key}`;
 
 // Sorts and trims the frequency data in case the tracked items are greater than the required items
 const sortAndTrimFrequencies = (freq: Record<string, number>) =>

@@ -92,6 +92,19 @@ const CATEGORY_TO_EMOJI_IDS: Record<EmojiCategory, string[]> =
   }, {} as Record<EmojiCategory, string[]>);
 
 export const getEmojis = ({
+  ids,
+  skin,
+}: {
+  ids: string[];
+  skin: EmojiSkin;
+}): Emoji[] =>
+  ids.map(
+    (id) =>
+      EMOJI_ID_TO_VARIANTS[id][skin] ??
+      EMOJI_ID_TO_VARIANTS[id][EmojiSkin.Default]
+  );
+
+export const getEmojisWithCategory = ({
   skin,
 }: {
   skin: EmojiSkin;
@@ -110,8 +123,8 @@ export const getEmojis = ({
 export const getEmojiVariants = ({ id }: { id: string }) =>
   EMOJI_ID_TO_VARIANTS[id];
 
-export const search = ({ value, skin }: { value: string; skin: EmojiSkin }) => {
-  const matchedEmojis = searcher.search(value);
+export const search = ({ query, skin }: { query: string; skin: EmojiSkin }) => {
+  const matchedEmojis = searcher.search(query);
   return matchedEmojis.map(
     (emoji) =>
       EMOJI_ID_TO_VARIANTS[emoji.id][skin] ??

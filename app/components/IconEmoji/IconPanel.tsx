@@ -5,15 +5,79 @@ import { FixedSizeList, ListChildComponentProps } from "react-window";
 import styled from "styled-components";
 import { s } from "@shared/styles";
 import { IconLibrary } from "@shared/utils/IconLibrary";
+import usePersistedState from "~/hooks/usePersistedState";
 import { hover } from "~/styles";
 import Flex from "../Flex";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
 import ColorPicker from "./ColorPicker";
-import { useIconPickerContext } from "./IconPickerContext";
 
 const iconNames = Object.keys(IconLibrary.mapping);
 const delayPerIcon = 250 / iconNames.length;
+
+const FREQUENTLY_USED_COUNT = {
+  Get: 24,
+  Track: 30,
+};
+
+const STORAGE_KEYS = {
+  Base: "icon-state",
+  EmojiSkin: "emoji-skin",
+  IconsFrequency: "icons-freq",
+  EmojisFrequency: "emojis-freq",
+  LastIcon: "last-icon",
+  LastEmoji: "last-emoji",
+};
+
+const getStorageKey = (key: string) => `${STORAGE_KEYS.Base}.${key}`;
+
+const sortFrequencies = (freqs: [string, number][]) =>
+  freqs.sort((a, b) => (a[1] > b[1] ? -1 : 1));
+
+const useIconState = () => {
+  const [iconsFreq, setIconsFreq] = usePersistedState<Record<string, number>>(
+    getStorageKey(STORAGE_KEYS.IconsFrequency),
+    {}
+  );
+  const [lastIcon, setLastIcon] = usePersistedState<string | undefined>(
+    getStorageKey(STORAGE_KEYS.LastIcon),
+    undefined
+  );
+
+  const incrementIconCount = React.useCallback(
+    (icon: string) => {
+      iconsFreq[icon] = (iconsFreq[icon] ?? 0) + 1;
+      setIconsFreq({ ...iconsFreq });
+      setLastIcon(icon);
+    },
+    [iconsFreq, setIconsFreq, setLastIcon]
+  );
+
+  const getFreqIcons = React.useCallback(() => {
+    const freqs = Object.entries(iconsFreq);
+    if (freqs.length > FREQUENTLY_USED_COUNT.Track) {
+      sortFrequencies(freqs).splice(FREQUENTLY_USED_COUNT.Track);
+      setIconsFreq(Object.fromEntries(freqs));
+    }
+
+    const icons = sortFrequencies(freqs)
+      .slice(0, FREQUENTLY_USED_COUNT.Get)
+      .map(([icon, _]) => icon);
+
+    const isLastPresent = icons.includes(lastIcon ?? "");
+    if (lastIcon && !isLastPresent) {
+      icons.pop();
+      icons.push(lastIcon);
+    }
+
+    return icons;
+  }, [iconsFreq, setIconsFreq, lastIcon]);
+
+  return {
+    incrementIconCount,
+    getFreqIcons,
+  };
+};
 
 type Props = {
   width: number;
@@ -39,7 +103,9 @@ const IconPanel = ({
   const { t } = useTranslation();
   const scrollableRef = React.useRef<HTMLDivElement | null>(null);
 
-  const { incrementIconCount } = useIconPickerContext();
+  const { incrementIconCount, getFreqIcons } = useIconState();
+
+  const freqIcons = React.useMemo(() => getFreqIcons(), [getFreqIcons]);
 
   const filteredIcons = React.useMemo(
     () => IconLibrary.findIcons(query),
