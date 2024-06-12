@@ -223,13 +223,19 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
   const handleIconChange = React.useCallback(
     async (chosenIcon: string | null, iconColor: string | null) => {
       // Restore focus on title
-      // restoreFocus();
+      restoreFocus();
       if (icon !== chosenIcon || color !== iconColor) {
         onChangeIcon?.(chosenIcon, iconColor);
       }
     },
     [icon, color, onChangeIcon, restoreFocus]
   );
+
+  React.useEffect(() => {
+    if (!iconPickerIsOpen) {
+      restoreFocus();
+    }
+  }, [iconPickerIsOpen, restoreFocus]);
 
   const dir = ref.current?.getComputedDirection();
   const emojiIcon = <Emoji size={32}>{icon}</Emoji>;
@@ -268,8 +274,6 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
               onChange={handleIconChange}
               onOpen={handleOpen}
               onClose={handleClose}
-              // onClickOutside={restoreFocus}
-              // autoFocus
             />
           </React.Suspense>
         </IconWrapper>

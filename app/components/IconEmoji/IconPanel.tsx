@@ -17,22 +17,22 @@ const delayPerIcon = 250 / iconNames.length;
 type Props = {
   width: number;
   initial: string;
-  icon: string;
   color: string;
   query: string;
   panelActive: boolean;
-  onIconChange: (icon: string, color: string) => void;
+  onIconChange: (icon: string) => void;
+  onColorChange: (icon: string) => void;
   onQueryChange: (query: string) => void;
 };
 
 const IconPanel = ({
   width,
   initial,
-  icon,
   color,
   query,
   panelActive,
   onIconChange,
+  onColorChange,
   onQueryChange,
 }: Props) => {
   const { t } = useTranslation();
@@ -59,7 +59,7 @@ const IconPanel = ({
   const icons = filteredIcons.map((name, index) => (
     <IconButton
       key={name}
-      onClick={() => onIconChange(name, color)}
+      onClick={() => onIconChange(name)}
       delay={Math.round(index * delayPerIcon)}
     >
       <Icon as={IconLibrary.getComponent(name)} color={color}>
@@ -78,10 +78,7 @@ const IconPanel = ({
 
   return (
     <Flex column gap={8}>
-      <ColorPicker
-        activeColor={color}
-        onSelect={(c) => onIconChange(icon, c)}
-      />
+      <ColorPicker activeColor={color} onSelect={(c) => onColorChange(c)} />
       <StyledInputSearch
         value={query}
         placeholder={`${t("Search icons")}…`}

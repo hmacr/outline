@@ -17,7 +17,7 @@ type Props = {
   width: number;
   query: string;
   panelActive: boolean;
-  onEmojiChange: (emoji: string | null) => void | Promise<void>;
+  onEmojiChange: (emoji: string) => void | Promise<void>;
   onQueryChange: (query: string) => void;
 };
 
@@ -135,7 +135,7 @@ const getAllEmojis = ({
 }: {
   skin: EmojiSkin;
   emojisPerRow: number;
-  onClick: (emoji: string | null) => void | Promise<void>;
+  onClick: (emoji: string) => void | Promise<void>;
 }): React.ReactNode[][] => {
   const getCategoryData = (emojiCategory: EmojiCategory) => {
     const category = (

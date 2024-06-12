@@ -54,6 +54,7 @@ const IconEmoji = ({
 }: Props) => {
   const { t } = useTranslation();
 
+  const [chosenColor, setChosenColor] = React.useState(color);
   const [query, setQuery] = React.useState("");
 
   const iconType = determineIconType(icon);
@@ -76,27 +77,22 @@ const IconEmoji = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultTab]);
 
-  const handleOutlineIconChange = React.useCallback(
-    (outlineIcon: string | null, iconColor: string) => {
-      if (icon !== outlineIcon) {
-        popover.hide();
-      }
-      onChange(outlineIcon, iconColor);
-    },
-    [popover, icon, onChange]
-  );
-
-  const handleEmojiChange = React.useCallback(
-    (emoji: string | null) => {
+  const handleIconChange = React.useCallback(
+    (ic: string) => {
       popover.hide();
-      onChange(emoji, null);
+      onChange(ic, chosenColor);
     },
-    [popover, onChange]
+    [popover, onChange, chosenColor]
   );
 
-  const handleRemove = React.useCallback(() => {
-    popover.hide();
+  const handleIconColorChange = React.useCallback(
+    (c: string) => setChosenColor(c),
+    []
+  );
+
+  const handleIconRemove = React.useCallback(() => {
     onChange(null, null);
+    popover.hide();
   }, [popover, onChange]);
 
   const handleQueryChange = React.useCallback(
@@ -116,15 +112,33 @@ const IconEmoji = ({
     [popover]
   );
 
+  // Popover open effect
   React.useEffect(() => {
     if (popover.visible) {
       onOpen?.();
-    } else {
-      setQuery("");
-      resetDefaultTab();
-      onClose?.();
     }
-  }, [popover.visible, onOpen, onClose, resetDefaultTab]);
+  }, [popover.visible, onOpen]);
+
+  // Popover close effect
+  React.useEffect(() => {
+    if (popover.visible) {
+      return;
+    }
+    if (icon !== null && color !== chosenColor) {
+      onChange(icon, chosenColor);
+    }
+    onClose?.();
+    setQuery("");
+    resetDefaultTab();
+  }, [
+    popover.visible,
+    color,
+    chosenColor,
+    icon,
+    onClose,
+    onChange,
+    resetDefaultTab,
+  ]);
 
   // Custom click outside handling rather than using `hideOnClickOutside` from reakit so that we can
   // prevent event bubbling.
@@ -154,7 +168,7 @@ const IconEmoji = ({
             <DisclosureIcon
               iconType={iconType}
               icon={icon ?? undefined}
-              color={color ?? undefined}
+              color={chosenColor}
               initial={initial ?? "?"}
               size={size}
             />
@@ -191,18 +205,18 @@ const IconEmoji = ({
               </StyledTab>
             </StyledTabList>
             {allowDelete && icon && (
-              <RemoveButton onClick={handleRemove}>Remove</RemoveButton>
+              <RemoveButton onClick={handleIconRemove}>Remove</RemoveButton>
             )}
           </TabActionsWrapper>
           <StyledTabPanel {...tab}>
             <IconPanel
               width={408}
               initial={initial ?? "?"}
-              color={color}
-              icon={icon ?? "collection"}
+              color={chosenColor}
               query={query}
               panelActive={popover.visible && tab.selectedId === tabIds.outline}
-              onIconChange={handleOutlineIconChange}
+              onIconChange={handleIconChange}
+              onColorChange={handleIconColorChange}
               onQueryChange={handleQueryChange}
             />
           </StyledTabPanel>
@@ -212,7 +226,7 @@ const IconEmoji = ({
                 width={408}
                 query={query}
                 panelActive={popover.visible && tab.selectedId === tabIds.emoji}
-                onEmojiChange={handleEmojiChange}
+                onEmojiChange={handleIconChange}
                 onQueryChange={handleQueryChange}
               />
             )}
@@ -226,8 +240,8 @@ const IconEmoji = ({
 type DisclosureIconProps = {
   iconType?: IconType;
   icon?: string;
-  color?: string;
-  initial?: string;
+  color: string;
+  initial: string;
   size: number;
 };
 
