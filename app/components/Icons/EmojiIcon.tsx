@@ -27,8 +27,8 @@ const Span = styled.span<{ $size: number }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
   flex-shrink: 0;
   width: ${(props) => props.$size}px;
   height: ${(props) => props.$size}px;
+  font-size: ${(props) => props.$size - 10}px;
 `;
