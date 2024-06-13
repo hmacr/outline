@@ -390,3 +390,38 @@ export type ProsemirrorDoc = {
   type: "doc";
   content: ProsemirrorData[];
 };
+
+export enum EmojiCategory {
+  People = "Smileys & People",
+  Nature = "Animals & Nature",
+  Foods = "Food & Drink",
+  Activity = "Activity",
+  Places = "Travel & Places",
+  Objects = "Objects",
+  Symbols = "Symbols",
+  Flags = "Flags",
+}
+
+export enum EmojiSkin {
+  Default = "Default",
+  Light = "Light",
+  MediumLight = "MediumLight",
+  Medium = "Medium",
+  MediumDark = "MediumDark",
+  Dark = "Dark",
+}
+
+export type Emoji = {
+  id: string;
+  name: string;
+  value: string;
+};
+
+export type EmojiVariants = {
+  [EmojiSkin.Default]: Emoji;
+  [EmojiSkin.Light]?: Emoji;
+  [EmojiSkin.MediumLight]?: Emoji;
+  [EmojiSkin.Medium]?: Emoji;
+  [EmojiSkin.MediumDark]?: Emoji;
+  [EmojiSkin.Dark]?: Emoji;
+};

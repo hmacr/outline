@@ -3,10 +3,10 @@ import styled, { css } from "styled-components";
 import { s } from "@shared/styles";
 import { colorPalette } from "@shared/utils/collections";
 import { validateColorHex } from "@shared/utils/color";
+import Flex from "~/components/Flex";
+import NudeButton from "~/components/NudeButton";
+import Text from "~/components/Text";
 import { hover } from "~/styles";
-import Flex from "../Flex";
-import NudeButton from "../NudeButton";
-import Text from "../Text";
 
 enum Panel {
   Builtin,

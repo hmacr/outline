@@ -4,6 +4,7 @@ import { init, Data } from "emoji-mart";
 import FuzzySearch from "fuzzy-search";
 import capitalize from "lodash/capitalize";
 import sortBy from "lodash/sortBy";
+import { Emoji, EmojiCategory, EmojiSkin, EmojiVariants } from "../types";
 
 init({ data: RawData });
 
@@ -15,41 +16,7 @@ const searcher = new FuzzySearch(Object.values(TypedData.emojis), ["search"], {
   sort: true,
 });
 
-export enum EmojiCategory {
-  People = "Smileys & People",
-  Nature = "Animals & Nature",
-  Foods = "Food & Drink",
-  Activity = "Activity",
-  Places = "Travel & Places",
-  Objects = "Objects",
-  Symbols = "Symbols",
-  Flags = "Flags",
-}
-
-export enum EmojiSkin {
-  Default = "Default",
-  Light = "Light",
-  MediumLight = "MediumLight",
-  Medium = "Medium",
-  MediumDark = "MediumDark",
-  Dark = "Dark",
-}
-
-export type Emoji = {
-  id: string;
-  name: string;
-  value: string;
-};
-
-export type EmojiVariants = {
-  [EmojiSkin.Default]: Emoji;
-  [EmojiSkin.Light]?: Emoji;
-  [EmojiSkin.MediumLight]?: Emoji;
-  [EmojiSkin.Medium]?: Emoji;
-  [EmojiSkin.MediumDark]?: Emoji;
-  [EmojiSkin.Dark]?: Emoji;
-};
-
+// Codes defined by unicode.org
 const SKIN_CODE_TO_ENUM = {
   "1f3fb": EmojiSkin.Light,
   "1f3fc": EmojiSkin.MediumLight,
@@ -75,7 +42,7 @@ const getVariants = ({ id, name, skins }: GetVariantsProps): EmojiVariants =>
 const EMOJI_ID_TO_VARIANTS = Object.entries(TypedData.emojis).reduce(
   (obj, [id, emoji]) => {
     obj[id] = getVariants({
-      id: emoji.id,
+      id,
       name: emoji.name,
       skins: emoji.skins,
     });
@@ -85,12 +52,12 @@ const EMOJI_ID_TO_VARIANTS = Object.entries(TypedData.emojis).reduce(
 );
 
 const CATEGORY_TO_EMOJI_IDS: Record<EmojiCategory, string[]> =
-  TypedData.categories.reduce((obj, { id, emojis: emojiIds }) => {
-    const category = EmojiCategory[capitalize(id)] as EmojiCategory;
+  TypedData.categories.reduce((obj, { id, emojis }) => {
+    const category = EmojiCategory[capitalize(id)];
     if (!category) {
       return obj;
     }
-    obj[category] = emojiIds;
+    obj[category] = emojis;
     return obj;
   }, {} as Record<EmojiCategory, string[]>);
 

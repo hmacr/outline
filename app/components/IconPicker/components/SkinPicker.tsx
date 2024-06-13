@@ -3,10 +3,11 @@ import { useTranslation } from "react-i18next";
 import { Menu, MenuButton, MenuItem, useMenuState } from "reakit";
 import styled from "styled-components";
 import { depths, s } from "@shared/styles";
+import { EmojiSkin } from "@shared/types";
+import { getEmojiVariants } from "@shared/utils/emoji";
+import Flex from "~/components/Flex";
+import NudeButton from "~/components/NudeButton";
 import { hover } from "~/styles";
-import Flex from "../Flex";
-import NudeButton from "../NudeButton";
-import { getEmojiVariants, EmojiSkin } from "./emoji-data";
 
 const SkinPicker = ({
   skin,

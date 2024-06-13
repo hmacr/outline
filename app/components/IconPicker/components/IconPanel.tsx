@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import { s } from "@shared/styles";
 import { IconLibrary } from "@shared/utils/IconLibrary";
+import Flex from "~/components/Flex";
+import InputSearch from "~/components/InputSearch";
+import NudeButton from "~/components/NudeButton";
 import usePersistedState from "~/hooks/usePersistedState";
 import { hover } from "~/styles";
-import Flex from "../Flex";
-import InputSearch from "../InputSearch";
-import NudeButton from "../NudeButton";
 import ColorPicker from "./ColorPicker";
 import Grid from "./Grid";
 

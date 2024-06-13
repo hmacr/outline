@@ -5,21 +5,16 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import { s } from "@shared/styles";
+import { EmojiCategory, EmojiSkin } from "@shared/types";
+import { getEmojis, getEmojisWithCategory, search } from "@shared/utils/emoji";
 import Flex from "~/components/Flex";
+import InputSearch from "~/components/InputSearch";
+import NudeButton from "~/components/NudeButton";
+import Text from "~/components/Text";
 import usePersistedState from "~/hooks/usePersistedState";
 import { hover } from "~/styles";
-import InputSearch from "../InputSearch";
-import NudeButton from "../NudeButton";
-import Text from "../Text";
 import Grid from "./Grid";
 import SkinPicker from "./SkinPicker";
-import {
-  EmojiCategory,
-  getEmojisWithCategory,
-  search,
-  EmojiSkin,
-  getEmojis,
-} from "./emoji-data";
 
 /**
  * This is needed as a constant for react-window.

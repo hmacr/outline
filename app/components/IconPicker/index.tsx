@@ -13,19 +13,19 @@ import styled, { css } from "styled-components";
 import { s } from "@shared/styles";
 import theme from "@shared/styles/theme";
 import { IconType, determineIconType } from "@shared/utils/icon";
+import Flex from "~/components/Flex";
+import Icon from "~/components/Icon";
+import NudeButton from "~/components/NudeButton";
+import Popover from "~/components/Popover";
 import useMobile from "~/hooks/useMobile";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
 import useWindowSize from "~/hooks/useWindowSize";
 import { hover } from "~/styles";
-import Flex from "../Flex";
-import Icon from "../Icon";
-import NudeButton from "../NudeButton";
-import Popover from "../Popover";
-import EmojiPanel from "./EmojiPanel";
-import IconPanel from "./IconPanel";
-import { PopoverButton } from "./PopoverButton";
+import EmojiPanel from "./components/EmojiPanel";
+import IconPanel from "./components/IconPanel";
+import { PopoverButton } from "./components/PopoverButton";
 
-const tabIds = {
+const TAB_NAMES = {
   outline: "outline",
   emoji: "emoji",
 } satisfies Record<IconType, string>;
@@ -68,7 +68,7 @@ const IconEmoji = ({
 
   const iconType = determineIconType(icon);
   const defaultTab = React.useMemo(
-    () => (iconType ? tabIds[iconType] : tabIds["outline"]),
+    () => (iconType ? TAB_NAMES[iconType] : TAB_NAMES["outline"]),
     [iconType]
   );
 
@@ -199,17 +199,17 @@ const IconEmoji = ({
             <StyledTabList {...tab}>
               <StyledTab
                 {...tab}
-                id={tabIds.outline}
+                id={TAB_NAMES.outline}
                 aria-label={t("Icons Tab")}
-                active={tab.selectedId === tabIds.outline}
+                active={tab.selectedId === TAB_NAMES.outline}
               >
                 Icons
               </StyledTab>
               <StyledTab
                 {...tab}
-                id={tabIds.emoji}
+                id={TAB_NAMES.emoji}
                 aria-label={t("Emojis Tab")}
-                active={tab.selectedId === tabIds.emoji}
+                active={tab.selectedId === TAB_NAMES.emoji}
               >
                 Emojis
               </StyledTab>
@@ -224,18 +224,22 @@ const IconEmoji = ({
               initial={initial ?? "?"}
               color={chosenColor}
               query={query}
-              panelActive={popover.visible && tab.selectedId === tabIds.outline}
+              panelActive={
+                popover.visible && tab.selectedId === TAB_NAMES.outline
+              }
               onIconChange={handleIconChange}
               onColorChange={handleIconColorChange}
               onQueryChange={handleQueryChange}
             />
           </StyledTabPanel>
           <StyledTabPanel {...tab}>
-            {tab.selectedId === tabIds.emoji && (
+            {tab.selectedId === TAB_NAMES.emoji && (
               <EmojiPanel
                 gridWidth={iconGridWidth}
                 query={query}
-                panelActive={popover.visible && tab.selectedId === tabIds.emoji}
+                panelActive={
+                  popover.visible && tab.selectedId === TAB_NAMES.emoji
+                }
                 onEmojiChange={handleIconChange}
                 onQueryChange={handleQueryChange}
               />

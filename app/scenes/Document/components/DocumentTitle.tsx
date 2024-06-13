@@ -20,7 +20,7 @@ import ContentEditable, { RefHandle } from "~/components/ContentEditable";
 import { useDocumentContext } from "~/components/DocumentContext";
 import Flex from "~/components/Flex";
 import Icon from "~/components/Icon";
-import { PopoverButton } from "~/components/IconPicker/PopoverButton";
+import { PopoverButton } from "~/components/IconPicker/components/PopoverButton";
 import useBoolean from "~/hooks/useBoolean";
 import usePolicy from "~/hooks/usePolicy";
 import { isModKey } from "~/utils/keyboard";
