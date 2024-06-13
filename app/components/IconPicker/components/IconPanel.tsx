@@ -1,56 +1,36 @@
-import chunk from "lodash/chunk";
-import * as React from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
-import { s } from "@shared/styles";
 import { IconLibrary } from "@shared/utils/IconLibrary";
 import Flex from "~/components/Flex";
 import InputSearch from "~/components/InputSearch";
-import NudeButton from "~/components/NudeButton";
 import usePersistedState from "~/hooks/usePersistedState";
-import { hover } from "~/styles";
+import {
+  FREQUENTLY_USED_COUNT,
+  IconCategory,
+  getIconsFreqKey,
+  getLastIconKey,
+  sortFrequencies,
+} from "../utils";
 import ColorPicker from "./ColorPicker";
-import Grid from "./Grid";
+import GridTemplate, { DataNode } from "./GridTemplate";
 
-const iconNames = Object.keys(IconLibrary.mapping);
-const delayPerIcon = 250 / iconNames.length;
+const IconNames = Object.keys(IconLibrary.mapping);
+const TotalIcons = IconNames.length;
 
 /**
  * This is needed as a constant for react-window.
  * Calculated from the heights of TabPanel, ColorPicker and InputSearch.
  */
 const GRID_HEIGHT = 314;
-/**
- * Icon size is 24px by default; and we add 4px padding on all sides,
- */
-const ICON_BUTTON_SIZE = 32;
-
-const FREQUENTLY_USED_COUNT = {
-  Get: 24,
-  Track: 30,
-};
-
-const STORAGE_KEYS = {
-  Base: "icon-state",
-  EmojiSkin: "emoji-skin",
-  IconsFrequency: "icons-freq",
-  EmojisFrequency: "emojis-freq",
-  LastIcon: "last-icon",
-  LastEmoji: "last-emoji",
-};
-
-const getStorageKey = (key: string) => `${STORAGE_KEYS.Base}.${key}`;
-
-const sortFrequencies = (freqs: [string, number][]) =>
-  freqs.sort((a, b) => (a[1] > b[1] ? -1 : 1));
 
 const useIconState = () => {
   const [iconsFreq, setIconsFreq] = usePersistedState<Record<string, number>>(
-    getStorageKey(STORAGE_KEYS.IconsFrequency),
+    getIconsFreqKey(),
     {}
   );
   const [lastIcon, setLastIcon] = usePersistedState<string | undefined>(
-    getStorageKey(STORAGE_KEYS.LastIcon),
+    getLastIconKey(),
     undefined
   );
 
@@ -65,6 +45,7 @@ const useIconState = () => {
 
   const getFreqIcons = React.useCallback(() => {
     const freqs = Object.entries(iconsFreq);
+
     if (freqs.length > FREQUENTLY_USED_COUNT.Track) {
       sortFrequencies(freqs).splice(FREQUENTLY_USED_COUNT.Track);
       setIconsFreq(Object.fromEntries(freqs));
@@ -118,15 +99,20 @@ const IconPanel = ({
   const { incrementIconCount, getFreqIcons } = useIconState();
 
   const freqIcons = React.useMemo(() => getFreqIcons(), [getFreqIcons]);
+  const totalFreqIcons = freqIcons.length;
 
   const filteredIcons = React.useMemo(
     () => IconLibrary.findIcons(query),
     [query]
   );
 
+  const isSearch = query !== "";
+  const category = isSearch ? IconCategory.Search : IconCategory.All;
+  const delayPerIcon = 250 / (TotalIcons + totalFreqIcons);
+
   const handleFilter = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      onQueryChange(event.target.value.toLowerCase());
+      onQueryChange(event.target.value);
     },
     [onQueryChange]
   );
@@ -139,22 +125,34 @@ const IconPanel = ({
     [onIconChange, incrementIconCount]
   );
 
-  // 24px padding for the Grid
-  const iconsPerRow = Math.floor((gridWidth - 24) / ICON_BUTTON_SIZE);
+  const baseIconsNode: DataNode = {
+    category,
+    icons: filteredIcons.map((name, index) => ({
+      type: "outline",
+      name,
+      color,
+      initial,
+      delay: Math.round((index + totalFreqIcons) * delayPerIcon),
+      onClick: handleIconClick,
+    })),
+  };
 
-  const icons = filteredIcons.map((name, index) => (
-    <IconButton
-      key={name}
-      onClick={() => handleIconClick(name)}
-      delay={Math.round(index * delayPerIcon)}
-    >
-      <Icon as={IconLibrary.getComponent(name)} color={color}>
-        {initial}
-      </Icon>
-    </IconButton>
-  ));
-
-  const dataChunks = chunk(icons, iconsPerRow);
+  const templateData: DataNode[] = isSearch
+    ? [baseIconsNode]
+    : [
+        {
+          category: IconCategory.Frequent,
+          icons: freqIcons.map((name, index) => ({
+            type: "outline",
+            name,
+            color,
+            initial,
+            delay: Math.round((index + totalFreqIcons) * delayPerIcon),
+            onClick: handleIconClick,
+          })),
+        },
+        baseIconsNode,
+      ];
 
   React.useEffect(() => {
     if (scrollableRef.current) {
@@ -172,13 +170,11 @@ const IconPanel = ({
         placeholder={`${t("Search icons")}…`}
         onChange={handleFilter}
       />
-      <Grid
+      <GridTemplate
         ref={scrollableRef}
         width={gridWidth}
         height={GRID_HEIGHT}
-        data={dataChunks}
-        columns={iconsPerRow}
-        itemWidth={ICON_BUTTON_SIZE}
+        nodes={templateData}
       />
     </Flex>
   );
@@ -186,22 +182,6 @@ const IconPanel = ({
 
 const StyledInputSearch = styled(InputSearch)`
   padding: 0px 12px;
-`;
-
-const IconButton = styled(NudeButton)<{ delay: number }>`
-  width: 32px;
-  height: 32px;
-  padding: 4px;
-  --delay: ${({ delay }) => `${delay}ms`};
-
-  &: ${hover} {
-    background: ${s("listItemHoverBackground")};
-  }
-`;
-
-const Icon = styled.svg`
-  transition: color 150ms ease-in-out, fill 150ms ease-in-out;
-  transition-delay: var(--delay);
 `;
 
 export default IconPanel;

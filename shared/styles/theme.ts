@@ -62,7 +62,7 @@ const buildBaseTheme = (input: Partial<Colors>) => {
     fontFamilyMono:
       "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace",
     fontFamilyEmoji:
-      "EmojiMart, Segoe UI Emoji, Segoe UI Symbol, Segoe UI, Apple Color Emoji, Twemoji Mozilla, Noto Color Emoji, Android Emoji",
+      "Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Segoe UI, Twemoji Mozilla, Noto Color Emoji, Android Emoji",
     fontWeightRegular: 400,
     fontWeightMedium: 500,
     fontWeightBold: 600,

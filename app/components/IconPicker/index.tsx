@@ -46,7 +46,7 @@ type Props = {
   onClose?: () => void;
 };
 
-const IconEmoji = ({
+const IconPicker = ({
   icon,
   color,
   size = 24,
@@ -316,4 +316,4 @@ const StyledTabPanel = styled(TabPanel)`
   overflow-y: auto;
 `;
 
-export default IconEmoji;
+export default IconPicker;

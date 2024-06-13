@@ -1,5 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
+import { s } from "@shared/styles";
 
 type Props = {
   /** The emoji to render */
@@ -22,6 +23,7 @@ export default function EmojiIcon({ size = 24, emoji, ...rest }: Props) {
 }
 
 const Span = styled.span<{ $size: number }>`
+  font-family: ${s("fontFamilyEmoji")};
   display: inline-flex;
   align-items: center;
   justify-content: center;
