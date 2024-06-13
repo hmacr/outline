@@ -81,7 +81,7 @@ const IconEmoji = ({
 
   const popoverWidth = isMobile ? windowWidth : POPOVER_WIDTH;
   // In mobile, popover is absolutely positioned to leave 8px on both sides.
-  const listWidth = isMobile ? windowWidth - 16 : popoverWidth;
+  const iconGridWidth = isMobile ? windowWidth - 16 : popoverWidth;
 
   const resetDefaultTab = React.useCallback(() => {
     tab.select(defaultTab);
@@ -220,7 +220,7 @@ const IconEmoji = ({
           </TabActionsWrapper>
           <StyledTabPanel {...tab}>
             <IconPanel
-              listWidth={listWidth}
+              gridWidth={iconGridWidth}
               initial={initial ?? "?"}
               color={chosenColor}
               query={query}
@@ -233,7 +233,7 @@ const IconEmoji = ({
           <StyledTabPanel {...tab}>
             {tab.selectedId === tabIds.emoji && (
               <EmojiPanel
-                listWidth={listWidth}
+                gridWidth={iconGridWidth}
                 query={query}
                 panelActive={popover.visible && tab.selectedId === tabIds.emoji}
                 onEmojiChange={handleIconChange}

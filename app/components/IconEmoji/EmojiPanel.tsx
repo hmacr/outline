@@ -3,7 +3,6 @@ import compact from "lodash/compact";
 import concat from "lodash/concat";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { FixedSizeList, ListChildComponentProps } from "react-window";
 import styled from "styled-components";
 import { s } from "@shared/styles";
 import Flex from "~/components/Flex";
@@ -12,6 +11,7 @@ import { hover } from "~/styles";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
 import Text from "../Text";
+import Grid from "./Grid";
 import SkinPicker from "./SkinPicker";
 import {
   EmojiCategory,
@@ -20,6 +20,16 @@ import {
   EmojiSkin,
   getEmojis,
 } from "./emoji-data";
+
+/**
+ * This is needed as a constant for react-window.
+ * Calculated from the heights of TabPanel and InputSearch.
+ */
+const GRID_HEIGHT = 362;
+/**
+ * Emoji size is 24px by default; and we add 4px padding on all sides,
+ */
+const EMOJI_BUTTON_SIZE = 32;
 
 const FREQUENTLY_USED_COUNT = {
   Get: 24,
@@ -92,7 +102,7 @@ const useEmojiState = () => {
 };
 
 type Props = {
-  listWidth: number;
+  gridWidth: number;
   query: string;
   panelActive: boolean;
   onEmojiChange: (emoji: string) => void | Promise<void>;
@@ -100,7 +110,7 @@ type Props = {
 };
 
 const EmojiPanel = ({
-  listWidth,
+  gridWidth,
   query,
   panelActive,
   onEmojiChange,
@@ -142,9 +152,8 @@ const EmojiPanel = ({
     [onEmojiChange, incrementEmojiCount]
   );
 
-  // 24px padding for the container
-  // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
-  const emojisPerRow = Math.floor((listWidth - 24) / 32);
+  // 24px padding for the Grid
+  const emojisPerRow = Math.floor((gridWidth - 24) / EMOJI_BUTTON_SIZE);
 
   const isSearch = query !== "";
   const dataChunks = isSearch
@@ -179,16 +188,14 @@ const EmojiPanel = ({
         />
         <SkinPicker skin={skin} onChange={handleSkinChange} />
       </UserInputContainer>
-      <StyledVirtualList
-        width={listWidth}
-        height={362}
-        itemCount={dataChunks.length}
-        itemSize={32}
-        itemData={{ dataChunks, emojisPerRow }}
-        outerRef={scrollableRef}
-      >
-        {DataRow}
-      </StyledVirtualList>
+      <Grid
+        ref={scrollableRef}
+        width={gridWidth}
+        height={GRID_HEIGHT}
+        data={dataChunks}
+        columns={emojisPerRow}
+        itemWidth={EMOJI_BUTTON_SIZE}
+      />
     </Flex>
   );
 };
@@ -320,42 +327,6 @@ const getAllEmojis = ({
     )
   );
 };
-
-type DataRowProps = {
-  dataChunks: React.ReactNode[][];
-  emojisPerRow: number;
-};
-
-const DataRow = ({
-  index: rowIdx,
-  style,
-  data,
-}: ListChildComponentProps<DataRowProps>) => {
-  const { dataChunks, emojisPerRow } = data;
-  const row = dataChunks[rowIdx];
-
-  return (
-    <DataRowGrid style={style} columns={emojisPerRow}>
-      {row}
-    </DataRowGrid>
-  );
-};
-
-const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
-  padding: 0px 12px;
-
-  // Needed for the absolutely positioned children
-  // to respect the VirtualList's padding
-  & > div {
-    position: relative;
-  }
-`;
-
-const DataRowGrid = styled.div<{ columns: number }>`
-  display: grid;
-  grid-template-columns: ${({ columns }) => `repeat(${columns}, 1fr)`};
-  align-content: center;
-`;
 
 const UserInputContainer = styled(Flex)`
   height: 48px;

@@ -1,7 +1,6 @@
 import chunk from "lodash/chunk";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { FixedSizeList, ListChildComponentProps } from "react-window";
 import styled from "styled-components";
 import { s } from "@shared/styles";
 import { IconLibrary } from "@shared/utils/IconLibrary";
@@ -11,9 +10,20 @@ import Flex from "../Flex";
 import InputSearch from "../InputSearch";
 import NudeButton from "../NudeButton";
 import ColorPicker from "./ColorPicker";
+import Grid from "./Grid";
 
 const iconNames = Object.keys(IconLibrary.mapping);
 const delayPerIcon = 250 / iconNames.length;
+
+/**
+ * This is needed as a constant for react-window.
+ * Calculated from the heights of TabPanel, ColorPicker and InputSearch.
+ */
+const GRID_HEIGHT = 314;
+/**
+ * Icon size is 24px by default; and we add 4px padding on all sides,
+ */
+const ICON_BUTTON_SIZE = 32;
 
 const FREQUENTLY_USED_COUNT = {
   Get: 24,
@@ -80,7 +90,7 @@ const useIconState = () => {
 };
 
 type Props = {
-  listWidth: number;
+  gridWidth: number;
   initial: string;
   color: string;
   query: string;
@@ -91,7 +101,7 @@ type Props = {
 };
 
 const IconPanel = ({
-  listWidth,
+  gridWidth,
   initial,
   color,
   query,
@@ -129,12 +139,8 @@ const IconPanel = ({
     [onIconChange, incrementIconCount]
   );
 
-  // 24px padding for the container
-  // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
-  const iconsPerRow = React.useMemo(
-    () => Math.floor((listWidth - 24) / 32),
-    [listWidth]
-  );
+  // 24px padding for the Grid
+  const iconsPerRow = Math.floor((gridWidth - 24) / ICON_BUTTON_SIZE);
 
   const icons = filteredIcons.map((name, index) => (
     <IconButton
@@ -166,56 +172,17 @@ const IconPanel = ({
         placeholder={`${t("Search icons")}…`}
         onChange={handleFilter}
       />
-      <StyledVirtualList
-        width={listWidth}
-        height={314}
-        itemCount={dataChunks.length}
-        itemSize={32}
-        itemData={{ dataChunks, iconsPerRow }}
-        style={{ padding: "0px 12px" }}
-        outerRef={scrollableRef}
-      >
-        {DataRow}
-      </StyledVirtualList>
+      <Grid
+        ref={scrollableRef}
+        width={gridWidth}
+        height={GRID_HEIGHT}
+        data={dataChunks}
+        columns={iconsPerRow}
+        itemWidth={ICON_BUTTON_SIZE}
+      />
     </Flex>
   );
 };
-
-type DataRowProps = {
-  dataChunks: React.ReactNode[][];
-  iconsPerRow: number;
-};
-
-const DataRow = ({
-  index: rowIdx,
-  style,
-  data,
-}: ListChildComponentProps<DataRowProps>) => {
-  const { dataChunks, iconsPerRow } = data;
-  const row = dataChunks[rowIdx];
-
-  return (
-    <DataRowGrid style={style} columns={iconsPerRow}>
-      {row}
-    </DataRowGrid>
-  );
-};
-
-const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
-  padding: 0px 12px;
-
-  // Needed for the absolutely positioned children
-  // to respect this list's padding
-  & > div {
-    position: relative;
-  }
-`;
-
-const DataRowGrid = styled.div<{ columns: number }>`
-  display: grid;
-  grid-template-columns: ${({ columns }) => `repeat(${columns}, 1fr)`};
-  align-content: center;
-`;
 
 const StyledInputSearch = styled(InputSearch)`
   padding: 0px 12px;
