@@ -168,9 +168,7 @@ const EmojiPanel = ({
     if (scrollableRef.current) {
       scrollableRef.current.scrollTop = 0;
     }
-    if (searchRef.current) {
-      searchRef.current.focus();
-    }
+    searchRef.current?.focus();
   }, [panelActive]);
 
   return (

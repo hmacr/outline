@@ -9,18 +9,19 @@ import {
   usePopoverState,
   useTabState,
 } from "reakit";
-import styled, { css, useTheme } from "styled-components";
+import styled, { css } from "styled-components";
 import { s } from "@shared/styles";
-import { IconLibrary } from "@shared/utils/IconLibrary";
+import theme from "@shared/styles/theme";
 import { IconType, determineIconType } from "@shared/utils/icon";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
 import { hover } from "~/styles";
 import Flex from "../Flex";
-import EmojiIcon from "../Icons/EmojiIcon";
+import Icon from "../Icon";
 import NudeButton from "../NudeButton";
 import Popover from "../Popover";
 import EmojiPanel from "./EmojiPanel";
 import IconPanel from "./IconPanel";
+import { PopoverButton } from "./PopoverButton";
 
 const tabIds = {
   outline: "outline",
@@ -91,8 +92,8 @@ const IconEmoji = ({
   );
 
   const handleIconRemove = React.useCallback(() => {
-    onChange(null, null);
     popover.hide();
+    onChange(null, null);
   }, [popover, onChange]);
 
   const handleQueryChange = React.useCallback(
@@ -159,21 +160,19 @@ const IconEmoji = ({
     <>
       <PopoverDisclosure {...popover}>
         {(props) => (
-          <NudeButton
+          <PopoverButton
             {...props}
             aria-label={t("Show menu")}
             className={className}
             size={size}
             onClick={handlePopoverButtonClick}
           >
-            <DisclosureIcon
-              iconType={iconType}
-              icon={icon ?? undefined}
-              color={chosenColor}
-              initial={initial ?? "?"}
-              size={size}
-            />
-          </NudeButton>
+            {iconType && icon ? (
+              <Icon value={icon} color={color} size={size} initial={initial} />
+            ) : (
+              <StyledSmileyIcon color={theme.textTertiary} size={size} />
+            )}
+          </PopoverButton>
         )}
       </PopoverDisclosure>
       <Popover
@@ -236,39 +235,6 @@ const IconEmoji = ({
       </Popover>
     </>
   );
-};
-
-type DisclosureIconProps = {
-  iconType?: IconType;
-  icon?: string;
-  color: string;
-  initial: string;
-  size: number;
-};
-
-const DisclosureIcon = ({
-  iconType,
-  icon,
-  color,
-  initial,
-  size,
-}: DisclosureIconProps) => {
-  const theme = useTheme();
-
-  if (!iconType) {
-    return <StyledSmileyIcon color={theme.textTertiary} size={size} />;
-  }
-
-  if (iconType === "outline") {
-    const Component = IconLibrary.getComponent(icon || "collection");
-    return (
-      <Component color={color!} size={size}>
-        {initial}
-      </Component>
-    );
-  }
-
-  return <EmojiIcon emoji={icon!} size={size} />;
 };
 
 const StyledSmileyIcon = styled(SmileyIcon)`

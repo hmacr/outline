@@ -133,7 +133,7 @@ const CollectionSquircle = ({ collection }: { collection: Collection }) => {
   const theme = useTheme();
   const iconType = determineIconType(collection.icon)!;
   const squircleColor =
-    iconType === "outline" ? collection.color : theme.slateLight;
+    iconType === "outline" ? collection.color! : theme.slateLight;
   const iconSize = iconType === "outline" ? 16 : 22;
 
   return (

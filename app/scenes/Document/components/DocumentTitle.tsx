@@ -8,10 +8,8 @@ import styled, { css } from "styled-components";
 import breakpoint from "styled-components-breakpoint";
 import isMarkdown from "@shared/editor/lib/isMarkdown";
 import normalizePastedMarkdown from "@shared/editor/lib/markdown/normalize";
-import { randomElement } from "@shared/random";
 import { extraArea, s } from "@shared/styles";
 import { light } from "@shared/styles/theme";
-import { colorPalette } from "@shared/utils/collections";
 import {
   getCurrentDateAsString,
   getCurrentDateTimeAsString,
@@ -20,8 +18,9 @@ import {
 import { DocumentValidation } from "@shared/validations";
 import ContentEditable, { RefHandle } from "~/components/ContentEditable";
 import { useDocumentContext } from "~/components/DocumentContext";
-import { Emoji, EmojiButton } from "~/components/EmojiPicker/components";
 import Flex from "~/components/Flex";
+import Icon from "~/components/Icon";
+import { PopoverButton } from "~/components/IconEmoji/PopoverButton";
 import useBoolean from "~/hooks/useBoolean";
 import usePolicy from "~/hooks/usePolicy";
 import { isModKey } from "~/utils/keyboard";
@@ -36,7 +35,7 @@ type Props = {
   /** Icon to display */
   icon?: string | null;
   /** Icon color */
-  color?: string | null;
+  color: string;
   /** Position of the icon relative to text */
   iconPosition: "side" | "top";
   /** Placeholder to display when the document has no title */
@@ -238,7 +237,10 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
   }, [iconPickerIsOpen, restoreFocus]);
 
   const dir = ref.current?.getComputedDirection();
-  const emojiIcon = <Emoji size={32}>{icon}</Emoji>;
+
+  const fallbackIcon = icon ? (
+    <Icon value={icon} color={color} size={40} />
+  ) : null;
 
   return (
     <Title
@@ -264,11 +266,11 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
           $position={iconPosition}
           dir={dir}
         >
-          <React.Suspense fallback={emojiIcon}>
+          <React.Suspense fallback={fallbackIcon}>
             <StyledIconPicker
               icon={icon ?? null}
-              color={color ?? randomElement(colorPalette)}
-              size={32}
+              color={color}
+              size={40}
               popoverPosition="bottom-start"
               allowDelete={true}
               onChange={handleIconChange}
@@ -284,37 +286,12 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
           $position={iconPosition}
           dir={dir}
         >
-          {emojiIcon}
+          {fallbackIcon}
         </IconWrapper>
       ) : null}
     </Title>
   );
 });
-
-const StyledIconPicker = styled(IconEmoji)`
-  ${extraArea(8)}
-`;
-
-const IconWrapper = styled(Flex)<{ $position: "top" | "side"; dir?: string }>`
-  height: 32px;
-  width: 32px;
-
-  // Always move above TOC
-  z-index: 1;
-
-  ${(props) =>
-    props.$position === "top"
-      ? css`
-          position: relative;
-          top: -8px;
-        `
-      : css`
-          position: absolute;
-          top: 8px;
-          ${(props: { dir?: string }) =>
-            props.dir === "rtl" ? "right: -40px" : "left: -40px"};
-        `}
-`;
 
 type TitleProps = {
   $containsIcon: boolean;
@@ -348,12 +325,12 @@ const Title = styled(ContentEditable)<TitleProps>`
   &:focus {
     margin-left: 40px;
 
-    ${EmojiButton} {
+    ${PopoverButton} {
       opacity: 1 !important;
     }
   }
 
-  ${EmojiButton} {
+  ${PopoverButton} {
     opacity: ${(props: TitleProps) =>
       props.$containsIcon ? "1 !important" : 0};
   }
@@ -367,7 +344,7 @@ const Title = styled(ContentEditable)<TitleProps>`
     }
 
     &:hover {
-      ${EmojiButton} {
+      ${PopoverButton} {
         opacity: 0.5;
 
         &:hover {
@@ -381,6 +358,31 @@ const Title = styled(ContentEditable)<TitleProps>`
     -webkit-text-fill-color: ${light.text};
     background: none;
   }
+`;
+
+const StyledIconPicker = styled(IconEmoji)`
+  ${extraArea(8)}
+`;
+
+const IconWrapper = styled(Flex)<{ $position: "top" | "side"; dir?: string }>`
+  height: 40px;
+  width: 40px;
+
+  // Always move above TOC
+  z-index: 1;
+
+  ${(props) =>
+    props.$position === "top"
+      ? css`
+          position: relative;
+          top: -8px;
+        `
+      : css`
+          position: absolute;
+          top: 3px;
+          ${(props: { dir?: string }) =>
+            props.dir === "rtl" ? "right: -50px" : "left: -50px"};
+        `}
 `;
 
 export default observer(DocumentTitle);

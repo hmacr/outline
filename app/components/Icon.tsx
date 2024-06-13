@@ -47,7 +47,7 @@ const Icon = ({
 
     return <EmojiIcon emoji={icon} size={size} className={className} />;
   } catch (err) {
-    Logger.warn("Failed to render custom icon", {
+    Logger.warn("Failed to render icon", {
       icon,
     });
   }

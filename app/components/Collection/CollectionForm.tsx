@@ -18,6 +18,7 @@ import Text from "~/components/Text";
 import useBoolean from "~/hooks/useBoolean";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import { Feature, FeatureFlags } from "~/utils/FeatureFlags";
+import Icon from "../Icon";
 
 const IconEmoji = React.lazy(() => import("~/components/IconEmoji"));
 
@@ -38,11 +39,16 @@ export const CollectionForm = observer(function CollectionForm_({
 }) {
   const team = useCurrentTeam();
   const { t } = useTranslation();
+
   const [hasOpenedIconPicker, setHasOpenedIconPicker] = useBoolean(false);
+
   const iconColor = React.useMemo(
     () => collection?.color ?? randomElement(colorPalette),
     [collection?.color]
   );
+
+  const fallbackIcon = <Icon value={"collection"} color={iconColor} />;
+
   const {
     register,
     handleSubmit: formHandleSubmit,
@@ -75,7 +81,7 @@ export const CollectionForm = observer(function CollectionForm_({
           "collection"
       );
     }
-  }, [values.name, collection]);
+  }, [collection, hasOpenedIconPicker, values.name, values.icon, setValue]);
 
   React.useEffect(() => {
     setTimeout(() => setFocus("name", { shouldSelect: true }), 100);
@@ -110,7 +116,7 @@ export const CollectionForm = observer(function CollectionForm_({
             maxLength: CollectionValidation.maxNameLength,
           })}
           prefix={
-            <React.Suspense fallback={"loading"}>
+            <React.Suspense fallback={fallbackIcon}>
               <StyledIconPicker
                 icon={values.icon}
                 color={values.color ?? iconColor}
