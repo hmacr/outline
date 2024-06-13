@@ -77,7 +77,7 @@ const useEmojiState = () => {
 };
 
 type Props = {
-  gridWidth: number;
+  panelWidth: number;
   query: string;
   panelActive: boolean;
   onEmojiChange: (emoji: string) => void;
@@ -85,7 +85,7 @@ type Props = {
 };
 
 const EmojiPanel = ({
-  gridWidth,
+  panelWidth,
   query,
   panelActive,
   onEmojiChange,
@@ -160,9 +160,9 @@ const EmojiPanel = ({
       </UserInputContainer>
       <GridTemplate
         ref={scrollableRef}
-        width={gridWidth}
+        width={panelWidth}
         height={GRID_HEIGHT}
-        nodes={templateData}
+        data={templateData}
       />
     </Flex>
   );

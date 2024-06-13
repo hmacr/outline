@@ -71,7 +71,7 @@ const useIconState = () => {
 };
 
 type Props = {
-  gridWidth: number;
+  panelWidth: number;
   initial: string;
   color: string;
   query: string;
@@ -82,7 +82,7 @@ type Props = {
 };
 
 const IconPanel = ({
-  gridWidth,
+  panelWidth,
   initial,
   color,
   query,
@@ -163,7 +163,11 @@ const IconPanel = ({
 
   return (
     <Flex column gap={8}>
-      <ColorPicker activeColor={color} onSelect={(c) => onColorChange(c)} />
+      <ColorPicker
+        width={panelWidth}
+        activeColor={color}
+        onSelect={(c) => onColorChange(c)}
+      />
       <StyledInputSearch
         ref={searchRef}
         value={query}
@@ -172,9 +176,9 @@ const IconPanel = ({
       />
       <GridTemplate
         ref={scrollableRef}
-        width={gridWidth}
+        width={panelWidth}
         height={GRID_HEIGHT}
-        nodes={templateData}
+        data={templateData}
       />
     </Flex>
   );

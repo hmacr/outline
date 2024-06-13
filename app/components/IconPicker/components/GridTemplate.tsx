@@ -37,18 +37,18 @@ export type DataNode = {
 type Props = {
   width: number;
   height: number;
-  nodes: DataNode[];
+  data: DataNode[];
 };
 
 const GridTemplate = (
-  { width, height, nodes }: Props,
+  { width, height, data }: Props,
   ref: React.Ref<HTMLDivElement>
 ) => {
   // 24px padding for the Grid Container
   const itemsPerRow = Math.floor((width - 24) / BUTTON_SIZE);
 
   const gridItems = compact(
-    nodes.flatMap((node) => {
+    data.flatMap((node) => {
       const category = (
         <CategoryName
           key={node.category}

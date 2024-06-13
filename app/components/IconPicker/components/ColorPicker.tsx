@@ -1,6 +1,6 @@
 import React from "react";
 import styled, { css } from "styled-components";
-import { s } from "@shared/styles";
+import { breakpoints, s } from "@shared/styles";
 import { colorPalette } from "@shared/utils/collections";
 import { validateColorHex } from "@shared/utils/color";
 import Flex from "~/components/Flex";
@@ -22,11 +22,14 @@ const colorWheel = `conic-gradient(
 )`;
 
 type Props = {
+  width: number;
   activeColor: string;
   onSelect: (color: string) => void;
 };
 
-const ColorPicker = ({ activeColor, onSelect }: Props) => {
+const ColorPicker = ({ width, activeColor, onSelect }: Props) => {
+  const [localValue, setLocalValue] = React.useState(activeColor);
+
   const [panel, setPanel] = React.useState(
     colorPalette.includes(activeColor) ? Panel.Builtin : Panel.Hex
   );
@@ -35,12 +38,32 @@ const ColorPicker = ({ activeColor, onSelect }: Props) => {
     setPanel(panel === Panel.Builtin ? Panel.Hex : Panel.Builtin);
   }, [panel, setPanel]);
 
-  return (
+  const isLargeMobile = width > breakpoints.mobileLarge + 12; // 12px for the Container padding
+
+  React.useEffect(() => {
+    setLocalValue(activeColor);
+    setPanel(colorPalette.includes(activeColor) ? Panel.Builtin : Panel.Hex);
+  }, [activeColor]);
+
+  return isLargeMobile ? (
+    <Container justify="space-between">
+      <LargeMobileBuiltinColors activeColor={activeColor} onClick={onSelect} />
+      <LargeMobileCustomColor
+        value={localValue}
+        setLocalValue={setLocalValue}
+        onValidHex={onSelect}
+      />
+    </Container>
+  ) : (
     <Container justify="space-between" gap={12}>
       {panel === Panel.Builtin ? (
         <BuiltinColors activeColor={activeColor} onClick={onSelect} />
       ) : (
-        <CustomColor value={activeColor} onValidHex={onSelect} />
+        <CustomColor
+          value={localValue}
+          setLocalValue={setLocalValue}
+          onValidHex={onSelect}
+        />
       )}
       <PanelSwitcher justify="flex-end" align="center">
         <SwitcherButton panel={panel} onClick={handleSwitcherClick}>
@@ -54,11 +77,13 @@ const ColorPicker = ({ activeColor, onSelect }: Props) => {
 const BuiltinColors = ({
   activeColor,
   onClick,
+  className,
 }: {
   activeColor: string;
   onClick: (color: string) => void;
+  className?: string;
 }) => (
-  <Flex justify="space-between" align="center" auto>
+  <Flex className={className} justify="space-between" align="center" auto>
     {colorPalette.map((color) => (
       <ColorButton
         key={color}
@@ -74,15 +99,15 @@ const BuiltinColors = ({
 
 const CustomColor = ({
   value,
+  setLocalValue,
   onValidHex,
+  className,
 }: {
   value: string;
+  setLocalValue: (value: string) => void;
   onValidHex: (color: string) => void;
+  className?: string;
 }) => {
-  const [localValue, setLocalValue] = React.useState(
-    value.startsWith("#") ? value : `#${value}`
-  );
-
   const hasHexChars = React.useCallback(
     (color: string) => /(^#[0-9A-F]{1,6}$)/i.test(color),
     []
@@ -100,24 +125,24 @@ const CustomColor = ({
       const uppercasedVal = val.toUpperCase();
 
       if (hasHexChars(uppercasedVal)) {
-        setLocalValue(val);
+        setLocalValue(uppercasedVal);
       }
 
       if (validateColorHex(uppercasedVal)) {
-        onValidHex(val);
+        onValidHex(uppercasedVal);
       }
     },
     [setLocalValue, hasHexChars, onValidHex]
   );
 
   return (
-    <Flex align="center" gap={8}>
+    <Flex className={className} align="center" gap={8}>
       <Text type="tertiary" size="small">
         HEX
       </Text>
       <CustomColorInput
         maxLength={7}
-        value={localValue}
+        value={value}
         onChange={handleInputChange}
       />
     </Flex>
@@ -184,9 +209,21 @@ const SwitcherButton = styled(NudeButton)<{ panel: Panel }>`
         `}
 `;
 
+const LargeMobileBuiltinColors = styled(BuiltinColors)`
+  max-width: 380px;
+  padding-right: 8px;
+`;
+
+const LargeMobileCustomColor = styled(CustomColor)`
+  padding-left: 8px;
+  border-left: 1px solid ${s("inputBorder")};
+`;
+
 const CustomColorInput = styled.input.attrs(() => ({
   type: "text",
+  autocomplete: "off",
 }))`
+  width: 70px;
   font-size: 14px;
   color: ${s("textSecondary")};
   background: transparent;
