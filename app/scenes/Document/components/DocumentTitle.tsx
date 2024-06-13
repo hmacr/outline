@@ -221,13 +221,11 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
 
   const handleIconChange = React.useCallback(
     (chosenIcon: string | null, iconColor: string | null) => {
-      // Restore focus on title
-      restoreFocus();
       if (icon !== chosenIcon || color !== iconColor) {
         onChangeIcon?.(chosenIcon, iconColor);
       }
     },
-    [icon, color, onChangeIcon, restoreFocus]
+    [icon, color, onChangeIcon]
   );
 
   React.useEffect(() => {

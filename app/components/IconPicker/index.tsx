@@ -101,8 +101,16 @@ const IconPicker = ({
   );
 
   const handleIconColorChange = React.useCallback(
-    (c: string) => setChosenColor(c),
-    []
+    (c: string) => {
+      setChosenColor(c);
+
+      const icType = determineIconType(icon);
+      // Outline icon set; propagate color change
+      if (icType === IconType.Outline) {
+        onChange(icon, c);
+      }
+    },
+    [icon, onChange]
   );
 
   const handleIconRemove = React.useCallback(() => {
@@ -131,32 +139,12 @@ const IconPicker = ({
   React.useEffect(() => {
     if (popover.visible) {
       onOpen?.();
+    } else {
+      onClose?.();
+      setQuery("");
+      resetDefaultTab();
     }
-  }, [popover.visible, onOpen]);
-
-  // Popover close effect
-  React.useEffect(() => {
-    if (popover.visible) {
-      return;
-    }
-
-    if (icon !== null && color !== chosenColor) {
-      const icType = determineIconType(icon);
-      const finalColor = icType === IconType.Outline ? chosenColor : null;
-      onChange(icon, finalColor);
-    }
-    onClose?.();
-    setQuery("");
-    resetDefaultTab();
-  }, [
-    popover.visible,
-    color,
-    chosenColor,
-    icon,
-    onClose,
-    onChange,
-    resetDefaultTab,
-  ]);
+  }, [popover.visible, onOpen, onClose, setQuery, resetDefaultTab]);
 
   // Custom click outside handling rather than using `hideOnClickOutside` from reakit so that we can
   // prevent event bubbling.
