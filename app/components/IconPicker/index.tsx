@@ -202,7 +202,7 @@ const IconEmoji = ({
       >
         <>
           <TabActionsWrapper justify="space-between" align="center">
-            <StyledTabList {...tab}>
+            <TabList {...tab}>
               <StyledTab
                 {...tab}
                 id={TAB_NAMES["Outline"]}
@@ -219,7 +219,7 @@ const IconEmoji = ({
               >
                 Emojis
               </StyledTab>
-            </StyledTabList>
+            </TabList>
             {allowDelete && icon && (
               <RemoveButton onClick={handleIconRemove}>Remove</RemoveButton>
             )}
@@ -265,7 +265,6 @@ const StyledSmileyIcon = styled(SmileyIcon)`
 
 const RemoveButton = styled(NudeButton)`
   width: auto;
-  height: 36px;
   font-weight: 500;
   font-size: 14px;
   color: ${s("textTertiary")};
@@ -277,13 +276,8 @@ const RemoveButton = styled(NudeButton)`
 `;
 
 const TabActionsWrapper = styled(Flex)`
-  padding: 0px 6px;
+  padding-left: 12px;
   border-bottom: 1px solid ${s("inputBorder")};
-`;
-
-const StyledTabList = styled(TabList)`
-  display: flex;
-  height: 36px;
 `;
 
 const StyledTab = styled(Tab)<{ active: boolean }>`
