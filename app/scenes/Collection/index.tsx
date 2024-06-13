@@ -307,8 +307,8 @@ const HeadingWithIcon = styled(Heading)`
 
 const HeadingIcon = styled(CollectionIcon)`
   flex-shrink: 0;
-  margin-left: -6px;
-  margin-right: 6px;
+  margin-left: -8px;
+  margin-right: 8px;
 `;
 
 export default observer(CollectionScene);

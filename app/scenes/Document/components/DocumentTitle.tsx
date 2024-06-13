@@ -381,7 +381,7 @@ const IconWrapper = styled(Flex)<{ $position: "top" | "side"; dir?: string }>`
           position: absolute;
           top: 3px;
           ${(props: { dir?: string }) =>
-            props.dir === "rtl" ? "right: -50px" : "left: -50px"};
+            props.dir === "rtl" ? "right: -48px" : "left: -48px"};
         `}
 `;
 

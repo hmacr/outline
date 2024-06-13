@@ -29,5 +29,4 @@ const Span = styled.span<{ $size: number }>`
   flex-shrink: 0;
   width: ${(props) => props.$size}px;
   height: ${(props) => props.$size}px;
-  font-size: ${(props) => props.$size - 10}px;
 `;
