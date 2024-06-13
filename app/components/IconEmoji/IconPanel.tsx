@@ -80,7 +80,7 @@ const useIconState = () => {
 };
 
 type Props = {
-  width: number;
+  listWidth: number;
   initial: string;
   color: string;
   query: string;
@@ -91,7 +91,7 @@ type Props = {
 };
 
 const IconPanel = ({
-  width,
+  listWidth,
   initial,
   color,
   query,
@@ -132,8 +132,8 @@ const IconPanel = ({
   // 24px padding for the container
   // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
   const iconsPerRow = React.useMemo(
-    () => Math.floor((width - 24) / 32),
-    [width]
+    () => Math.floor((listWidth - 24) / 32),
+    [listWidth]
   );
 
   const icons = filteredIcons.map((name, index) => (
@@ -167,11 +167,11 @@ const IconPanel = ({
         onChange={handleFilter}
       />
       <StyledVirtualList
-        width={width}
+        width={listWidth}
         height={314}
         itemCount={dataChunks.length}
         itemSize={32}
-        itemData={{ dataChunks }}
+        itemData={{ dataChunks, iconsPerRow }}
         style={{ padding: "0px 12px" }}
         outerRef={scrollableRef}
       >
@@ -183,6 +183,7 @@ const IconPanel = ({
 
 type DataRowProps = {
   dataChunks: React.ReactNode[][];
+  iconsPerRow: number;
 };
 
 const DataRow = ({
@@ -190,10 +191,14 @@ const DataRow = ({
   style,
   data,
 }: ListChildComponentProps<DataRowProps>) => {
-  const { dataChunks } = data;
+  const { dataChunks, iconsPerRow } = data;
   const row = dataChunks[rowIdx];
 
-  return <Flex style={style}>{row}</Flex>;
+  return (
+    <DataRowGrid style={style} columns={iconsPerRow}>
+      {row}
+    </DataRowGrid>
+  );
 };
 
 const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
@@ -204,6 +209,12 @@ const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
   & > div {
     position: relative;
   }
+`;
+
+const DataRowGrid = styled.div<{ columns: number }>`
+  display: grid;
+  grid-template-columns: ${({ columns }) => `repeat(${columns}, 1fr)`};
+  align-content: center;
 `;
 
 const StyledInputSearch = styled(InputSearch)`

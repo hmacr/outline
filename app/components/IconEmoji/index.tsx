@@ -13,7 +13,9 @@ import styled, { css } from "styled-components";
 import { s } from "@shared/styles";
 import theme from "@shared/styles/theme";
 import { IconType, determineIconType } from "@shared/utils/icon";
+import useMobile from "~/hooks/useMobile";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
+import useWindowSize from "~/hooks/useWindowSize";
 import { hover } from "~/styles";
 import Flex from "../Flex";
 import Icon from "../Icon";
@@ -27,6 +29,8 @@ const tabIds = {
   outline: "outline",
   emoji: "emoji",
 } satisfies Record<IconType, string>;
+
+const POPOVER_WIDTH = 408;
 
 type Props = {
   icon: string | null;
@@ -55,8 +59,12 @@ const IconEmoji = ({
 }: Props) => {
   const { t } = useTranslation();
 
+  const { width: windowWidth } = useWindowSize();
+  const isMobile = useMobile();
+
   const [query, setQuery] = React.useState("");
   const [chosenColor, setChosenColor] = React.useState(color);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
 
   const iconType = determineIconType(icon);
   const defaultTab = React.useMemo(
@@ -71,7 +79,9 @@ const IconEmoji = ({
   });
   const tab = useTabState({ selectedId: defaultTab });
 
-  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const popoverWidth = isMobile ? windowWidth : POPOVER_WIDTH;
+  // In mobile, popover is absolutely positioned to leave 8px on both sides.
+  const listWidth = isMobile ? windowWidth - 16 : popoverWidth;
 
   const resetDefaultTab = React.useCallback(() => {
     tab.select(defaultTab);
@@ -178,7 +188,7 @@ const IconEmoji = ({
       <Popover
         {...popover}
         ref={contentRef}
-        width={408}
+        width={popoverWidth}
         shrink
         aria-label={t("Icon Picker")}
         onClick={(e) => e.stopPropagation()}
@@ -210,7 +220,7 @@ const IconEmoji = ({
           </TabActionsWrapper>
           <StyledTabPanel {...tab}>
             <IconPanel
-              width={408}
+              listWidth={listWidth}
               initial={initial ?? "?"}
               color={chosenColor}
               query={query}
@@ -223,7 +233,7 @@ const IconEmoji = ({
           <StyledTabPanel {...tab}>
             {tab.selectedId === tabIds.emoji && (
               <EmojiPanel
-                width={408}
+                listWidth={listWidth}
                 query={query}
                 panelActive={popover.visible && tab.selectedId === tabIds.emoji}
                 onEmojiChange={handleIconChange}

@@ -92,7 +92,7 @@ const useEmojiState = () => {
 };
 
 type Props = {
-  width: number;
+  listWidth: number;
   query: string;
   panelActive: boolean;
   onEmojiChange: (emoji: string) => void | Promise<void>;
@@ -100,7 +100,7 @@ type Props = {
 };
 
 const EmojiPanel = ({
-  width,
+  listWidth,
   query,
   panelActive,
   onEmojiChange,
@@ -144,10 +144,7 @@ const EmojiPanel = ({
 
   // 24px padding for the container
   // icon size is 24px by default; and we add 4px padding on all sides => 32px is the button size.
-  const emojisPerRow = React.useMemo(
-    () => Math.floor((width - 24) / 32),
-    [width]
-  );
+  const emojisPerRow = Math.floor((listWidth - 24) / 32);
 
   const isSearch = query !== "";
   const dataChunks = isSearch
@@ -183,11 +180,11 @@ const EmojiPanel = ({
         <SkinPicker skin={skin} onChange={handleSkinChange} />
       </UserInputContainer>
       <StyledVirtualList
-        width={width}
-        height={358}
+        width={listWidth}
+        height={362}
         itemCount={dataChunks.length}
         itemSize={32}
-        itemData={{ dataChunks }}
+        itemData={{ dataChunks, emojisPerRow }}
         outerRef={scrollableRef}
       >
         {DataRow}
@@ -326,6 +323,7 @@ const getAllEmojis = ({
 
 type DataRowProps = {
   dataChunks: React.ReactNode[][];
+  emojisPerRow: number;
 };
 
 const DataRow = ({
@@ -333,13 +331,13 @@ const DataRow = ({
   style,
   data,
 }: ListChildComponentProps<DataRowProps>) => {
-  const { dataChunks } = data;
+  const { dataChunks, emojisPerRow } = data;
   const row = dataChunks[rowIdx];
 
   return (
-    <Flex style={style} align="center">
+    <DataRowGrid style={style} columns={emojisPerRow}>
       {row}
-    </Flex>
+    </DataRowGrid>
   );
 };
 
@@ -353,6 +351,12 @@ const StyledVirtualList = styled(FixedSizeList<DataRowProps>)`
   }
 `;
 
+const DataRowGrid = styled.div<{ columns: number }>`
+  display: grid;
+  grid-template-columns: ${({ columns }) => `repeat(${columns}, 1fr)`};
+  align-content: center;
+`;
+
 const UserInputContainer = styled(Flex)`
   height: 48px;
   padding: 6px 12px 0px;
@@ -363,6 +367,7 @@ const StyledInputSearch = styled(InputSearch)`
 `;
 
 const CategoryName = styled(Text)`
+  grid-column: 1 / -1;
   padding-left: 6px;
 `;
 
