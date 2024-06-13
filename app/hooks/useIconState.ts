@@ -1,5 +1,5 @@
 import React from "react";
-import { EmojiSkin } from "~/components/IconEmoji/emoji-data";
+import { EmojiSkin } from "~/components/IconPicker/emoji-data";
 import usePersistedState from "./usePersistedState";
 
 const STORAGE_KEYS = {

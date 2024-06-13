@@ -20,12 +20,12 @@ import ContentEditable, { RefHandle } from "~/components/ContentEditable";
 import { useDocumentContext } from "~/components/DocumentContext";
 import Flex from "~/components/Flex";
 import Icon from "~/components/Icon";
-import { PopoverButton } from "~/components/IconEmoji/PopoverButton";
+import { PopoverButton } from "~/components/IconPicker/PopoverButton";
 import useBoolean from "~/hooks/useBoolean";
 import usePolicy from "~/hooks/usePolicy";
 import { isModKey } from "~/utils/keyboard";
 
-const IconEmoji = React.lazy(() => import("~/components/IconEmoji"));
+const IconPicker = React.lazy(() => import("~/components/IconPicker"));
 
 type Props = {
   /** ID of the associated document */
@@ -360,7 +360,7 @@ const Title = styled(ContentEditable)<TitleProps>`
   }
 `;
 
-const StyledIconPicker = styled(IconEmoji)`
+const StyledIconPicker = styled(IconPicker)`
   ${extraArea(8)}
 `;
 

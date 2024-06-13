@@ -1,7 +1,7 @@
 import capitalize from "lodash/capitalize";
 import React from "react";
 import { emojiMartToGemoji, snakeCase } from "@shared/editor/lib/emoji";
-import { search as emojiSearch } from "~/components/IconEmoji/emoji-data";
+import { search as emojiSearch } from "~/components/IconPicker/emoji-data";
 import EmojiMenuItem from "./EmojiMenuItem";
 import SuggestionsMenu, {
   Props as SuggestionsMenuProps,

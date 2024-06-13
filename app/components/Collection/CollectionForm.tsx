@@ -20,7 +20,7 @@ import useCurrentTeam from "~/hooks/useCurrentTeam";
 import { Feature, FeatureFlags } from "~/utils/FeatureFlags";
 import Icon from "../Icon";
 
-const IconEmoji = React.lazy(() => import("~/components/IconEmoji"));
+const IconPicker = React.lazy(() => import("~/components/IconPicker"));
 
 export interface FormData {
   name: string;
@@ -184,7 +184,7 @@ export const CollectionForm = observer(function CollectionForm_({
   );
 });
 
-const StyledIconPicker = styled(IconEmoji)`
+const StyledIconPicker = styled(IconPicker)`
   margin-left: 4px;
   margin-right: 4px;
 `;
