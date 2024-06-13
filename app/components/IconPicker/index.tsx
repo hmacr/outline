@@ -12,7 +12,8 @@ import {
 import styled, { css } from "styled-components";
 import { s } from "@shared/styles";
 import theme from "@shared/styles/theme";
-import { IconType, determineIconType } from "@shared/utils/icon";
+import { IconType } from "@shared/types";
+import { determineIconType } from "@shared/utils/icon";
 import Flex from "~/components/Flex";
 import Icon from "~/components/Icon";
 import NudeButton from "~/components/NudeButton";
@@ -26,9 +27,9 @@ import IconPanel from "./components/IconPanel";
 import { PopoverButton } from "./components/PopoverButton";
 
 const TAB_NAMES = {
-  outline: "outline",
-  emoji: "emoji",
-} satisfies Record<IconType, string>;
+  Outline: "outline",
+  Emoji: "emoji",
+} as const;
 
 const POPOVER_WIDTH = 408;
 
@@ -68,7 +69,8 @@ const IconEmoji = ({
 
   const iconType = determineIconType(icon);
   const defaultTab = React.useMemo(
-    () => (iconType ? TAB_NAMES[iconType] : TAB_NAMES["outline"]),
+    () =>
+      iconType === IconType.Emoji ? TAB_NAMES["Emoji"] : TAB_NAMES["Outline"],
     [iconType]
   );
 
@@ -91,7 +93,9 @@ const IconEmoji = ({
   const handleIconChange = React.useCallback(
     (ic: string) => {
       popover.hide();
-      onChange(ic, chosenColor);
+      const icType = determineIconType(ic);
+      const finalColor = icType === IconType.Outline ? chosenColor : null;
+      onChange(ic, finalColor);
     },
     [popover, onChange, chosenColor]
   );
@@ -137,7 +141,9 @@ const IconEmoji = ({
     }
 
     if (icon !== null && color !== chosenColor) {
-      onChange(icon, chosenColor);
+      const icType = determineIconType(icon);
+      const finalColor = icType === IconType.Outline ? chosenColor : null;
+      onChange(icon, finalColor);
     }
     onClose?.();
     setQuery("");
@@ -199,17 +205,17 @@ const IconEmoji = ({
             <StyledTabList {...tab}>
               <StyledTab
                 {...tab}
-                id={TAB_NAMES.outline}
+                id={TAB_NAMES["Outline"]}
                 aria-label={t("Icons Tab")}
-                active={tab.selectedId === TAB_NAMES.outline}
+                active={tab.selectedId === TAB_NAMES["Outline"]}
               >
                 Icons
               </StyledTab>
               <StyledTab
                 {...tab}
-                id={TAB_NAMES.emoji}
+                id={TAB_NAMES["Emoji"]}
                 aria-label={t("Emojis Tab")}
-                active={tab.selectedId === TAB_NAMES.emoji}
+                active={tab.selectedId === TAB_NAMES["Emoji"]}
               >
                 Emojis
               </StyledTab>
@@ -225,7 +231,7 @@ const IconEmoji = ({
               color={chosenColor}
               query={query}
               panelActive={
-                popover.visible && tab.selectedId === TAB_NAMES.outline
+                popover.visible && tab.selectedId === TAB_NAMES["Outline"]
               }
               onIconChange={handleIconChange}
               onColorChange={handleIconColorChange}
@@ -233,17 +239,15 @@ const IconEmoji = ({
             />
           </StyledTabPanel>
           <StyledTabPanel {...tab}>
-            {tab.selectedId === TAB_NAMES.emoji && (
-              <EmojiPanel
-                gridWidth={iconGridWidth}
-                query={query}
-                panelActive={
-                  popover.visible && tab.selectedId === TAB_NAMES.emoji
-                }
-                onEmojiChange={handleIconChange}
-                onQueryChange={handleQueryChange}
-              />
-            )}
+            <EmojiPanel
+              gridWidth={iconGridWidth}
+              query={query}
+              panelActive={
+                popover.visible && tab.selectedId === TAB_NAMES["Emoji"]
+              }
+              onEmojiChange={handleIconChange}
+              onQueryChange={handleQueryChange}
+            />
           </StyledTabPanel>
         </>
       </Popover>

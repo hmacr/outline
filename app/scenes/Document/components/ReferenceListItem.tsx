@@ -4,7 +4,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { s, ellipsis } from "@shared/styles";
-import { NavigationNode } from "@shared/types";
+import { IconType, NavigationNode } from "@shared/types";
 import { determineIconType } from "@shared/utils/icon";
 import Document from "~/models/Document";
 import Flex from "~/components/Flex";
@@ -60,7 +60,7 @@ function ReferenceListItem({
   ...rest
 }: Props) {
   const { icon, color } = document;
-  const isEmoji = determineIconType(icon) === "emoji";
+  const isEmoji = determineIconType(icon) === IconType.Emoji;
 
   return (
     <DocumentLink
@@ -76,7 +76,11 @@ function ReferenceListItem({
       {...rest}
     >
       <Content gap={4} dir="auto">
-        {icon ? <Icon value={icon} color={color} /> : <DocumentIcon />}
+        {icon ? (
+          <Icon value={icon} color={color ?? undefined} />
+        ) : (
+          <DocumentIcon />
+        )}
         <Title>
           {isEmoji ? document.title.replace(icon!, "") : document.title}
         </Title>

@@ -7,6 +7,7 @@ import isMarkdown from "@shared/editor/lib/isMarkdown";
 import normalizePastedMarkdown from "@shared/editor/lib/markdown/normalize";
 import isInCode from "@shared/editor/queries/isInCode";
 import isInList from "@shared/editor/queries/isInList";
+import { IconType } from "@shared/types";
 import { determineIconType } from "@shared/utils/icon";
 import parseDocumentSlug from "@shared/utils/parseDocumentSlug";
 import { isDocumentUrl, isUrl } from "@shared/utils/urls";
@@ -181,7 +182,7 @@ export default class PasteHandler extends Extension {
                         const { hash } = new URL(text);
 
                         const hasEmoji =
-                          determineIconType(document.icon) === "emoji";
+                          determineIconType(document.icon) === IconType.Emoji;
 
                         const title = `${hasEmoji ? document.icon + " " : ""}${
                           document.titleWithDefault

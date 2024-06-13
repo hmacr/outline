@@ -1,6 +1,7 @@
 import { getLuminance } from "polished";
 import * as React from "react";
 import { randomElement } from "@shared/random";
+import { IconType } from "@shared/types";
 import { IconLibrary } from "@shared/utils/IconLibrary";
 import { colorPalette } from "@shared/utils/collections";
 import { determineIconType } from "@shared/utils/icon";
@@ -33,7 +34,7 @@ const Icon = ({
   }
 
   try {
-    if (iconType === "outline") {
+    if (iconType === IconType.Outline) {
       return (
         <OutlineIcon
           value={icon}

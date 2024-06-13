@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import styled, { useTheme } from "styled-components";
 import Squircle from "@shared/components/Squircle";
 import { s, ellipsis } from "@shared/styles";
+import { IconType } from "@shared/types";
 import { determineIconType } from "@shared/utils/icon";
 import Document from "~/models/Document";
 import Pin from "~/models/Pin";
@@ -53,7 +54,7 @@ function DocumentCard(props: Props) {
     disabled: !isDraggable || !canUpdatePin,
   });
 
-  const hasEmojiInTitle = determineIconType(document.icon) === "emoji";
+  const hasEmojiInTitle = determineIconType(document.icon) === IconType.Emoji;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -118,7 +119,12 @@ function DocumentCard(props: Props) {
                 color={document.color ?? undefined}
               />
             ) : (
-              <Squircle color={collection?.color ?? theme.slateDark}>
+              <Squircle
+                color={
+                  collection?.color ??
+                  (!pin?.collectionId ? theme.slateLight : theme.slateDark)
+                }
+              >
                 {collection?.icon &&
                 collection?.icon !== "letter" &&
                 collection?.icon !== "collection" &&
@@ -172,7 +178,8 @@ const DocumentSquircle = ({
 }) => {
   const theme = useTheme();
   const iconType = determineIconType(icon)!;
-  const squircleColor = iconType === "outline" ? color : theme.slateLight;
+  const squircleColor =
+    iconType === IconType.Outline ? color : theme.slateLight;
 
   return (
     <Squircle color={squircleColor}>

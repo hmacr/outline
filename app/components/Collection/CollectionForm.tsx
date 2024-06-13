@@ -81,7 +81,7 @@ export const CollectionForm = observer(function CollectionForm_({
           "collection"
       );
     }
-  }, [collection, hasOpenedIconPicker, values.name, values.icon, setValue]);
+  }, [collection, hasOpenedIconPicker, setValue, values.name, values.icon]);
 
   React.useEffect(() => {
     setTimeout(() => setFocus("name", { shouldSelect: true }), 100);

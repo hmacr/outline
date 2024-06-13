@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import styled from "styled-components";
 import breakpoint from "styled-components-breakpoint";
 import { s } from "@shared/styles";
-import { NavigationNode } from "@shared/types";
+import { IconType, NavigationNode } from "@shared/types";
 import { ProsemirrorHelper, Heading } from "@shared/utils/ProsemirrorHelper";
 import { parseDomain } from "@shared/utils/domains";
 import { determineIconType } from "@shared/utils/icon";
@@ -416,7 +416,7 @@ class DocumentScene extends React.Component<Props> {
       ? this.props.match.url
       : updateDocumentPath(this.props.match.url, document);
 
-    const hasEmojiInTitle = determineIconType(document.icon) === "emoji";
+    const hasEmojiInTitle = determineIconType(document.icon) === IconType.Emoji;
     const title = hasEmojiInTitle
       ? document.titleWithDefault.replace(document.icon!, "")
       : document.titleWithDefault;

@@ -391,6 +391,11 @@ export type ProsemirrorDoc = {
   content: ProsemirrorData[];
 };
 
+export enum IconType {
+  Outline = "outline",
+  Emoji = "emoji",
+}
+
 export enum EmojiCategory {
   People = "Smileys & People",
   Nature = "Animals & Nature",

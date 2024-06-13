@@ -1,6 +1,5 @@
+import { IconType } from "../types";
 import { IconLibrary } from "./IconLibrary";
-
-export type IconType = "outline" | "emoji";
 
 const outlineIconNames = new Set(Object.keys(IconLibrary.mapping));
 
@@ -10,5 +9,5 @@ export const determineIconType = (
   if (!icon) {
     return;
   }
-  return outlineIconNames.has(icon) ? "outline" : "emoji";
+  return outlineIconNames.has(icon) ? IconType.Outline : IconType.Emoji;
 };
