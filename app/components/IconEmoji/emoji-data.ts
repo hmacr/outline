@@ -1,10 +1,16 @@
-import RawData, { type EmojiMartData, Skin } from "@emoji-mart/data";
+import RawData from "@emoji-mart/data";
+import type { EmojiMartData, Skin } from "@emoji-mart/data";
+import { init, Data } from "emoji-mart";
 import FuzzySearch from "fuzzy-search";
 import capitalize from "lodash/capitalize";
+import sortBy from "lodash/sortBy";
 
-const Data = RawData as EmojiMartData;
+init({ data: RawData });
 
-const searcher = new FuzzySearch(Object.values(Data.emojis), ["search"], {
+// Data has the pre-processed "search" terms.
+const TypedData = Data as EmojiMartData;
+
+const searcher = new FuzzySearch(Object.values(TypedData.emojis), ["search"], {
   caseSensitive: false,
   sort: true,
 });
@@ -66,7 +72,7 @@ const getVariants = ({ id, name, skins }: GetVariantsProps): EmojiVariants =>
     return obj;
   }, {} as EmojiVariants);
 
-const EMOJI_ID_TO_VARIANTS = Object.entries(Data.emojis).reduce(
+const EMOJI_ID_TO_VARIANTS = Object.entries(TypedData.emojis).reduce(
   (obj, [id, emoji]) => {
     obj[id] = getVariants({
       id: emoji.id,
@@ -79,7 +85,7 @@ const EMOJI_ID_TO_VARIANTS = Object.entries(Data.emojis).reduce(
 );
 
 const CATEGORY_TO_EMOJI_IDS: Record<EmojiCategory, string[]> =
-  Data.categories.reduce((obj, { id, emojis: emojiIds }) => {
+  TypedData.categories.reduce((obj, { id, emojis: emojiIds }) => {
     const category = EmojiCategory[capitalize(id)] as EmojiCategory;
     if (!category) {
       return obj;
@@ -120,11 +126,25 @@ export const getEmojisWithCategory = ({
 export const getEmojiVariants = ({ id }: { id: string }) =>
   EMOJI_ID_TO_VARIANTS[id];
 
-export const search = ({ query, skin }: { query: string; skin: EmojiSkin }) => {
-  const matchedEmojis = searcher.search(query);
-  return matchedEmojis.map(
-    (emoji) =>
-      EMOJI_ID_TO_VARIANTS[emoji.id][skin] ??
-      EMOJI_ID_TO_VARIANTS[emoji.id][EmojiSkin.Default]
-  );
+export const search = ({
+  query,
+  skin,
+}: {
+  query: string;
+  skin?: EmojiSkin;
+}) => {
+  const queryLowercase = query.toLowerCase();
+  const emojiSkin = skin ?? EmojiSkin.Default;
+
+  const matchedEmojis = searcher
+    .search(queryLowercase)
+    .map(
+      (emoji) =>
+        EMOJI_ID_TO_VARIANTS[emoji.id][emojiSkin] ??
+        EMOJI_ID_TO_VARIANTS[emoji.id][EmojiSkin.Default]
+    );
+  return sortBy(matchedEmojis, (emoji) => {
+    const nlc = emoji.name.toLowerCase();
+    return query === nlc ? -1 : nlc.startsWith(queryLowercase) ? 0 : 1;
+  });
 };
