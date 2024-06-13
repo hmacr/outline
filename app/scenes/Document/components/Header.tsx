@@ -24,6 +24,7 @@ import {
   useDocumentContext,
   useEditingFocus,
 } from "~/components/DocumentContext";
+import Flex from "~/components/Flex";
 import Header from "~/components/Header";
 import Icon from "~/components/Icon";
 import Star from "~/components/Star";
@@ -189,7 +190,14 @@ function DocumentHeader({
     return (
       <StyledHeader
         $hidden={isEditingFocus}
-        title={document.title}
+        title={
+          <Flex gap={4}>
+            {document.icon && (
+              <Icon value={document.icon} color={document.color ?? undefined} />
+            )}
+            {document.title}
+          </Flex>
+        }
         hasSidebar={sharedTree && sharedTree.children?.length > 0}
         left={
           isMobile ? (
@@ -229,20 +237,15 @@ function DocumentHeader({
           )
         }
         title={
-          <>
+          <Flex gap={4}>
             {document.icon && (
-              <>
-                <Icon
-                  value={document.icon}
-                  color={document.color ?? undefined}
-                />{" "}
-              </>
+              <Icon value={document.icon} color={document.color ?? undefined} />
             )}
-            {document.title}{" "}
+            {document.title}
             {document.isArchived && (
               <ArchivedBadge>{t("Archived")}</ArchivedBadge>
             )}
-          </>
+          </Flex>
         }
         actions={
           <>

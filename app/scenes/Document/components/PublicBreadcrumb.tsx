@@ -53,14 +53,10 @@ const PublicBreadcrumb: React.FC<Props> = ({
         .slice(0, -1)
         .map((item) => ({
           ...item,
-          icon: undefined,
-          title: item.icon ? (
-            <>
-              <Icon value={item.icon} color={item.color} /> {item.title}
-            </>
-          ) : (
-            item.title
-          ),
+          icon: item.icon ? (
+            <Icon value={item.icon} color={item.color} />
+          ) : undefined,
+          title: item.title,
           type: "route",
           to: sharedDocumentPath(shareId, item.url),
         })),
