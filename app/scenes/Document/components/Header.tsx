@@ -232,7 +232,10 @@ function DocumentHeader({
           <>
             {document.icon && (
               <>
-                <Icon value={document.icon} color={document.color} size={24} />{" "}
+                <Icon
+                  value={document.icon}
+                  color={document.color ?? undefined}
+                />{" "}
               </>
             )}
             {document.title}{" "}

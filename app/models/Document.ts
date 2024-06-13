@@ -136,7 +136,7 @@ export default class Document extends ParanoidModel {
   icon?: string | null;
 
   /**
-   * The color to use for the document icon (not emoji).
+   * The color to use for the document icon.
    */
   @Field
   @observable

@@ -263,7 +263,7 @@ class Document extends ParanoidModel<
   @Column
   icon: string | null;
 
-  /** The color of the icon (not emoji). Otherwise, null */
+  /** The color of the icon. */
   @IsHexColor
   @Column
   color: string | null;

@@ -22,7 +22,7 @@ const useTemplatesActions = () => {
           analyticsName: "New document",
           section: DocumentSection,
           icon: item.icon ? (
-            <Icon value={item.icon} color={item.color} />
+            <Icon value={item.icon} color={item.color ?? undefined} />
           ) : (
             <NewDocumentIcon />
           ),

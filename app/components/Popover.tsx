@@ -20,7 +20,7 @@ type Props = PopoverProps & {
   hide: () => void;
 };
 
-const Popover: React.ForwardRefRenderFunction<HTMLDivElement, Props> = (
+const Popover = (
   {
     children,
     shrink,
@@ -30,7 +30,7 @@ const Popover: React.ForwardRefRenderFunction<HTMLDivElement, Props> = (
     mobilePosition,
     ...rest
   }: Props,
-  ref
+  ref: React.Ref<HTMLDivElement>
 ) => {
   const isMobile = useMobile();
 

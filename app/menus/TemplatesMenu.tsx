@@ -44,7 +44,7 @@ function TemplatesMenu({ onSelectTemplate, document }: Props) {
       onClick={() => onSelectTemplate(template)}
       icon={
         template.icon ? (
-          <Icon value={template.icon} color={template.color} />
+          <Icon value={template.icon} color={template.color ?? undefined} />
         ) : (
           <DocumentIcon />
         )

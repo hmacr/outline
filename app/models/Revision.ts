@@ -25,7 +25,7 @@ class Revision extends Model {
   /** The icon (or) emoji of the document when the revision was created */
   icon: string | null;
 
-  /** The color of the document icon (not emoji) when the revision was created */
+  /** The color of the document icon when the revision was created */
   color: string | null;
 
   /** HTML string representing the revision as a diff from the previous version */

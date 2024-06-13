@@ -426,6 +426,7 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
 
     const collection = model && (await presentCollection(undefined, model));
     if (collection) {
+      // For backward compatibility, set a default color.
       collection.color = collection.color ?? colorPalette[0];
     }
 
@@ -457,6 +458,7 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
     const collection =
       model && (await presentCollection(undefined, model.collection!));
     if (collection) {
+      // For backward compatibility, set a default color.
       collection.color = collection.color ?? colorPalette[0];
     }
 
@@ -490,6 +492,7 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
     const collection =
       model && (await presentCollection(undefined, model.collection!));
     if (collection) {
+      // For backward compatibility, set a default color.
       collection.color = collection.color ?? colorPalette[0];
     }
 

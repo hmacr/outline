@@ -47,7 +47,7 @@ export default class Collection extends ParanoidModel {
   icon: string;
 
   /**
-   * The color to use for the collection icon (not emoji) and other highlights.
+   * The color to use for the collection icon and other highlights.
    */
   @Field
   @observable

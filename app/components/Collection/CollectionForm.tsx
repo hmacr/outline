@@ -11,6 +11,7 @@ import { CollectionValidation } from "@shared/validations";
 import Collection from "~/models/Collection";
 import Button from "~/components/Button";
 import Flex from "~/components/Flex";
+import Icon from "~/components/Icon";
 import Input from "~/components/Input";
 import InputSelectPermission from "~/components/InputSelectPermission";
 import Switch from "~/components/Switch";
@@ -18,7 +19,6 @@ import Text from "~/components/Text";
 import useBoolean from "~/hooks/useBoolean";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import { Feature, FeatureFlags } from "~/utils/FeatureFlags";
-import Icon from "../Icon";
 
 const IconPicker = React.lazy(() => import("~/components/IconPicker"));
 

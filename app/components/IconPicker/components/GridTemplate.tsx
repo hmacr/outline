@@ -9,7 +9,7 @@ import Grid from "./Grid";
 import { IconButton } from "./IconButton";
 
 /**
- * icon/emoji size is 24px by default; and we add 4px padding on all sides,
+ * icon/emoji size is 24px; and we add 4px padding on all sides,
  */
 const BUTTON_SIZE = 32;
 
@@ -49,6 +49,10 @@ const GridTemplate = (
 
   const gridItems = compact(
     data.flatMap((node) => {
+      if (node.icons.length === 0) {
+        return [];
+      }
+
       const category = (
         <CategoryName
           key={node.category}
@@ -84,10 +88,6 @@ const GridTemplate = (
           </IconButton>
         );
       });
-
-      if (items.length === 0) {
-        return [];
-      }
 
       const chunks = chunk(items, itemsPerRow);
       return [[category], ...chunks];

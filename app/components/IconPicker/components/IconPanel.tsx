@@ -125,7 +125,7 @@ const IconPanel = ({
     [onIconChange, incrementIconCount]
   );
 
-  const baseIconsNode: DataNode = {
+  const baseIcons: DataNode = {
     category,
     icons: filteredIcons.map((name, index) => ({
       type: "outline",
@@ -138,7 +138,7 @@ const IconPanel = ({
   };
 
   const templateData: DataNode[] = isSearch
-    ? [baseIconsNode]
+    ? [baseIcons]
     : [
         {
           category: IconCategory.Frequent,
@@ -151,7 +151,7 @@ const IconPanel = ({
             onClick: handleIconClick,
           })),
         },
-        baseIconsNode,
+        baseIcons,
       ];
 
   React.useEffect(() => {
