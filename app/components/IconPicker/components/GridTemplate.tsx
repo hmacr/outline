@@ -2,12 +2,11 @@ import chunk from "lodash/chunk";
 import compact from "lodash/compact";
 import React from "react";
 import styled from "styled-components";
-import { s } from "@shared/styles";
 import { IconLibrary } from "@shared/utils/IconLibrary";
-import NudeButton from "~/components/NudeButton";
 import Text from "~/components/Text";
-import { hover } from "~/styles";
+import { Emoji } from "./Emoji";
 import Grid from "./Grid";
+import { IconButton } from "./IconButton";
 
 /**
  * icon/emoji size is 24px by default; and we add 4px padding on all sides,
@@ -64,7 +63,7 @@ const GridTemplate = (
       const items = node.icons.map((item) => {
         if (item.type === "outline") {
           return (
-            <Button
+            <IconButton
               key={item.name}
               onClick={() => item.onClick(item.name)}
               delay={item.delay}
@@ -72,17 +71,17 @@ const GridTemplate = (
               <Icon as={IconLibrary.getComponent(item.name)} color={item.color}>
                 {item.initial}
               </Icon>
-            </Button>
+            </IconButton>
           );
         }
 
         return (
-          <Button
+          <IconButton
             key={item.id}
             onClick={() => item.onClick({ id: item.id, value: item.value })}
           >
             <Emoji>{item.value}</Emoji>
-          </Button>
+          </IconButton>
         );
       });
 
@@ -112,26 +111,9 @@ const CategoryName = styled(Text)`
   padding-left: 6px;
 `;
 
-const Button = styled(NudeButton)<{ delay?: number }>`
-  width: ${BUTTON_SIZE}px;
-  height: ${BUTTON_SIZE}px;
-  padding: 4px;
-  --delay: ${({ delay }) => delay && `${delay}ms`};
-
-  &: ${hover} {
-    background: ${s("listItemHoverBackground")};
-  }
-`;
-
 const Icon = styled.svg`
   transition: color 150ms ease-in-out, fill 150ms ease-in-out;
   transition-delay: var(--delay);
-`;
-
-const Emoji = styled.span`
-  font-family: ${s("fontFamilyEmoji")};
-  width: 24px;
-  height: 24px;
 `;
 
 export default React.forwardRef(GridTemplate);

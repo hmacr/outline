@@ -8,6 +8,8 @@ import { getEmojiVariants } from "@shared/utils/emoji";
 import Flex from "~/components/Flex";
 import NudeButton from "~/components/NudeButton";
 import { hover } from "~/styles";
+import { Emoji } from "./Emoji";
+import { IconButton } from "./IconButton";
 
 const SkinPicker = ({
   skin,
@@ -40,9 +42,9 @@ const SkinPicker = ({
       Object.entries(handEmojiVariants).map(([eskin, emoji]) => (
         <MenuItem {...menu} key={emoji.value}>
           {(menuprops) => (
-            <EmojiButton {...menuprops} onClick={() => handleSkinClick(eskin)}>
+            <IconButton {...menuprops} onClick={() => handleSkinClick(eskin)}>
               <Emoji>{emoji.value}</Emoji>
-            </EmojiButton>
+            </IconButton>
           )}
         </MenuItem>
       )),
@@ -82,22 +84,6 @@ const StyledMenuButton = styled(NudeButton)`
   &: ${hover} {
     border: 1px solid ${s("inputBorderFocused")};
   }
-`;
-
-const EmojiButton = styled(NudeButton)`
-  width: 32px;
-  height: 32px;
-  padding: 4px;
-
-  &: ${hover} {
-    background: ${s("listItemHoverBackground")};
-  }
-`;
-
-const Emoji = styled.span`
-  width: 24px;
-  height: 24px;
-  font-family: ${s("fontFamilyEmoji")};
 `;
 
 export default SkinPicker;
