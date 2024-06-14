@@ -1,6 +1,7 @@
 import { observer } from "mobx-react";
 import * as React from "react";
 import EditorContainer from "@shared/editor/components/Styles";
+import { colorPalette } from "@shared/utils/collections";
 import Document from "~/models/Document";
 import Revision from "~/models/Revision";
 import { Props as EditorProps } from "~/components/Editor";
@@ -31,6 +32,7 @@ function RevisionViewer(props: Props) {
         documentId={revision.documentId}
         title={revision.title}
         icon={revision.icon}
+        color={revision.color ?? colorPalette[0]}
         iconPosition={document.fullWidth ? "top" : "side"}
         readOnly
       />
