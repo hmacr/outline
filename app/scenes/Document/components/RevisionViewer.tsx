@@ -30,8 +30,8 @@ function RevisionViewer(props: Props) {
       <DocumentTitle
         documentId={revision.documentId}
         title={revision.title}
-        emoji={revision.emoji}
-        emojiPosition={document.fullWidth ? "top" : "side"}
+        icon={revision.icon}
+        iconPosition={document.fullWidth ? "top" : "side"}
         readOnly
       />
       <DocumentMeta
