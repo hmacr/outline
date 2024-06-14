@@ -7,6 +7,8 @@ import isMarkdown from "@shared/editor/lib/isMarkdown";
 import normalizePastedMarkdown from "@shared/editor/lib/markdown/normalize";
 import { isInCode } from "@shared/editor/queries/isInCode";
 import { isInList } from "@shared/editor/queries/isInList";
+import { IconType } from "@shared/types";
+import { determineIconType } from "@shared/utils/icon";
 import parseDocumentSlug from "@shared/utils/parseDocumentSlug";
 import { isDocumentUrl, isUrl } from "@shared/utils/urls";
 import stores from "~/stores";
@@ -172,16 +174,19 @@ export default class PasteHandler extends Extension {
                 if (slug) {
                   void stores.documents
                     .fetch(slug)
-                    .then((document) => {
+                    .then(document => {
                       if (view.isDestroyed) {
                         return;
                       }
                       if (document) {
                         const { hash } = new URL(text);
 
-                        const title = `${
-                          document.emoji ? document.emoji + " " : ""
-                        }${document.titleWithDefault}`;
+                        const hasEmoji =
+                          determineIconType(document.icon) === IconType.Emoji;
+
+                        const title = `${hasEmoji ? document.icon + " " : ""}${
+                          document.titleWithDefault
+                        }`;
                         insertLink(`${document.path}${hash}`, title);
                       }
                     })
@@ -273,7 +278,7 @@ export default class PasteHandler extends Extension {
               // be pasted inline with surrounding content.
               const singleNode = sliceSingleNode(slice);
               if (singleNode?.type === this.editor.schema.nodes.paragraph) {
-                singleNode.forEach((node) => {
+                singleNode.forEach(node => {
                   tr.insert(currentPos, node);
                   currentPos += node.nodeSize;
                 });
