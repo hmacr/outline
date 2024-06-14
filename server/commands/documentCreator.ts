@@ -11,7 +11,8 @@ type Props = Optional<
     | "title"
     | "text"
     | "content"
-    | "emoji"
+    | "icon"
+    | "color"
     | "collectionId"
     | "parentDocumentId"
     | "importId"
@@ -35,7 +36,8 @@ type Props = Optional<
 export default async function documentCreator({
   title = "",
   text = "",
-  emoji,
+  icon,
+  color,
   state,
   id,
   urlId,
@@ -89,7 +91,8 @@ export default async function documentCreator({
       importId,
       sourceMetadata,
       fullWidth: templateDocument ? templateDocument.fullWidth : fullWidth,
-      emoji: templateDocument ? templateDocument.emoji : emoji,
+      icon: templateDocument ? templateDocument.icon : icon,
+      color: templateDocument ? templateDocument.color : color,
       title: TextHelper.replaceTemplateVariables(
         templateDocument ? templateDocument.title : title,
         user
