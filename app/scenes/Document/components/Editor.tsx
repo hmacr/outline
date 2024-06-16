@@ -194,7 +194,6 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
         }
         icon={document.icon}
         color={iconColor}
-        iconPosition={document.fullWidth ? "top" : "side"}
         onChangeTitle={onChangeTitle}
         onChangeIcon={onChangeIcon}
         onGoToNextInput={handleGoToNextInput}

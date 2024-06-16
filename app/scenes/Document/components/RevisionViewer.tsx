@@ -33,7 +33,6 @@ function RevisionViewer(props: Props) {
         title={revision.title}
         icon={revision.icon}
         color={revision.color ?? colorPalette[0]}
-        iconPosition={document.fullWidth ? "top" : "side"}
         readOnly
       />
       <DocumentMeta

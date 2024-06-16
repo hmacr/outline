@@ -1,6 +1,7 @@
 import { Transaction } from "sequelize";
 import { Optional } from "utility-types";
 import { Document, Event, User } from "@server/models";
+import { ProsemirrorHelper } from "@server/models/helpers/ProsemirrorHelper";
 import { TextHelper } from "@server/models/helpers/TextHelper";
 
 type Props = Optional<
@@ -60,6 +61,12 @@ export default async function documentCreator({
 }: Props): Promise<Document> {
   const templateId = templateDocument ? templateDocument.id : undefined;
 
+  if (state && templateDocument) {
+    throw new Error(
+      "State cannot be set when creating a document from a template"
+    );
+  }
+
   if (urlId) {
     const existing = await Document.unscoped().findOne({
       attributes: ["id"],
@@ -106,6 +113,12 @@ export default async function documentCreator({
         ip,
         transaction
       ),
+      content: templateDocument
+        ? ProsemirrorHelper.replaceTemplateVariables(
+            templateDocument.content,
+            user
+          )
+        : undefined,
       state,
     },
     {

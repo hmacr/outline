@@ -4,7 +4,7 @@ import { Selection } from "prosemirror-state";
 import { __parseFromClipboard } from "prosemirror-view";
 import * as React from "react";
 import { mergeRefs } from "react-merge-refs";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import breakpoint from "styled-components-breakpoint";
 import isMarkdown from "@shared/editor/lib/isMarkdown";
 import normalizePastedMarkdown from "@shared/editor/lib/markdown/normalize";
@@ -36,8 +36,6 @@ type Props = {
   icon?: string | null;
   /** Icon color */
   color: string;
-  /** Position of the icon relative to text */
-  iconPosition: "side" | "top";
   /** Placeholder to display when the document has no title */
   placeholder?: string;
   /** Should the title be editable, policies will also be considered separately */
@@ -63,7 +61,6 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
     title,
     icon,
     color,
-    iconPosition,
     readOnly,
     onChangeTitle,
     onChangeIcon,
@@ -258,12 +255,7 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
       ref={mergeRefs([ref, externalRef])}
     >
       {can.update && !readOnly ? (
-        <IconWrapper
-          align="center"
-          justify="center"
-          $position={iconPosition}
-          dir={dir}
-        >
+        <IconWrapper align="center" justify="center" dir={dir}>
           <React.Suspense fallback={fallbackIcon}>
             <StyledIconPicker
               icon={icon ?? null}
@@ -279,12 +271,7 @@ const DocumentTitle = React.forwardRef(function _DocumentTitle(
           </React.Suspense>
         </IconWrapper>
       ) : icon ? (
-        <IconWrapper
-          align="center"
-          justify="center"
-          $position={iconPosition}
-          dir={dir}
-        >
+        <IconWrapper align="center" justify="center" dir={dir}>
           {fallbackIcon}
         </IconWrapper>
       ) : null}
@@ -363,25 +350,17 @@ const StyledIconPicker = styled(IconPicker)`
   ${extraArea(8)}
 `;
 
-const IconWrapper = styled(Flex)<{ $position: "top" | "side"; dir?: string }>`
+const IconWrapper = styled(Flex)<{ dir?: string }>`
+  position: absolute;
+  top: 3px;
   height: 40px;
   width: 40px;
 
   // Always move above TOC
   z-index: 1;
 
-  ${(props) =>
-    props.$position === "top"
-      ? css`
-          position: relative;
-          top: -8px;
-        `
-      : css`
-          position: absolute;
-          top: 3px;
-          ${(props: { dir?: string }) =>
-            props.dir === "rtl" ? "right: -48px" : "left: -48px"};
-        `}
+  ${(props: { dir?: string }) =>
+    props.dir === "rtl" ? "right: -48px" : "left: -48px"};
 `;
 
 export default observer(DocumentTitle);
