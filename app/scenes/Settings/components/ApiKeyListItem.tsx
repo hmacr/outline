@@ -27,30 +27,28 @@ const ApiKeyListItem = ({ apiKey, isCopied, onCopy }: Props) => {
     ? isPast(new Date(apiKey.expiresAt))
     : false;
 
-  const lastActive = apiKey.lastActiveAt && (
+  const lastUsedText = apiKey.lastActiveAt && (
     <>
-      {t("Last used")} <Time dateTime={apiKey.lastActiveAt} addSuffix />
+      {t("Last used")} <Time dateTime={apiKey.lastActiveAt} addSuffix />{" "}
       &middot;{" "}
     </>
   );
 
-  const subtitle = (
+  const expiryText = (
     <Text type={hasExpired ? "danger" : "tertiary"}>
-      {lastActive}
-      {t(`Created`)} <Time dateTime={apiKey.createdAt} addSuffix /> &middot;{" "}
       {apiKey.expiresAt
         ? dateToExpiry(apiKey.expiresAt, t, userLocale)
         : t("No expiry")}
     </Text>
   );
 
-  React.useEffect(() => {
-    if (linkCopied) {
-      setTimeout(() => {
-        setLinkCopied(false);
-      }, 3000);
-    }
-  }, [linkCopied]);
+  const subtitle = (
+    <Text type="tertiary">
+      {lastUsedText}
+      {t("Created")} <Time dateTime={apiKey.createdAt} addSuffix /> &middot;{" "}
+      {expiryText}
+    </Text>
+  );
 
   const handleCopy = React.useCallback(() => {
     onCopy(apiKey.id);
