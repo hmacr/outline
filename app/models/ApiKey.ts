@@ -16,6 +16,10 @@ class ApiKey extends Model {
   @observable
   lastActiveAt?: string;
 
+  @Field
+  @observable
+  expiresAt?: string;
+
   secret: string;
 }
 

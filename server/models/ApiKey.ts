@@ -40,6 +40,10 @@ class ApiKey extends ParanoidModel<
   @Column
   lastActiveAt: Date | null;
 
+  @IsDate
+  @Column
+  expiresAt: Date | null;
+
   // hooks
 
   @BeforeValidate
