@@ -645,7 +645,6 @@ type MainProps = {
 
 const Main = styled.div<MainProps>`
   margin-top: 4px;
-  border: 1px solid blue;
 
   ${breakpoint("tablet")`
     display: grid;
