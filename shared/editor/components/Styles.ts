@@ -574,6 +574,8 @@ iframe.embed {
     EditorStyleHelper.padding
   }px + var(--container-width) * -0.5));
 
+  border: 1px solid green;
+
   .${EditorStyleHelper.tableScrollable},
   table {
     width: calc(var(--container-width) - ${EditorStyleHelper.padding * 2}px);

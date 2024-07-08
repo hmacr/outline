@@ -1,10 +1,7 @@
-import { transparentize } from "polished";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
-import breakpoint from "styled-components-breakpoint";
-import { EditorStyleHelper } from "@shared/editor/styles/EditorStyleHelper";
-import { depths, s } from "@shared/styles";
+import { s } from "@shared/styles";
 import Text from "~/components/Text";
 import useWindowScrollPosition from "~/hooks/useWindowScrollPosition";
 
@@ -19,7 +16,10 @@ type Props = {
   }[];
 };
 
-export default function Contents({ headings }: Props) {
+const Contents = (
+  { headings }: Props,
+  ref: React.RefObject<HTMLDivElement>
+) => {
   const [activeSlug, setActiveSlug] = React.useState<string>();
   const scrollPosition = useWindowScrollPosition({
     throttle: 100,
@@ -55,7 +55,7 @@ export default function Contents({ headings }: Props) {
   const { t } = useTranslation();
 
   return (
-    <StickyWrapper>
+    <div ref={ref}>
       <Heading>{t("Contents")}</Heading>
       {headings.length ? (
         <List>
@@ -74,35 +74,9 @@ export default function Contents({ headings }: Props) {
       ) : (
         <Empty>{t("Headings you add to the document will appear here")}</Empty>
       )}
-    </StickyWrapper>
+    </div>
   );
-}
-
-const StickyWrapper = styled.div`
-  display: none;
-
-  position: sticky;
-  top: 90px;
-  max-height: calc(100vh - 90px);
-  width: ${EditorStyleHelper.tocWidth}px;
-
-  padding: 0 16px;
-  overflow-y: auto;
-  border-radius: 8px;
-
-  background: ${s("background")};
-  transition: ${s("backgroundTransition")};
-
-  @supports (backdrop-filter: blur(20px)) {
-    backdrop-filter: blur(20px);
-    background: ${(props) => transparentize(0.2, props.theme.background)};
-  }
-
-  ${breakpoint("tablet")`
-    display: block;
-    z-index: ${depths.toc};
-  `};
-`;
+};
 
 const Heading = styled.h3`
   font-size: 13px;
@@ -141,3 +115,5 @@ const List = styled.ol`
   padding: 0;
   list-style: none;
 `;
+
+export default React.forwardRef<HTMLDivElement, Props>(Contents);

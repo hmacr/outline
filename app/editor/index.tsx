@@ -445,6 +445,14 @@ export class Editor extends React.PureComponent<
           step.mark.type.name === this.schema.marks.comment.name
       );
 
+    const isTableModified = (tr: Transaction) =>
+      tr.steps.some(
+        (step) =>
+          (step instanceof ReplaceAroundStep || step instanceof ReplaceStep) &&
+          step.slice.content?.firstChild?.type.name ===
+            this.schema.nodes.table.name
+      );
+
     const self = this; // eslint-disable-line
     const view = new EditorView(this.elementRef.current, {
       handleDOMEvents: {

@@ -55,6 +55,7 @@ import {
   updateDocumentPath,
 } from "~/utils/routeHelpers";
 import Container from "./Container";
+import ContentsPositioner from "./ContentPositioner";
 import Contents from "./Contents";
 import Editor from "./Editor";
 import Header from "./Header";
@@ -119,6 +120,12 @@ class DocumentScene extends React.Component<Props> {
 
   @observable
   headings: Heading[] = [];
+
+  @observable
+  contentsRef = React.createRef<HTMLDivElement>();
+
+  @observable
+  fullWidthElems: Element[] = [];
 
   componentDidMount() {
     this.updateIsDirty();
@@ -379,6 +386,13 @@ class DocumentScene extends React.Component<Props> {
     const total = tasks?.length ?? 0;
     const completed = tasks?.filter((t) => t.completed).length ?? 0;
     document.updateTasks(total, completed);
+
+    if (this.editor.current) {
+      const { view } = this.editor.current;
+      const dom = view.dom;
+      const fullWidthTables = dom.querySelectorAll(".table-full-width");
+      this.fullWidthElems = Array.from(fullWidthTables);
+    }
   };
 
   onHeadingsChange = (headings: Heading[]) => {
@@ -539,7 +553,15 @@ class DocumentScene extends React.Component<Props> {
                         docFullWidth={document.fullWidth}
                         position={tocPos}
                       >
-                        <Contents headings={this.headings} />
+                        <ContentsPositioner
+                          contentsRef={this.contentsRef}
+                          fullWidthElems={this.fullWidthElems}
+                        >
+                          <Contents
+                            ref={this.contentsRef}
+                            headings={this.headings}
+                          />
+                        </ContentsPositioner>
                       </ContentsContainer>
                     )}
                     <EditorContainer
@@ -623,6 +645,7 @@ type MainProps = {
 
 const Main = styled.div<MainProps>`
   margin-top: 4px;
+  border: 1px solid blue;
 
   ${breakpoint("tablet")`
     display: grid;
@@ -651,8 +674,7 @@ type ContentsContainerProps = {
 
 const ContentsContainer = styled.div<ContentsContainerProps>`
   ${breakpoint("tablet")`
-    margin-top: calc(44px + 6vh);
-
+    border: 1px solid yellow;
     grid-row: 1;
     grid-column: ${({ docFullWidth, position }: ContentsContainerProps) =>
       position === TOCPosition.Left ? 1 : docFullWidth ? 2 : 3};
