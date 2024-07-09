@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { s } from "@shared/styles";
 import Text from "~/components/Text";
 import useWindowScrollPosition from "~/hooks/useWindowScrollPosition";
+import ContentsPositioner from "./ContentPositioner";
 
 const HEADING_OFFSET = 20;
 
@@ -14,12 +15,10 @@ type Props = {
     level: number;
     id: string;
   }[];
+  fullWidthElems: Element[];
 };
 
-const Contents = (
-  { headings }: Props,
-  ref: React.RefObject<HTMLDivElement>
-) => {
+export default function Contents({ headings, fullWidthElems }: Props) {
   const [activeSlug, setActiveSlug] = React.useState<string>();
   const scrollPosition = useWindowScrollPosition({
     throttle: 100,
@@ -55,7 +54,7 @@ const Contents = (
   const { t } = useTranslation();
 
   return (
-    <div ref={ref}>
+    <ContentsPositioner fullWidthElems={fullWidthElems}>
       <Heading>{t("Contents")}</Heading>
       {headings.length ? (
         <List>
@@ -74,9 +73,9 @@ const Contents = (
       ) : (
         <Empty>{t("Headings you add to the document will appear here")}</Empty>
       )}
-    </div>
+    </ContentsPositioner>
   );
-};
+}
 
 const Heading = styled.h3`
   font-size: 13px;
@@ -115,5 +114,3 @@ const List = styled.ol`
   padding: 0;
   list-style: none;
 `;
-
-export default React.forwardRef<HTMLDivElement, Props>(Contents);

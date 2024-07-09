@@ -6,17 +6,17 @@ import breakpoint from "styled-components-breakpoint";
 import { EditorStyleHelper } from "@shared/editor/styles/EditorStyleHelper";
 import { depths, s } from "@shared/styles";
 
-const STICKY_TOP_POSITION = 90;
+const StickyTopPosition = 90;
+const BaseTranslateY = 90;
 
 type YBound = {
   top: number;
   bottom: number;
 };
 
-type HoleYBound = YBound & { idx?: number };
+type HoleYBound = YBound & { idx: number };
 
 type Props = {
-  contentsRef: React.RefObject<HTMLDivElement>;
   fullWidthElems: Element[];
 };
 
@@ -26,16 +26,12 @@ const ContentsPositioner = ({
 }: PropsWithChildren<Props>) => {
   const theme = useTheme();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const activeHoleIdx = React.useRef<number>(0);
 
-  const handleScroll = React.useCallback(() => {
+  const handlePositioning = React.useCallback(() => {
     if (!containerRef.current) {
       return;
     }
-    console.log(">>>> START");
-
-    // const contentsRect = containerRef.current.getBoundingClientRect();
-    // console.log("contentsRect.top", contentsRect.top);
-    // console.log("window.scrollY", window.scrollY);
 
     const allItemsYBound: YBound[] = sortBy(
       fullWidthElems.map((elem) => {
@@ -59,75 +55,61 @@ const ContentsPositioner = ({
 
     allHolesYBound.unshift({
       idx: 0,
-      top: 90,
+      top: StickyTopPosition,
       bottom: allItemsYBound[0]?.top ?? window.innerHeight,
     });
 
-    console.log("allHolesYBound", allHolesYBound);
-
-    const sortedVisiblesYBound: YBound[] = sortBy(
-      fullWidthElems
-        .map((elem) => elem.getBoundingClientRect())
-        .filter((rect) => rect.top <= window.innerHeight && rect.bottom >= 0)
-        .map((rect) => ({ top: rect.top, bottom: rect.bottom })),
-      (yBound) => yBound.top
+    const visibleHolesYBound: HoleYBound[] = allHolesYBound.filter(
+      (rect) => rect.top <= window.innerHeight && rect.bottom >= 0
     );
 
-    const holesYBound: YBound[] = sortedVisiblesYBound.map((yBound, index) => {
-      const nextYBound = sortedVisiblesYBound[index + 1] ?? {
-        top: window.innerHeight, // intentionally setting the window height
-        bottom: window.innerHeight,
-      };
-      return {
-        top: yBound.bottom,
-        bottom: nextYBound.top,
-      };
-    });
-
-    if (sortedVisiblesYBound[0]?.top > 90) {
-      holesYBound.unshift({
-        top: 90,
-        bottom: sortedVisiblesYBound[0].top,
-      });
-    }
-
-    // console.log("holesYBound", holesYBound);
-
     const contentsHeight = containerRef.current.offsetHeight;
-    const freespaceToUse = holesYBound
+    const freespaceToUse = visibleHolesYBound
       .filter((yBound) => yBound.bottom - yBound.top + 1 >= contentsHeight)
-      .at(0);
+      .at(0)!;
 
-    // console.log("freespaceToUse", freespaceToUse);
+    const inInitialHole = freespaceToUse.idx === 0;
 
-    const isInInitialHole = !freespaceToUse || freespaceToUse.top === 90;
+    const transition = activeHoleIdx.current !== freespaceToUse.idx;
+    activeHoleIdx.current = freespaceToUse.idx;
 
-    if (isInInitialHole) {
-      const transformDistance = window.scrollY <= 90 ? 90 - window.scrollY : 0;
-      // console.log("transformDistance - initialHole", transformDistance);
-      containerRef.current.style.transform = `translateY(${transformDistance}px)`;
-      // containerRef.current.style.transition =
-      //   transformDistance > 100
-      //     ? `${theme["backgroundTransition"]}, transform 50ms ease-in-out`
-      //     : theme["backgroundTransition"];
-    } else if (freespaceToUse) {
-      const transformDistance =
-        freespaceToUse.top - 90 > 0 ? freespaceToUse.top - 90 : 0;
-      // console.log("transformDistance - freespace", transformDistance);
-      containerRef.current.style.transform = `translateY(${transformDistance}px)`;
-      // containerRef.current.style.transition =
-      //   transformDistance > 100
-      //     ? `${theme["backgroundTransition"]}, transform 100ms ease-in-out`
-      //     : theme["backgroundTransition"];
-    }
+    const transformDistance = inInitialHole
+      ? window.scrollY <= BaseTranslateY
+        ? BaseTranslateY - window.scrollY
+        : 0
+      : freespaceToUse.top - StickyTopPosition > 0
+      ? freespaceToUse.top - StickyTopPosition
+      : 0;
 
-    console.log(">>>> END");
+    requestAnimationFrame(() => {
+      if (containerRef.current) {
+        containerRef.current.style.transform = `translateY(${transformDistance}px)`;
+        if (transition) {
+          containerRef.current.style.transition = `${theme["backgroundTransition"]}, transform 50ms ease-out`;
+          setTimeout(() => {
+            if (containerRef.current) {
+              containerRef.current.style.transition =
+                theme["backgroundTransition"];
+            }
+          }, 100);
+        }
+      }
+    });
   }, [fullWidthElems, theme]);
 
+  // const scrollPosition = useWindowScrollPosition({ throttle: 300 });
+
+  // React.useEffect(
+  //   () => handlePositioning(),
+  //   [scrollPosition, handlePositioning]
+  // );
+
   React.useEffect(() => {
-    window.addEventListener("scroll", handleScroll); // TODO: passive
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    window.addEventListener("scroll", handlePositioning); // TODO: passive
+    return () => window.removeEventListener("scroll", handlePositioning);
+  }, [handlePositioning]);
+
+  // React.useEffect(() => handlePositioning(), [handlePositioning]);
 
   return <Container ref={containerRef}>{children}</Container>;
 };
@@ -136,10 +118,10 @@ const Container = styled.div`
   display: none;
 
   position: sticky;
-  top: ${STICKY_TOP_POSITION}px;
-  max-height: calc(100vh - ${STICKY_TOP_POSITION}px);
+  top: ${StickyTopPosition}px;
+  max-height: calc(100vh - ${StickyTopPosition}px);
   width: ${EditorStyleHelper.tocWidth}px;
-  transform: translateY(90px);
+  transform: translateY(${BaseTranslateY}px);
   will-change: transform;
 
   padding: 0 16px;

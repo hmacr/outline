@@ -55,7 +55,6 @@ import {
   updateDocumentPath,
 } from "~/utils/routeHelpers";
 import Container from "./Container";
-import ContentsPositioner from "./ContentPositioner";
 import Contents from "./Contents";
 import Editor from "./Editor";
 import Header from "./Header";
@@ -120,9 +119,6 @@ class DocumentScene extends React.Component<Props> {
 
   @observable
   headings: Heading[] = [];
-
-  @observable
-  contentsRef = React.createRef<HTMLDivElement>();
 
   @observable
   fullWidthElems: Element[] = [];
@@ -553,15 +549,10 @@ class DocumentScene extends React.Component<Props> {
                         docFullWidth={document.fullWidth}
                         position={tocPos}
                       >
-                        <ContentsPositioner
-                          contentsRef={this.contentsRef}
+                        <Contents
+                          headings={this.headings}
                           fullWidthElems={this.fullWidthElems}
-                        >
-                          <Contents
-                            ref={this.contentsRef}
-                            headings={this.headings}
-                          />
-                        </ContentsPositioner>
+                        />
                       </ContentsContainer>
                     )}
                     <EditorContainer
