@@ -46,6 +46,7 @@ export type Props = Optional<
   onSynced?: () => Promise<void>;
   onPublish?: (event: React.MouseEvent) => void;
   editorStyle?: React.CSSProperties;
+  onFullWidthElemsChange?: (fullWidthElems: Element[]) => void;
 };
 
 function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
@@ -56,6 +57,7 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
     onHeadingsChange,
     onCreateCommentMark,
     onDeleteCommentMark,
+    onFullWidthElemsChange,
   } = props;
   const userLocale = useUserLocale();
   const locale = dateLocale(userLocale);
@@ -66,6 +68,7 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
   const preferences = useCurrentUser({ rejectOnEmpty: false })?.preferences;
   const previousHeadings = React.useRef<Heading[] | null>(null);
   const previousCommentIds = React.useRef<string[]>();
+  const previousFullWidthElemIds = React.useRef<string[]>();
 
   const handleSearchLink = React.useCallback(
     async (term: string) => {
@@ -248,13 +251,42 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
     }
   }, [onCreateCommentMark, onDeleteCommentMark, comments.orderedData]);
 
+  const updateFullWidthElems = React.useCallback(() => {
+    if (!onFullWidthElemsChange) {
+      return;
+    }
+
+    const view = localRef.current?.view;
+    if (!view) {
+      return;
+    }
+
+    const dom = view.dom;
+    const fullWidthTables =
+      dom.querySelectorAll<HTMLElement>(".table-full-width");
+
+    const fullWidthTableIds = Array.from(fullWidthTables).map(
+      (table) => table.dataset.id ?? ""
+    );
+
+    const hasChanged =
+      fullWidthTableIds.join(",") !==
+      previousFullWidthElemIds?.current?.join(",");
+
+    if (hasChanged) {
+      previousFullWidthElemIds.current = fullWidthTableIds;
+      onFullWidthElemsChange(Array.from(fullWidthTables));
+    }
+  }, [onFullWidthElemsChange]);
+
   const handleChange = React.useCallback(
     (event) => {
       onChange?.(event);
       updateHeadings();
       updateComments();
+      updateFullWidthElems();
     },
-    [onChange, updateComments, updateHeadings]
+    [onChange, updateComments, updateHeadings, updateFullWidthElems]
   );
 
   const handleRefChanged = React.useCallback(
@@ -262,9 +294,10 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
       if (node) {
         updateHeadings();
         updateComments();
+        updateFullWidthElems();
       }
     },
-    [updateComments, updateHeadings]
+    [updateComments, updateHeadings, updateFullWidthElems]
   );
 
   return (

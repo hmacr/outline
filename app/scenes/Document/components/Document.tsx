@@ -382,17 +382,14 @@ class DocumentScene extends React.Component<Props> {
     const total = tasks?.length ?? 0;
     const completed = tasks?.filter((t) => t.completed).length ?? 0;
     document.updateTasks(total, completed);
-
-    if (this.editor.current) {
-      const { view } = this.editor.current;
-      const dom = view.dom;
-      const fullWidthTables = dom.querySelectorAll(".table-full-width");
-      this.fullWidthElems = Array.from(fullWidthTables);
-    }
   };
 
   onHeadingsChange = (headings: Heading[]) => {
     this.headings = headings;
+  };
+
+  onFullWidthElemsChange = (fullWidthElems: Element[]) => {
+    this.fullWidthElems = fullWidthElems;
   };
 
   handleChangeTitle = action((value: string) => {
@@ -581,6 +578,7 @@ class DocumentScene extends React.Component<Props> {
                         onChangeIcon={this.handleChangeIcon}
                         onChange={this.handleChange}
                         onHeadingsChange={this.onHeadingsChange}
+                        onFullWidthElemsChange={this.onFullWidthElemsChange}
                         onSave={this.onSave}
                         onPublish={this.onPublish}
                         onCancel={this.goBack}

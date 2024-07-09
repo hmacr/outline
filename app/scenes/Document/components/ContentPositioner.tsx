@@ -17,6 +17,11 @@ type YBound = {
 type HoleYBound = YBound & { idx: number };
 
 type Props = {
+  headings: {
+    title: string;
+    level: number;
+    id: string;
+  }[];
   fullWidthElems: Element[];
 };
 
@@ -33,6 +38,18 @@ const ContentsPositioner = ({
       return;
     }
 
+    const contentsRect = containerRef.current.getBoundingClientRect();
+    console.log(
+      "top",
+      contentsRect.top,
+      "bottom",
+      contentsRect.bottom,
+      "height",
+      contentsRect.height,
+      "scroll",
+      window.scrollY
+    );
+
     const allItemsYBound: YBound[] = sortBy(
       fullWidthElems.map((elem) => {
         const rect = elem.getBoundingClientRect();
@@ -42,74 +59,89 @@ const ContentsPositioner = ({
     );
 
     const allHolesYBound: HoleYBound[] = allItemsYBound.map((yBound, idx) => {
-      const nextYBound = allItemsYBound[idx + 1] ?? {
-        top: window.innerHeight, // intentionally setting the window height
-        bottom: window.innerHeight,
-      };
+      const bottom = allItemsYBound.at(idx + 1)?.top ?? window.innerHeight;
       return {
         idx: idx + 1,
         top: yBound.bottom,
-        bottom: nextYBound.top,
+        bottom,
       };
     });
 
-    allHolesYBound.unshift({
-      idx: 0,
-      top: StickyTopPosition,
-      bottom: allItemsYBound[0]?.top ?? window.innerHeight,
-    });
+    if (!allItemsYBound.length) {
+      allHolesYBound.push({
+        idx: 0,
+        top: StickyTopPosition,
+        bottom: window.innerHeight,
+      });
+    } else if (allItemsYBound[0].top > StickyTopPosition) {
+      allHolesYBound.unshift({
+        idx: 0,
+        top: StickyTopPosition,
+        bottom: allItemsYBound[0].top,
+      });
+    }
 
     const visibleHolesYBound: HoleYBound[] = allHolesYBound.filter(
-      (rect) => rect.top <= window.innerHeight && rect.bottom >= 0
+      (rect) => rect.top >= 0 && rect.bottom <= window.innerHeight
     );
 
-    const contentsHeight = containerRef.current.offsetHeight;
-    const freespaceToUse = visibleHolesYBound
-      .filter((yBound) => yBound.bottom - yBound.top + 1 >= contentsHeight)
-      .at(0)!;
+    const holeToUse = visibleHolesYBound
+      .filter((yBound) => yBound.bottom - yBound.top + 1 >= contentsRect.height)
+      .at(0);
 
-    const inInitialHole = freespaceToUse.idx === 0;
+    if (!holeToUse) {
+      // TODO: handle overlap
+      return;
+    }
 
-    const transition = activeHoleIdx.current !== freespaceToUse.idx;
-    activeHoleIdx.current = freespaceToUse.idx;
+    const inInitialHole = holeToUse.top === StickyTopPosition;
 
-    const transformDistance = inInitialHole
-      ? window.scrollY <= BaseTranslateY
-        ? BaseTranslateY - window.scrollY
-        : 0
-      : freespaceToUse.top - StickyTopPosition > 0
-      ? freespaceToUse.top - StickyTopPosition
-      : 0;
+    const transition = activeHoleIdx.current !== holeToUse.idx;
+    activeHoleIdx.current = holeToUse.idx;
 
-    requestAnimationFrame(() => {
-      if (containerRef.current) {
-        containerRef.current.style.transform = `translateY(${transformDistance}px)`;
-        if (transition) {
-          containerRef.current.style.transition = `${theme["backgroundTransition"]}, transform 50ms ease-out`;
-          setTimeout(() => {
-            if (containerRef.current) {
-              containerRef.current.style.transition =
-                theme["backgroundTransition"];
-            }
-          }, 100);
-        }
-      }
-    });
-  }, [fullWidthElems, theme]);
+    let initialRenderComp = 0;
 
-  // const scrollPosition = useWindowScrollPosition({ throttle: 300 });
+    if (inInitialHole) {
+      const overlapItem = allItemsYBound.find(
+        (yBound) => contentsRect.bottom > yBound.top
+      );
+      console.log("overlapItem", overlapItem);
+      initialRenderComp = overlapItem
+        ? contentsRect.bottom - overlapItem.top
+        : 0;
+    }
 
-  // React.useEffect(
-  //   () => handlePositioning(),
-  //   [scrollPosition, handlePositioning]
-  // );
+    console.log("initialRenderComp", initialRenderComp);
+
+    const transformDist = inInitialHole
+      ? BaseTranslateY - initialRenderComp - window.scrollY
+      : holeToUse.top - StickyTopPosition;
+
+    const transformDistance = transformDist > 0 ? transformDist : 0;
+
+    containerRef.current.style.transform = `translateY(${transformDistance}px)`;
+
+    // requestAnimationFrame(() => {
+    //   if (containerRef.current) {
+    //     containerRef.current.style.transform = `translateY(${transformDistance}px)`;
+    //     // if (transition) {
+    //     //   containerRef.current.style.transition = `${theme["backgroundTransition"]}, transform 50ms ease-out`;
+    //     //   setTimeout(() => {
+    //     //     if (containerRef.current) {
+    //     //       containerRef.current.style.transition =
+    //     //         theme["backgroundTransition"];
+    //     //     }
+    //     //   }, 100);
+    //     // }
+    //   }
+    // });
+  }, [fullWidthElems]);
 
   React.useEffect(() => {
-    window.addEventListener("scroll", handlePositioning); // TODO: passive
+    handlePositioning();
+    window.addEventListener("scroll", handlePositioning, { passive: true });
     return () => window.removeEventListener("scroll", handlePositioning);
   }, [handlePositioning]);
-
-  // React.useEffect(() => handlePositioning(), [handlePositioning]);
 
   return <Container ref={containerRef}>{children}</Container>;
 };

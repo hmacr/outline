@@ -54,7 +54,7 @@ export default function Contents({ headings, fullWidthElems }: Props) {
   const { t } = useTranslation();
 
   return (
-    <ContentsPositioner fullWidthElems={fullWidthElems}>
+    <ContentsPositioner headings={headings} fullWidthElems={fullWidthElems}>
       <Heading>{t("Contents")}</Heading>
       {headings.length ? (
         <List>
