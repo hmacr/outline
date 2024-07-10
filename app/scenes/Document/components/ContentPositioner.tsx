@@ -12,7 +12,7 @@ const InitialSpaceName = "initial";
 
 type NamedDOMRect = {
   name: string;
-  rect: DOMRect;
+  value: DOMRect;
 };
 
 type SpaceBound = {
@@ -52,36 +52,40 @@ const ContentsPositioner = ({
 
     const positionerRect = positionerRef.current.getBoundingClientRect();
 
-    const filteredFullWidthsElemsNamedRect = sortBy<NamedDOMRect>(
+    const fullWidthsElemsNamedRect = sortBy<NamedDOMRect>(
       visibleFullWidthElems
         .map((elem) => ({
           name: elem.dataset.id ?? "",
-          rect: elem.getBoundingClientRect(),
+          value: elem.getBoundingClientRect(),
         }))
-        .filter((namedRect) => namedRect.rect.bottom > StickyTopPosition),
-      (namedRect) => namedRect.rect.top
+        .filter(
+          (namedRect) =>
+            namedRect.value.bottom > StickyTopPosition &&
+            namedRect.value.bottom <= window.innerHeight
+        ),
+      (namedRect) => namedRect.value.top
     );
 
-    const spacesBound = filteredFullWidthsElemsNamedRect
+    const spacesBound = fullWidthsElemsNamedRect
       .map((namedRect, idx) => {
         const bottom =
-          idx !== filteredFullWidthsElemsNamedRect.length - 1
-            ? filteredFullWidthsElemsNamedRect[idx + 1].rect.top - 1
+          idx !== fullWidthsElemsNamedRect.length - 1
+            ? fullWidthsElemsNamedRect[idx + 1].value.top - 1
             : window.innerHeight;
         return {
           name: namedRect.name,
-          top: namedRect.rect.bottom + 1,
+          top: namedRect.value.bottom + 1,
           bottom,
         } satisfies SpaceBound;
       })
       .filter((yBound) => yBound.top >= StickyTopPosition);
 
     if (
-      !filteredFullWidthsElemsNamedRect.length ||
-      filteredFullWidthsElemsNamedRect[0].rect.top > StickyTopPosition
+      !fullWidthsElemsNamedRect.length ||
+      fullWidthsElemsNamedRect[0].value.top > StickyTopPosition
     ) {
-      const bottom = filteredFullWidthsElemsNamedRect.length
-        ? filteredFullWidthsElemsNamedRect[0].rect.top - 1
+      const bottom = fullWidthsElemsNamedRect.length
+        ? fullWidthsElemsNamedRect[0].value.top - 1
         : window.innerHeight;
       spacesBound.unshift({
         name: InitialSpaceName,
@@ -115,8 +119,8 @@ const ContentsPositioner = ({
       spaceToUse.top === StickyTopPosition &&
       window.scrollY < StickyTopPosition + BaseTranslateY
     ) {
-      const spaceHeight = spaceToUse.bottom - spaceToUse.top + 1;
-      const extraSpace = spaceHeight - positionerRect.height;
+      const spaceSize = spaceToUse.bottom - spaceToUse.top + 1;
+      const extraSpace = spaceSize - positionerRect.height;
 
       let scrollAdjusted =
         extraSpace < BaseTranslateY - window.scrollY
@@ -202,7 +206,6 @@ const Positioner = styled.div`
   padding: 0 16px;
   overflow-y: auto;
   border-radius: 8px;
-  border: 1px solid red;
 
   background: ${s("background")};
   transition: ${s("backgroundTransition")};

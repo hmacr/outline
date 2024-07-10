@@ -662,7 +662,6 @@ type ContentsContainerProps = {
 
 const ContentsContainer = styled.div<ContentsContainerProps>`
   ${breakpoint("tablet")`
-    border: 1px solid yellow;
     grid-row: 1;
     grid-column: ${({ docFullWidth, position }: ContentsContainerProps) =>
       position === TOCPosition.Left ? 1 : docFullWidth ? 2 : 3};
