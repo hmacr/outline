@@ -1,10 +1,10 @@
 import { DownloadIcon } from "outline-icons";
 import type { EditorView } from "prosemirror-view";
-import randomstring from "randomstring";
 import * as React from "react";
 import styled from "styled-components";
 import { s } from "../../styles";
 import { sanitizeUrl } from "../../utils/urls";
+import { getNodeId } from "../lib/nodeId";
 import { ComponentProps } from "../types";
 import { ImageZoom } from "./ImageZoom";
 import { ResizeLeft, ResizeRight } from "./ResizeHandle";
@@ -44,6 +44,7 @@ const Image = (props: Props) => {
 
   const isFullWidth = layoutClass === "full-width";
   const isResizable = !!props.onChangeSize;
+  const nodeId = getNodeId();
 
   React.useEffect(() => {
     if (node.attrs.width && node.attrs.width !== width) {
@@ -63,7 +64,7 @@ const Image = (props: Props) => {
       contentEditable={false}
       className={className}
       ref={ref}
-      data-id={randomstring.generate(10)}
+      data-id={nodeId}
     >
       <ImageWrapper
         isFullWidth={isFullWidth}

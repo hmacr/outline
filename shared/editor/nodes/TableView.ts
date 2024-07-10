@@ -1,6 +1,6 @@
 import { Node } from "prosemirror-model";
 import { TableView as ProsemirrorTableView } from "prosemirror-tables";
-import randomstring from "randomstring";
+import { getNodeId } from "../lib/nodeId";
 import { EditorStyleHelper } from "../styles/EditorStyleHelper";
 import { TableLayout } from "../types";
 
@@ -10,7 +10,7 @@ export class TableView extends ProsemirrorTableView {
 
     this.dom.removeChild(this.table);
     this.dom.classList.add(EditorStyleHelper.table);
-    this.dom.setAttribute("data-id", randomstring.generate(10));
+    this.dom.setAttribute("data-id", getNodeId());
 
     // Add an extra wrapper to enable scrolling
     this.scrollable = this.dom.appendChild(document.createElement("div"));
