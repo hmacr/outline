@@ -1,7 +1,7 @@
 import sortBy from "lodash/sortBy";
 import { transparentize } from "polished";
 import React, { PropsWithChildren } from "react";
-import styled, { useTheme } from "styled-components";
+import styled from "styled-components";
 import breakpoint from "styled-components-breakpoint";
 import { EditorStyleHelper } from "@shared/editor/styles/EditorStyleHelper";
 import { depths, s } from "@shared/styles";
@@ -14,8 +14,6 @@ type YBound = {
   bottom: number;
 };
 
-type HoleYBound = YBound & { idx: number };
-
 type Props = {
   headings: {
     title: string;
@@ -26,134 +24,153 @@ type Props = {
 };
 
 const ContentsPositioner = ({
+  headings,
   fullWidthElems,
   children,
 }: PropsWithChildren<Props>) => {
-  const theme = useTheme();
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const activeHoleIdx = React.useRef<number>(0);
+  const [visibleFullWidthElems, setVisibleFullWidthElems] = React.useState<
+    HTMLElement[]
+  >([]);
+  const positionerRef = React.useRef<HTMLDivElement>(null);
+  const observerRef = React.useRef<IntersectionObserver>();
 
   const handlePositioning = React.useCallback(() => {
-    if (!containerRef.current) {
+    if (!positionerRef.current) {
       return;
     }
 
-    const contentsRect = containerRef.current.getBoundingClientRect();
-    console.log(
-      "top",
-      contentsRect.top,
-      "bottom",
-      contentsRect.bottom,
-      "height",
-      contentsRect.height,
-      "scroll",
-      window.scrollY
+    const positionerRect = positionerRef.current.getBoundingClientRect();
+
+    const filteredFullWidthsElemsRect = sortBy(
+      visibleFullWidthElems
+        .map((elem) => elem.getBoundingClientRect())
+        .filter((elemRect) => elemRect.bottom > StickyTopPosition),
+      (elemRect) => elemRect.top
     );
 
-    const allItemsYBound: YBound[] = sortBy(
-      fullWidthElems.map((elem) => {
-        const rect = elem.getBoundingClientRect();
-        return { top: rect.top, bottom: rect.bottom };
-      }),
-      (yBound) => yBound.top
-    );
+    const spacesYBound = filteredFullWidthsElemsRect
+      .map((elemRect, idx) => {
+        const bottom =
+          idx !== filteredFullWidthsElemsRect.length - 1
+            ? filteredFullWidthsElemsRect[idx + 1].top - 1
+            : window.innerHeight;
+        return {
+          top: elemRect.bottom + 1,
+          bottom,
+        } as YBound;
+      })
+      .filter((yBound) => yBound.top >= StickyTopPosition);
 
-    const allHolesYBound: HoleYBound[] = allItemsYBound.map((yBound, idx) => {
-      const bottom = allItemsYBound.at(idx + 1)?.top ?? window.innerHeight;
-      return {
-        idx: idx + 1,
-        top: yBound.bottom,
+    if (
+      !filteredFullWidthsElemsRect.length ||
+      filteredFullWidthsElemsRect[0].top > StickyTopPosition
+    ) {
+      const bottom = filteredFullWidthsElemsRect.length
+        ? filteredFullWidthsElemsRect[0].top - 1
+        : window.innerHeight;
+      spacesYBound.unshift({
+        top: StickyTopPosition,
         bottom,
-      };
-    });
-
-    if (!allItemsYBound.length) {
-      allHolesYBound.push({
-        idx: 0,
-        top: StickyTopPosition,
-        bottom: window.innerHeight,
-      });
-    } else if (allItemsYBound[0].top > StickyTopPosition) {
-      allHolesYBound.unshift({
-        idx: 0,
-        top: StickyTopPosition,
-        bottom: allItemsYBound[0].top,
       });
     }
 
-    const visibleHolesYBound: HoleYBound[] = allHolesYBound.filter(
-      (rect) => rect.top >= 0 && rect.bottom <= window.innerHeight
+    let spaceToUse = spacesYBound.find(
+      (hole) => hole.bottom - hole.top + 1 >= positionerRect.height
     );
 
-    const holeToUse = visibleHolesYBound
-      .filter((yBound) => yBound.bottom - yBound.top + 1 >= contentsRect.height)
-      .at(0);
-
-    if (!holeToUse) {
-      // TODO: handle overlap
-      return;
-    }
-
-    const inInitialHole = holeToUse.top === StickyTopPosition;
-
-    const transition = activeHoleIdx.current !== holeToUse.idx;
-    activeHoleIdx.current = holeToUse.idx;
-
-    let initialRenderComp = 0;
-
-    if (inInitialHole) {
-      const overlapItem = allItemsYBound.find(
-        (yBound) => contentsRect.bottom > yBound.top
+    if (!spaceToUse) {
+      const sortedSpacesYBound = spacesYBound.sort((a, b) =>
+        a.bottom - a.top + 1 >= b.bottom - b.top + 1 ? -1 : 1
       );
-      console.log("overlapItem", overlapItem);
-      initialRenderComp = overlapItem
-        ? contentsRect.bottom - overlapItem.top
-        : 0;
+      if (
+        sortedSpacesYBound[0].bottom === window.innerHeight &&
+        sortedSpacesYBound.length > 1
+      ) {
+        spaceToUse = sortedSpacesYBound[1];
+      } else {
+        spaceToUse = sortedSpacesYBound[0];
+      }
     }
 
-    console.log("initialRenderComp", initialRenderComp);
+    let translateY: number = 0;
 
-    const transformDist = inInitialHole
-      ? BaseTranslateY - initialRenderComp - window.scrollY
-      : holeToUse.top - StickyTopPosition;
+    if (
+      spaceToUse.top === StickyTopPosition &&
+      window.scrollY < StickyTopPosition + BaseTranslateY
+    ) {
+      const spaceHeight = spaceToUse.bottom - spaceToUse.top + 1;
+      const extraSpace = spaceHeight - positionerRect.height;
 
-    const transformDistance = transformDist > 0 ? transformDist : 0;
+      let scrollAdjusted =
+        extraSpace < BaseTranslateY - window.scrollY
+          ? extraSpace
+          : BaseTranslateY - window.scrollY;
 
-    containerRef.current.style.transform = `translateY(${transformDistance}px)`;
+      if (scrollAdjusted < 0) {
+        scrollAdjusted = 0;
+      }
 
-    // requestAnimationFrame(() => {
-    //   if (containerRef.current) {
-    //     containerRef.current.style.transform = `translateY(${transformDistance}px)`;
-    //     // if (transition) {
-    //     //   containerRef.current.style.transition = `${theme["backgroundTransition"]}, transform 50ms ease-out`;
-    //     //   setTimeout(() => {
-    //     //     if (containerRef.current) {
-    //     //       containerRef.current.style.transition =
-    //     //         theme["backgroundTransition"];
-    //     //     }
-    //     //   }, 100);
-    //     // }
-    //   }
-    // });
+      translateY = scrollAdjusted;
+    } else {
+      translateY = spaceToUse.top - StickyTopPosition;
+    }
+
+    if (translateY < 0) {
+      translateY = 0;
+    }
+
+    positionerRef.current.style.transform = `translateY(${translateY}px)`;
+  }, [visibleFullWidthElems]);
+
+  React.useEffect(() => {
+    observerRef.current = new IntersectionObserver((entries) => {
+      const visibleElems = entries
+        .filter((entry) => entry.isIntersecting)
+        .map((entry) => entry.target as HTMLElement);
+
+      const allElemIds = entries
+        .map((entry) => entry.target as HTMLElement)
+        .map((elem) => elem.dataset.id);
+
+      setVisibleFullWidthElems((prevElems) => {
+        const filteredPrevElems = prevElems.filter(
+          (elem) => !allElemIds.includes(elem.dataset.id)
+        );
+        return [...filteredPrevElems, ...visibleElems];
+      });
+    });
+  }, []);
+
+  React.useEffect(() => {
+    const allElemIds = fullWidthElems.map(
+      (elem) => (elem as HTMLElement).dataset.id
+    );
+    setVisibleFullWidthElems((prevElems) =>
+      prevElems.filter((elem) => allElemIds.includes(elem.dataset.id))
+    );
+
+    fullWidthElems.forEach((elem) => observerRef.current?.observe(elem));
+    return () => {
+      observerRef.current?.disconnect();
+    };
   }, [fullWidthElems]);
 
   React.useEffect(() => {
     handlePositioning();
-    window.addEventListener("scroll", handlePositioning, { passive: true });
+    window.addEventListener("scroll", handlePositioning);
     return () => window.removeEventListener("scroll", handlePositioning);
-  }, [handlePositioning]);
+  }, [headings, handlePositioning]);
 
-  return <Container ref={containerRef}>{children}</Container>;
+  return <Positioner ref={positionerRef}>{children}</Positioner>;
 };
 
-const Container = styled.div`
+const Positioner = styled.div`
   display: none;
 
   position: sticky;
   top: ${StickyTopPosition}px;
   max-height: calc(100vh - ${StickyTopPosition}px);
   width: ${EditorStyleHelper.tocWidth}px;
-  transform: translateY(${BaseTranslateY}px);
   will-change: transform;
 
   padding: 0 16px;
