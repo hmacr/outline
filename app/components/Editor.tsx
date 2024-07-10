@@ -256,6 +256,8 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
       return;
     }
 
+    console.log("updateFullWidthElems");
+
     const view = localRef.current?.view;
     if (!view) {
       return;
@@ -270,6 +272,8 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
 
     const fullWidthElems = Array.from([...fullWidthTables, ...fullWidthImages]);
 
+    console.log("fullWidthElems", fullWidthElems);
+
     const fullWidthElemIds = fullWidthElems.map(
       (elem) => elem.dataset.id ?? ""
     );
@@ -277,6 +281,8 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
     const hasChanged =
       fullWidthElemIds.join(",") !==
       previousFullWidthElemIds?.current?.join(",");
+
+    console.log("hasChanged", hasChanged);
 
     if (hasChanged) {
       previousFullWidthElemIds.current = fullWidthElemIds;
@@ -286,6 +292,7 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
 
   const handleChange = React.useCallback(
     (event) => {
+      console.log("handleChange");
       onChange?.(event);
       updateHeadings();
       updateComments();
