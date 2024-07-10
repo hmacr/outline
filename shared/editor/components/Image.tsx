@@ -1,5 +1,6 @@
 import { DownloadIcon } from "outline-icons";
 import type { EditorView } from "prosemirror-view";
+import randomstring from "randomstring";
 import * as React from "react";
 import styled from "styled-components";
 import { s } from "../../styles";
@@ -58,7 +59,12 @@ const Image = (props: Props) => {
     : { width: width || "auto" };
 
   return (
-    <div contentEditable={false} className={className} ref={ref}>
+    <div
+      contentEditable={false}
+      className={className}
+      ref={ref}
+      data-id={randomstring.generate(10)}
+    >
       <ImageWrapper
         isFullWidth={isFullWidth}
         className={isSelected || dragging ? "ProseMirror-selectednode" : ""}

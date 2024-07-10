@@ -123,23 +123,28 @@ const ContentsPositioner = ({
   }, [visibleFullWidthElems]);
 
   React.useEffect(() => {
-    observerRef.current = new IntersectionObserver((entries) => {
-      const visibleElems = entries
-        .filter((entry) => entry.isIntersecting)
-        .map((entry) => entry.target as HTMLElement);
+    if (!observerRef.current) {
+      observerRef.current = new IntersectionObserver((entries) => {
+        const visibleElems = entries
+          .filter((entry) => entry.isIntersecting)
+          .map((entry) => entry.target as HTMLElement);
 
-      const allElemIds = entries
-        .map((entry) => entry.target as HTMLElement)
-        .map((elem) => elem.dataset.id);
+        const allElemIds = entries
+          .map((entry) => entry.target as HTMLElement)
+          .map((elem) => elem.dataset.id);
 
-      setVisibleFullWidthElems((prevElems) => {
-        const filteredPrevElems = prevElems.filter(
-          (elem) => !allElemIds.includes(elem.dataset.id)
-        );
-        return [...filteredPrevElems, ...visibleElems];
+        setVisibleFullWidthElems((prevElems) => {
+          const filteredPrevElems = prevElems.filter(
+            (elem) => !allElemIds.includes(elem.dataset.id)
+          );
+          return [...filteredPrevElems, ...visibleElems];
+        });
       });
-    });
-  }, []);
+    }
+
+    window.addEventListener("scroll", handlePositioning);
+    return () => window.removeEventListener("scroll", handlePositioning);
+  }, [handlePositioning]);
 
   React.useEffect(() => {
     const allElemIds = fullWidthElems.map(
@@ -157,8 +162,6 @@ const ContentsPositioner = ({
 
   React.useEffect(() => {
     handlePositioning();
-    window.addEventListener("scroll", handlePositioning);
-    return () => window.removeEventListener("scroll", handlePositioning);
   }, [headings, handlePositioning]);
 
   return <Positioner ref={positionerRef}>{children}</Positioner>;

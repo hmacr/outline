@@ -262,20 +262,25 @@ function Editor(props: Props, ref: React.RefObject<SharedEditor> | null) {
     }
 
     const dom = view.dom;
+
     const fullWidthTables =
       dom.querySelectorAll<HTMLElement>(".table-full-width");
+    const fullWidthImages =
+      dom.querySelectorAll<HTMLElement>(".image-full-width");
 
-    const fullWidthTableIds = Array.from(fullWidthTables).map(
-      (table) => table.dataset.id ?? ""
+    const fullWidthElems = Array.from([...fullWidthTables, ...fullWidthImages]);
+
+    const fullWidthElemIds = fullWidthElems.map(
+      (elem) => elem.dataset.id ?? ""
     );
 
     const hasChanged =
-      fullWidthTableIds.join(",") !==
+      fullWidthElemIds.join(",") !==
       previousFullWidthElemIds?.current?.join(",");
 
     if (hasChanged) {
-      previousFullWidthElemIds.current = fullWidthTableIds;
-      onFullWidthElemsChange(Array.from(fullWidthTables));
+      previousFullWidthElemIds.current = fullWidthElemIds;
+      onFullWidthElemsChange(fullWidthElems);
     }
   }, [onFullWidthElemsChange]);
 
