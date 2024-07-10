@@ -1,15 +1,22 @@
 import sortBy from "lodash/sortBy";
 import { transparentize } from "polished";
 import React, { PropsWithChildren } from "react";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
 import breakpoint from "styled-components-breakpoint";
 import { EditorStyleHelper } from "@shared/editor/styles/EditorStyleHelper";
 import { depths, s } from "@shared/styles";
 
 const StickyTopPosition = 90;
 const BaseTranslateY = 90;
+const InitialSpaceName = "initial";
 
-type YBound = {
+type NamedDOMRect = {
+  name: string;
+  rect: DOMRect;
+};
+
+type SpaceBound = {
+  name: string;
   top: number;
   bottom: number;
 };
@@ -28,11 +35,15 @@ const ContentsPositioner = ({
   fullWidthElems,
   children,
 }: PropsWithChildren<Props>) => {
+  const theme = useTheme();
+
   const [visibleFullWidthElems, setVisibleFullWidthElems] = React.useState<
     HTMLElement[]
   >([]);
+
   const positionerRef = React.useRef<HTMLDivElement>(null);
   const observerRef = React.useRef<IntersectionObserver>();
+  const previousSpaceNameRef = React.useRef<string>();
 
   const handlePositioning = React.useCallback(() => {
     if (!positionerRef.current) {
@@ -41,54 +52,60 @@ const ContentsPositioner = ({
 
     const positionerRect = positionerRef.current.getBoundingClientRect();
 
-    const filteredFullWidthsElemsRect = sortBy(
+    const filteredFullWidthsElemsNamedRect = sortBy<NamedDOMRect>(
       visibleFullWidthElems
-        .map((elem) => elem.getBoundingClientRect())
-        .filter((elemRect) => elemRect.bottom > StickyTopPosition),
-      (elemRect) => elemRect.top
+        .map((elem) => ({
+          name: elem.dataset.id ?? "",
+          rect: elem.getBoundingClientRect(),
+        }))
+        .filter((namedRect) => namedRect.rect.bottom > StickyTopPosition),
+      (namedRect) => namedRect.rect.top
     );
 
-    const spacesYBound = filteredFullWidthsElemsRect
-      .map((elemRect, idx) => {
+    const spacesBound = filteredFullWidthsElemsNamedRect
+      .map((namedRect, idx) => {
         const bottom =
-          idx !== filteredFullWidthsElemsRect.length - 1
-            ? filteredFullWidthsElemsRect[idx + 1].top - 1
+          idx !== filteredFullWidthsElemsNamedRect.length - 1
+            ? filteredFullWidthsElemsNamedRect[idx + 1].rect.top - 1
             : window.innerHeight;
         return {
-          top: elemRect.bottom + 1,
+          name: namedRect.name,
+          top: namedRect.rect.bottom + 1,
           bottom,
-        } as YBound;
+        } satisfies SpaceBound;
       })
       .filter((yBound) => yBound.top >= StickyTopPosition);
 
     if (
-      !filteredFullWidthsElemsRect.length ||
-      filteredFullWidthsElemsRect[0].top > StickyTopPosition
+      !filteredFullWidthsElemsNamedRect.length ||
+      filteredFullWidthsElemsNamedRect[0].rect.top > StickyTopPosition
     ) {
-      const bottom = filteredFullWidthsElemsRect.length
-        ? filteredFullWidthsElemsRect[0].top - 1
+      const bottom = filteredFullWidthsElemsNamedRect.length
+        ? filteredFullWidthsElemsNamedRect[0].rect.top - 1
         : window.innerHeight;
-      spacesYBound.unshift({
+      spacesBound.unshift({
+        name: InitialSpaceName,
         top: StickyTopPosition,
         bottom,
       });
     }
 
-    let spaceToUse = spacesYBound.find(
+    let spaceToUse = spacesBound.find(
       (hole) => hole.bottom - hole.top + 1 >= positionerRect.height
     );
 
     if (!spaceToUse) {
-      const sortedSpacesYBound = spacesYBound.sort((a, b) =>
+      // descending sort based on size
+      const sortedSpacesBound = spacesBound.sort((a, b) =>
         a.bottom - a.top + 1 >= b.bottom - b.top + 1 ? -1 : 1
       );
       if (
-        sortedSpacesYBound[0].bottom === window.innerHeight &&
-        sortedSpacesYBound.length > 1
+        sortedSpacesBound[0].bottom === window.innerHeight &&
+        sortedSpacesBound.length > 1
       ) {
-        spaceToUse = sortedSpacesYBound[1];
+        spaceToUse = sortedSpacesBound[1];
       } else {
-        spaceToUse = sortedSpacesYBound[0];
+        spaceToUse = sortedSpacesBound[0];
       }
     }
 
@@ -115,12 +132,18 @@ const ContentsPositioner = ({
       translateY = spaceToUse.top - StickyTopPosition;
     }
 
-    if (translateY < 0) {
-      translateY = 0;
-    }
-
     positionerRef.current.style.transform = `translateY(${translateY}px)`;
-  }, [visibleFullWidthElems]);
+    if (previousSpaceNameRef.current !== spaceToUse.name) {
+      positionerRef.current.style.transition = `${theme["backgroundTransition"]}, transform 100ms ease-out`;
+      setTimeout(() => {
+        if (positionerRef.current) {
+          positionerRef.current.style.transition =
+            theme["backgroundTransition"];
+        }
+      }, 100);
+    }
+    previousSpaceNameRef.current = spaceToUse.name;
+  }, [visibleFullWidthElems, theme]);
 
   React.useEffect(() => {
     if (!observerRef.current) {
