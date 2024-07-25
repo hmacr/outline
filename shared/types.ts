@@ -89,6 +89,7 @@ export enum IntegrationService {
   GoogleAnalytics = "google-analytics",
   Matomo = "matomo",
   GitHub = "github",
+  Mattermost = "mattermost",
 }
 
 export type UserCreatableIntegrationService = Extract<

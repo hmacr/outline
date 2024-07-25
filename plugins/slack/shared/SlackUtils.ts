@@ -35,7 +35,7 @@ export class SlackUtils {
 
   static callbackUrl(
     { baseUrl, params }: { baseUrl: string; params?: string } = {
-      baseUrl: `${env.URL}`,
+      baseUrl: `https://4d59-2402-e280-2135-170-e924-d3d5-1188-8121.ngrok-free.app`,
       params: undefined,
     }
   ) {
@@ -46,7 +46,7 @@ export class SlackUtils {
 
   static connectUrl(
     { baseUrl, params }: { baseUrl: string; params?: string } = {
-      baseUrl: `${env.URL}`,
+      baseUrl: `https://4d59-2402-e280-2135-170-e924-d3d5-1188-8121.ngrok-free.app`,
       params: undefined,
     }
   ) {
