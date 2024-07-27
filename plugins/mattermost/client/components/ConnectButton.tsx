@@ -14,7 +14,7 @@ const ConnectButton = ({ state = "", scopes, label, icon }: Props) => {
   const { t } = useTranslation();
 
   const handleClick = () => {
-    window.location.href = authUrl({ state, scope: scopes.join(" ") });
+    window.location.href = authUrl({ state, scopes });
   };
 
   return (

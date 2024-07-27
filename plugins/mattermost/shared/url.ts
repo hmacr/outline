@@ -1,21 +1,42 @@
 import env from "@shared/env";
 import { integrationSettingsPath } from "@shared/utils/routeHelpers";
+import { GetAccessTokenProps } from "../server/types";
 
 const AuthBaseUrl = `${env.MATTERMOST_SERVER_URL}/oauth/authorize`;
+const AccessTokenBaseUrl = `${env.MATTERMOST_SERVER_URL}/oauth/access_token`;
 
-export const authUrl = ({ state, scope }: { state: string; scope: string }) => {
-  const params: Record<string, string> = {
+export const authUrl = ({
+  state,
+  scopes,
+}: {
+  state: string;
+  scopes: string[];
+}) => {
+  const params = new URLSearchParams({
     response_type: "code",
-    client_id: env.MATTERMOST_CLIENT_ID,
     state,
-    scope,
+    scope: scopes.join(" "),
+    client_id: env.MATTERMOST_CLIENT_ID,
+    redirect_uri: callbackUrl(),
+  });
+  return `${AuthBaseUrl}?${params}`;
+};
+
+export const accessTokenUrl = (props: GetAccessTokenProps) => {
+  const params: Record<string, string> = {
+    grant_type: props.type,
+    client_id: env.MATTERMOST_CLIENT_ID,
+    client_secret: env.MATTERMOST_CLIENT_SECRET,
     redirect_uri: callbackUrl(),
   };
-  const urlParams = Object.keys(params)
-    .map((key) => `${key}=${encodeURIComponent(params[key])}`)
-    .join("&");
 
-  return `${AuthBaseUrl}?${urlParams}`;
+  if (props.type === "authorization_code") {
+    params["code"] = props.code;
+  } else {
+    params["refresh_token"] = props.refresh_token;
+  }
+
+  return `${AccessTokenBaseUrl}?${new URLSearchParams(params)}`;
 };
 
 export const callbackUrl = (

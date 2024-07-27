@@ -7,6 +7,7 @@ import { Team } from "@server/models";
 import { APIContext } from "@server/types";
 import { parseOAuthState } from "../../../shared/oauthState";
 import { callbackUrl, settingsUrl } from "../../../shared/url";
+import { getAccessToken } from "../../mattermost";
 import * as T from "./schema";
 
 const router = new Router();
@@ -56,6 +57,14 @@ router.get(
         return ctx.redirect(settingsUrl({ error: "unauthenticated" }));
       }
     }
+
+    // validation middleware ensures that code is non-null at this point
+    const data = await getAccessToken({
+      type: "authorization_code",
+      code: code!,
+    });
+
+    console.log("data", data);
 
     ctx.redirect(settingsUrl());
   }

@@ -96,7 +96,7 @@ const MatterMost = () => {
                     type: IntegrationType.Post,
                     collectionId: collection.id,
                   })}
-                  scopes={["incoming-webhook"]}
+                  scopes={["manage_incoming_webhooks"]}
                   label={t("Connect")}
                 />
               }
