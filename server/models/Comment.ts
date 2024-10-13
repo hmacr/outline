@@ -1,5 +1,10 @@
+import uniq from "lodash/uniq";
 import { Node } from "prosemirror-model";
-import { InferAttributes, InferCreationAttributes } from "sequelize";
+import {
+  InferAttributes,
+  InferCreationAttributes,
+  Transaction,
+} from "sequelize";
 import {
   DataType,
   BelongsTo,
@@ -84,6 +89,10 @@ class Comment extends ParanoidModel<
   @Column(DataType.UUID)
   parentCommentId: string;
 
+  /** Emoji -> UserId[] */
+  @Column(DataType.JSONB)
+  reactions: Record<string, string[]> | null;
+
   // methods
 
   /**
@@ -116,6 +125,43 @@ class Comment extends ParanoidModel<
     this.resolvedBy = null;
     this.resolvedAt = null;
   }
+
+  public updateReactions = async ({
+    type,
+    emoji,
+    userId,
+    transaction,
+  }: {
+    type: "add" | "remove";
+    emoji: string;
+    userId: string;
+    transaction?: Transaction;
+  }): Promise<boolean> => {
+    const reactions = this.reactions || {};
+    const existingUserIds = reactions[emoji] ?? [];
+
+    const updatable =
+      type === "add"
+        ? !existingUserIds.includes(userId)
+        : existingUserIds.includes(userId);
+    if (!updatable) {
+      return false;
+    }
+
+    let updatedUserIds: string[];
+    if (type === "add") {
+      updatedUserIds = [...existingUserIds, userId];
+    } else {
+      updatedUserIds = existingUserIds.filter((id) => id !== userId);
+    }
+    reactions[emoji] = uniq(updatedUserIds);
+
+    this.reactions = reactions;
+    this.changed("reactions", true);
+    await this.save({ fields: ["reactions"], transaction });
+
+    return true;
+  };
 
   /**
    * Whether the comment is resolved

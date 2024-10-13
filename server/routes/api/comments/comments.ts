@@ -10,6 +10,7 @@ import { rateLimiter } from "@server/middlewares/rateLimiter";
 import { transaction } from "@server/middlewares/transaction";
 import validate from "@server/middlewares/validate";
 import { Document, Comment, Collection, Event } from "@server/models";
+import Reaction from "@server/models/Reaction";
 import { authorize } from "@server/policies";
 import { presentComment, presentPolicies } from "@server/presenters";
 import { APIContext } from "@server/types";
@@ -356,6 +357,123 @@ router.post(
     ctx.body = {
       data: presentComment(comment),
       policies: presentPolicies(user, [comment]),
+    };
+  }
+);
+
+router.post(
+  "comments.add_reaction",
+  rateLimiter(RateLimiterStrategy.TwentyFivePerMinute),
+  auth(),
+  feature(TeamPreference.Commenting),
+  validate(T.CommentsReactionSchema),
+  transaction(),
+  async (ctx: APIContext<T.CommentsReactionReq>) => {
+    const { id, emoji } = ctx.input.body;
+    const { user } = ctx.state.auth;
+    const { transaction } = ctx.state;
+
+    const comment = await Comment.findByPk(id, {
+      transaction,
+      rejectOnEmpty: true,
+      lock: {
+        level: transaction.LOCK.UPDATE,
+        of: Comment,
+      },
+    });
+    authorize(user, "addReaction", comment);
+
+    await Reaction.findOrCreate({
+      where: {
+        emoji,
+        userId: user.id,
+        commentId: id,
+      },
+      transaction,
+    });
+    const added = await comment.updateReactions({
+      type: "add",
+      emoji,
+      userId: user.id,
+      transaction,
+    });
+
+    if (added) {
+      await Event.createFromContext(
+        ctx,
+        {
+          name: "comments.add_reaction",
+          modelId: comment.id,
+          data: {
+            emoji,
+          },
+        },
+        { transaction }
+      );
+    }
+
+    ctx.body = {
+      success: true,
+    };
+  }
+);
+
+router.post(
+  "comments.remove_reaction",
+  rateLimiter(RateLimiterStrategy.TwentyFivePerMinute),
+  auth(),
+  feature(TeamPreference.Commenting),
+  validate(T.CommentsReactionSchema),
+  transaction(),
+  async (ctx: APIContext<T.CommentsReactionReq>) => {
+    const { id, emoji } = ctx.input.body;
+    const { user } = ctx.state.auth;
+    const { transaction } = ctx.state;
+
+    const comment = await Comment.findByPk(id, {
+      transaction,
+      rejectOnEmpty: true,
+      lock: {
+        level: transaction.LOCK.UPDATE,
+        of: Comment,
+      },
+    });
+    authorize(user, "removeReaction", comment);
+
+    const reaction = await Reaction.findOne({
+      where: {
+        emoji,
+        userId: user.id,
+        commentId: id,
+      },
+      transaction,
+    });
+    authorize(user, "delete", reaction);
+
+    await reaction.destroy({ transaction });
+    const removed = await comment.updateReactions({
+      type: "remove",
+      emoji: reaction.emoji,
+      userId: user.id,
+      transaction,
+    });
+
+    if (removed) {
+      await Event.createFromContext(
+        ctx,
+        {
+          name: "comments.remove_reaction",
+          modelId: comment.id,
+          data: {
+            emoji: reaction.emoji,
+          },
+        },
+        { transaction }
+      );
+    }
+
+    ctx.body = {
+      success: true,
     };
   }
 );
