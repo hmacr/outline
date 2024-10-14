@@ -381,10 +381,6 @@ export type CommentUpdateEvent = BaseEvent<Comment> & {
 export type CommentReactionEvent = BaseEvent<Comment> & {
   name: "comments.add_reaction" | "comments.remove_reaction";
   modelId: string;
-  actorId: string;
-  data: {
-    emoji: string;
-  };
 };
 
 export type CommentEvent =

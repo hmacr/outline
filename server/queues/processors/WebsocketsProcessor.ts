@@ -18,6 +18,7 @@ import {
   UserMembership,
   User,
 } from "@server/models";
+import Reaction from "@server/models/Reaction";
 import { cannot } from "@server/policies";
 import {
   presentComment,
@@ -507,7 +508,12 @@ export default class WebsocketsProcessor {
 
       case "comments.add_reaction":
       case "comments.remove_reaction": {
-        const comment = await Comment.findByPk(event.modelId, {
+        const reaction = await Reaction.findByPk(event.modelId);
+        if (!reaction) {
+          return;
+        }
+
+        const comment = await Comment.findByPk(reaction.commentId, {
           include: [
             {
               model: Document.scope(["withoutState", "withDrafts"]),
@@ -525,9 +531,10 @@ export default class WebsocketsProcessor {
           comment.document
         );
         return socketio.to(channels).emit(event.name, {
-          modelId: event.modelId,
-          userId: event.actorId,
-          emoji: event.data.emoji,
+          modelId: reaction.id,
+          emoji: reaction.emoji,
+          userId: reaction.userId,
+          commentId: reaction.commentId,
         });
       }
 

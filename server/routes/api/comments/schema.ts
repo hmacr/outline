@@ -88,11 +88,22 @@ export const CommentsUnresolveSchema = z.object({
 
 export type CommentsUnresolveReq = z.infer<typeof CommentsUnresolveSchema>;
 
-export const CommentsReactionSchema = z.object({
+export const CommentsAddReactionSchema = z.object({
   body: BaseIdSchema.extend({
-    /**  Emoji that's added to (or) removed from a comment as a reaction. */
+    /**  Emoji that's added as a reaction to a comment. */
     emoji: z.string().regex(emojiRegex()),
   }),
 });
 
-export type CommentsReactionReq = z.infer<typeof CommentsReactionSchema>;
+export type CommentsAddReactionReq = z.infer<typeof CommentsAddReactionSchema>;
+
+export const CommentsRemoveReactionSchema = z.object({
+  body: BaseIdSchema.extend({
+    /** Id of the reaction that needs to be removed. */
+    reactionId: z.string().uuid(),
+  }),
+});
+
+export type CommentsRemoveReactionReq = z.infer<
+  typeof CommentsRemoveReactionSchema
+>;

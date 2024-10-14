@@ -366,9 +366,9 @@ router.post(
   rateLimiter(RateLimiterStrategy.TwentyFivePerMinute),
   auth(),
   feature(TeamPreference.Commenting),
-  validate(T.CommentsReactionSchema),
+  validate(T.CommentsAddReactionSchema),
   transaction(),
-  async (ctx: APIContext<T.CommentsReactionReq>) => {
+  async (ctx: APIContext<T.CommentsAddReactionReq>) => {
     const { id, emoji } = ctx.input.body;
     const { user } = ctx.state.auth;
     const { transaction } = ctx.state;
@@ -383,7 +383,7 @@ router.post(
     });
     authorize(user, "addReaction", comment);
 
-    await Reaction.findOrCreate({
+    const [reaction] = await Reaction.findOrCreate({
       where: {
         emoji,
         userId: user.id,
@@ -395,6 +395,7 @@ router.post(
       type: "add",
       emoji,
       userId: user.id,
+      reactionId: reaction.id,
       transaction,
     });
 
@@ -403,10 +404,7 @@ router.post(
         ctx,
         {
           name: "comments.add_reaction",
-          modelId: comment.id,
-          data: {
-            emoji,
-          },
+          modelId: reaction.id,
         },
         { transaction }
       );
@@ -423,10 +421,10 @@ router.post(
   rateLimiter(RateLimiterStrategy.TwentyFivePerMinute),
   auth(),
   feature(TeamPreference.Commenting),
-  validate(T.CommentsReactionSchema),
+  validate(T.CommentsRemoveReactionSchema),
   transaction(),
-  async (ctx: APIContext<T.CommentsReactionReq>) => {
-    const { id, emoji } = ctx.input.body;
+  async (ctx: APIContext<T.CommentsRemoveReactionReq>) => {
+    const { id, reactionId } = ctx.input.body;
     const { user } = ctx.state.auth;
     const { transaction } = ctx.state;
 
@@ -440,12 +438,7 @@ router.post(
     });
     authorize(user, "removeReaction", comment);
 
-    const reaction = await Reaction.findOne({
-      where: {
-        emoji,
-        userId: user.id,
-        commentId: id,
-      },
+    const reaction = await Reaction.findByPk(reactionId, {
       transaction,
     });
     authorize(user, "delete", reaction);
@@ -455,6 +448,7 @@ router.post(
       type: "remove",
       emoji: reaction.emoji,
       userId: user.id,
+      reactionId: reaction.id,
       transaction,
     });
 
@@ -463,10 +457,7 @@ router.post(
         ctx,
         {
           name: "comments.remove_reaction",
-          modelId: comment.id,
-          data: {
-            emoji: reaction.emoji,
-          },
+          modelId: reaction.id,
         },
         { transaction }
       );
