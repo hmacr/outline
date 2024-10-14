@@ -31,7 +31,7 @@ const Reactions: React.FC<Props> = ({
 );
 
 const Container = styled(Flex)`
-  margin-top: 6px;
+  margin-top: 5px;
 `;
 
 export default observer(Reactions);

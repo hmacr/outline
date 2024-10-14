@@ -37,7 +37,7 @@ const Reaction: React.FC<Props> = ({
 
   return (
     <EmojiButton $active={active} onClick={handleClick}>
-      <Flex gap={8} justify="center" align="center">
+      <Flex gap={6} justify="center" align="center">
         <Emoji size={13}>{reaction.emoji}</Emoji>
         <Count weight="bold">{reaction.userIds.length}</Count>
       </Flex>
