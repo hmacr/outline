@@ -9,8 +9,7 @@ import { feature } from "@server/middlewares/feature";
 import { rateLimiter } from "@server/middlewares/rateLimiter";
 import { transaction } from "@server/middlewares/transaction";
 import validate from "@server/middlewares/validate";
-import { Document, Comment, Collection, Event } from "@server/models";
-import Reaction from "@server/models/Reaction";
+import { Document, Comment, Collection, Event, Reaction } from "@server/models";
 import { authorize } from "@server/policies";
 import { presentComment, presentPolicies } from "@server/presenters";
 import { APIContext } from "@server/types";
@@ -366,9 +365,9 @@ router.post(
   rateLimiter(RateLimiterStrategy.TwentyFivePerMinute),
   auth(),
   feature(TeamPreference.Commenting),
-  validate(T.CommentsAddReactionSchema),
+  validate(T.CommentsReactionSchema),
   transaction(),
-  async (ctx: APIContext<T.CommentsAddReactionReq>) => {
+  async (ctx: APIContext<T.CommentsReactionReq>) => {
     const { id, emoji } = ctx.input.body;
     const { user } = ctx.state.auth;
     const { transaction } = ctx.state;
@@ -383,7 +382,7 @@ router.post(
     });
     authorize(user, "addReaction", comment);
 
-    const [reaction] = await Reaction.findOrCreate({
+    await Reaction.findOrCreate({
       where: {
         emoji,
         userId: user.id,
@@ -395,7 +394,6 @@ router.post(
       type: "add",
       emoji,
       userId: user.id,
-      reactionId: reaction.id,
       transaction,
     });
 
@@ -404,7 +402,10 @@ router.post(
         ctx,
         {
           name: "comments.add_reaction",
-          modelId: reaction.id,
+          modelId: comment.id,
+          data: {
+            emoji,
+          },
         },
         { transaction }
       );
@@ -421,10 +422,10 @@ router.post(
   rateLimiter(RateLimiterStrategy.TwentyFivePerMinute),
   auth(),
   feature(TeamPreference.Commenting),
-  validate(T.CommentsRemoveReactionSchema),
+  validate(T.CommentsReactionSchema),
   transaction(),
-  async (ctx: APIContext<T.CommentsRemoveReactionReq>) => {
-    const { id, reactionId } = ctx.input.body;
+  async (ctx: APIContext<T.CommentsReactionReq>) => {
+    const { id, emoji } = ctx.input.body;
     const { user } = ctx.state.auth;
     const { transaction } = ctx.state;
 
@@ -438,7 +439,8 @@ router.post(
     });
     authorize(user, "removeReaction", comment);
 
-    const reaction = await Reaction.findByPk(reactionId, {
+    const reaction = await Reaction.findOne({
+      where: { emoji, userId: user.id },
       transaction,
     });
     authorize(user, "delete", reaction);
@@ -448,7 +450,6 @@ router.post(
       type: "remove",
       emoji: reaction.emoji,
       userId: user.id,
-      reactionId: reaction.id,
       transaction,
     });
 
@@ -457,7 +458,10 @@ router.post(
         ctx,
         {
           name: "comments.remove_reaction",
-          modelId: reaction.id,
+          modelId: comment.id,
+          data: {
+            emoji,
+          },
         },
         { transaction }
       );

@@ -16,9 +16,11 @@ import Comment from "~/models/Comment";
 import { Avatar } from "~/components/Avatar";
 import ButtonSmall from "~/components/ButtonSmall";
 import Flex from "~/components/Flex";
+import Reactions from "~/components/Reactions";
 import Text from "~/components/Text";
 import Time from "~/components/Time";
 import useBoolean from "~/hooks/useBoolean";
+import useCurrentUser from "~/hooks/useCurrentUser";
 import CommentMenu from "~/menus/CommentMenu";
 import { hover } from "~/styles";
 import CommentEditor from "./CommentEditor";
@@ -96,6 +98,7 @@ function CommentThreadItem({
   highlightedText,
 }: Props) {
   const { t } = useTranslation();
+  const user = useCurrentUser();
   const [forceRender, setForceRender] = React.useState(0);
   const [data, setData] = React.useState(toJS(comment.data));
   const showAuthor = firstOfAuthor;
@@ -106,6 +109,20 @@ function CommentThreadItem({
     !comment.isResolved;
   const [isEditing, setEditing, setReadOnly] = useBoolean();
   const formRef = React.useRef<HTMLFormElement>(null);
+
+  const handleAddReaction = React.useCallback(
+    async (emoji: string) => {
+      await comment.addReaction({ emoji, userId: user.id });
+    },
+    [comment, user]
+  );
+
+  const handleRemoveReaction = React.useCallback(
+    async (emoji: string) => {
+      await comment.removeReaction({ emoji, userId: user.id });
+    },
+    [comment, user]
+  );
 
   const handleChange = (value: (asString: boolean) => ProsemirrorData) => {
     setData(value(false));
@@ -193,6 +210,13 @@ function CommentThreadItem({
             onSave={handleSave}
             autoFocus
           />
+          {!isEditing && !!comment.reactions && (
+            <Reactions
+              reactions={comment.reactions}
+              onAddReaction={handleAddReaction}
+              onRemoveReaction={handleRemoveReaction}
+            />
+          )}
           {isEditing && (
             <Flex align="flex-end" gap={8}>
               <ButtonSmall type="submit" borderOnHover>

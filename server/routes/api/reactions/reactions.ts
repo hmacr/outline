@@ -1,7 +1,7 @@
 import Router from "koa-router";
 import auth from "@server/middlewares/authentication";
 import validate from "@server/middlewares/validate";
-import Reaction from "@server/models/Reaction";
+import { Reaction } from "@server/models";
 import { presentReaction } from "@server/presenters";
 import { APIContext } from "@server/types";
 import * as T from "./schema";

@@ -1,4 +1,4 @@
-import Reaction from "@server/models/Reaction";
+import { Reaction } from "@server/models";
 import presentUser from "./user";
 
 export default function present(reaction: Reaction) {

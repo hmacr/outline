@@ -1,6 +1,4 @@
-import filter from "lodash/filter";
-import find from "lodash/find";
-import uniqBy from "lodash/uniqBy";
+import uniq from "lodash/uniq";
 import { Node } from "prosemirror-model";
 import {
   InferAttributes,
@@ -16,7 +14,7 @@ import {
   Length,
   DefaultScope,
 } from "sequelize-typescript";
-import type { ProsemirrorData, ReactionsData } from "@shared/types";
+import type { ProsemirrorData, Reaction } from "@shared/types";
 import { ProsemirrorHelper } from "@shared/utils/ProsemirrorHelper";
 import { CommentValidation } from "@shared/validations";
 import { schema } from "@server/editor";
@@ -92,7 +90,7 @@ class Comment extends ParanoidModel<
   parentCommentId: string;
 
   @Column(DataType.JSONB)
-  reactions: ReactionsData | null;
+  reactions: Reaction[] | null;
 
   // methods
 
@@ -131,33 +129,40 @@ class Comment extends ParanoidModel<
     type,
     emoji,
     userId,
-    reactionId,
     transaction,
   }: {
     type: "add" | "remove";
     emoji: string;
     userId: string;
-    reactionId: string;
     transaction?: Transaction;
   }): Promise<boolean> => {
-    const reactions = this.reactions || {};
-    const currData = reactions[emoji] ?? [];
+    let reactions = this.reactions ?? [];
+    const reaction = reactions.find((r) => r.emoji === emoji);
 
     const updatable =
       type === "add"
-        ? !find(currData, (item) => item.userId === userId)
-        : find(currData, (item) => item.userId === userId);
+        ? !reaction?.userIds.includes(userId)
+        : reaction?.userIds.includes(userId);
+
     if (!updatable) {
       return false;
     }
 
-    let updatedData: ReactionsData[number];
     if (type === "add") {
-      updatedData = [...currData, { userId, reactionId }];
+      if (!reaction) {
+        reactions.push({ emoji, userIds: [userId] });
+      } else {
+        reaction.userIds = uniq([...reaction.userIds, userId]);
+      }
     } else {
-      updatedData = filter(currData, (item) => item.userId !== userId);
+      if (reaction) {
+        reaction.userIds = reaction.userIds.filter((id) => id !== userId);
+      }
+
+      if (reaction?.userIds.length === 0) {
+        reactions = reactions.filter((r) => r.emoji !== reaction.emoji);
+      }
     }
-    reactions[emoji] = uniqBy(updatedData, (item) => item.userId);
 
     this.reactions = reactions;
     this.changed("reactions", true);

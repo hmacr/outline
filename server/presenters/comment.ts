@@ -1,3 +1,4 @@
+import { Reaction } from "@shared/types";
 import { Comment } from "@server/models";
 import presentUser from "./user";
 
@@ -14,6 +15,22 @@ export default function present(comment: Comment) {
     resolvedById: comment.resolvedById,
     createdAt: comment.createdAt,
     updatedAt: comment.updatedAt,
-    reactions: comment.reactions,
+    reactions: comment.reactions ?? [],
   };
 }
+
+export const presentReactions = (
+  reactions: Record<string, string[]> | null
+) => {
+  if (!reactions) {
+    return [];
+  }
+
+  return Object.entries(reactions).map(
+    ([emoji, userIds]) =>
+      ({
+        emoji,
+        userIds,
+      } as Reaction)
+  );
+};
