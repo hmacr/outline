@@ -9,6 +9,7 @@ import Popover from "~/components/Popover";
 import useMobile from "~/hooks/useMobile";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
 import useWindowSize from "~/hooks/useWindowSize";
+import { hover } from "~/styles";
 
 type Props = {
   onSelect: (emoji: string) => Promise<void>;
@@ -72,9 +73,9 @@ const ReactionPicker: React.FC<Props> = ({ onSelect }) => {
     <>
       <PopoverDisclosure {...popover}>
         {(props) => (
-          <NudeButton {...props} onClick={handlePopoverButtonClick}>
-            <SmileyIcon />
-          </NudeButton>
+          <PopoverButton {...props} onClick={handlePopoverButtonClick}>
+            <SmileyIcon size={20} />
+          </PopoverButton>
         )}
       </PopoverDisclosure>
       <Popover
@@ -103,6 +104,16 @@ const ReactionPicker: React.FC<Props> = ({ onSelect }) => {
 const ScrollableContainer = styled.div`
   height: 250px;
   overflow-y: auto;
+`;
+
+const PopoverButton = styled(NudeButton)`
+  border-radius: 50%;
+  opacity: 0.8;
+  transition: opacity 100ms ease;
+
+  &: ${hover} {
+    opacity: 1;
+  }
 `;
 
 export default ReactionPicker;

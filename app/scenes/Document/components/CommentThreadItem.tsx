@@ -210,13 +210,6 @@ function CommentThreadItem({
             onSave={handleSave}
             autoFocus
           />
-          {!isEditing && !!comment.reactions && (
-            <Reactions
-              reactions={comment.reactions}
-              onAddReaction={handleAddReaction}
-              onRemoveReaction={handleRemoveReaction}
-            />
-          )}
           {isEditing && (
             <Flex align="flex-end" gap={8}>
               <ButtonSmall type="submit" borderOnHover>
@@ -226,6 +219,13 @@ function CommentThreadItem({
                 {t("Cancel")}
               </ButtonSmall>
             </Flex>
+          )}
+          {!!comment.reactions && (
+            <Reactions
+              reactions={comment.reactions}
+              onAddReaction={handleAddReaction}
+              onRemoveReaction={handleRemoveReaction}
+            />
           )}
         </Body>
         <EventBoundary>

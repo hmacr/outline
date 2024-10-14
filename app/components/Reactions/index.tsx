@@ -1,5 +1,6 @@
 import { observer } from "mobx-react";
 import React from "react";
+import styled from "styled-components";
 import type { Reaction as TReaction } from "@shared/types";
 import Flex from "../Flex";
 import Reaction from "./components/Reaction";
@@ -16,7 +17,7 @@ const Reactions: React.FC<Props> = ({
   onAddReaction,
   onRemoveReaction,
 }) => (
-  <Flex>
+  <Container align="center" gap={6} wrap>
     {reactions.map((reaction) => (
       <Reaction
         key={reaction.emoji}
@@ -26,7 +27,11 @@ const Reactions: React.FC<Props> = ({
       />
     ))}
     <ReactionPicker onSelect={onAddReaction} />
-  </Flex>
+  </Container>
 );
+
+const Container = styled(Flex)`
+  margin-top: 6px;
+`;
 
 export default observer(Reactions);
