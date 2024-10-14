@@ -3,6 +3,7 @@ import React from "react";
 import type { Reaction as TReaction } from "@shared/types";
 import Flex from "../Flex";
 import Reaction from "./components/Reaction";
+import ReactionPicker from "./components/ReactionPicker";
 
 type Props = {
   reactions: TReaction[];
@@ -24,6 +25,7 @@ const Reactions: React.FC<Props> = ({
         onRemoveReaction={onRemoveReaction}
       />
     ))}
+    <ReactionPicker onSelect={onAddReaction} />
   </Flex>
 );
 
