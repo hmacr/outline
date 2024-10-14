@@ -4,6 +4,7 @@ import React from "react";
 import styled, { css } from "styled-components";
 import { s } from "@shared/styles";
 import type { Reaction as TReaction } from "@shared/types";
+import { Emoji } from "~/components/Emoji";
 import Flex from "~/components/Flex";
 import NudeButton from "~/components/NudeButton";
 import Text from "~/components/Text";
@@ -37,7 +38,7 @@ const Reaction: React.FC<Props> = ({
   return (
     <EmojiButton $active={active} onClick={handleClick}>
       <Flex gap={8} justify="center" align="center">
-        <Emoji>{reaction.emoji}</Emoji>
+        <Emoji size={13}>{reaction.emoji}</Emoji>
         <Count weight="bold">{reaction.userIds.length}</Count>
       </Flex>
     </EmojiButton>
@@ -66,11 +67,6 @@ const EmojiButton = styled(NudeButton)<{ $active: boolean }>`
             background: ${s("listItemHoverBackground")};
           }
         `};
-`;
-
-const Emoji = styled.span`
-  font-family: ${s("fontFamilyEmoji")};
-  font-size: 13px;
 `;
 
 const Count = styled(Text)`

@@ -198,6 +198,13 @@ class Comment extends Model {
       }
     }
   };
+
+  fetchReactions = async () => {
+    const res = await client.post("/reactions.list", {
+      commentId: this.id,
+    });
+    return res.data;
+  };
 }
 
 export default Comment;
