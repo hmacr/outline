@@ -113,7 +113,7 @@ const Reaction: React.FC<Props> = ({
         </Flex>
       </EmojiButton>
     ),
-    [active, handleClick, reaction]
+    [reaction.emoji, reaction.userIds, active, handleClick]
   );
 
   return tooltipContent ? (
