@@ -3,7 +3,7 @@ import React from "react";
 import styled from "styled-components";
 import type { Reaction as TReaction } from "@shared/types";
 import useHover from "~/hooks/useHover";
-import { ReactionData } from "~/types";
+import { EmojiReactedUsers, ReactionData } from "~/types";
 import Logger from "~/utils/Logger";
 import Flex from "../Flex";
 import Reaction from "./components/Reaction";
@@ -15,17 +15,16 @@ type Props = {
   fetchReactionData: () => Promise<ReactionData[]>;
 };
 
-type ReactedUsers = Record<string, ReactionData["user"][]>;
-
 const Reactions: React.FC<Props> = ({
   reactions,
   onAddReaction,
   onRemoveReaction,
   fetchReactionData,
 }) => {
-  const [reactedUsers, setReactedUsers] = React.useState<ReactedUsers>({});
+  const [emojiReactedUsers, setEmojiReactedUsers] =
+    React.useState<EmojiReactedUsers>({});
   const { hovered, onMouseEnter, onMouseLeave } = useHover({
-    duration: 100,
+    duration: 250,
   });
 
   React.useEffect(() => {
@@ -35,13 +34,13 @@ const Reactions: React.FC<Props> = ({
 
         const transformedData = reactionData.reduce((acc, data) => {
           const emoji = data.emoji;
-          const users = (acc[emoji] ?? []) as ReactedUsers[number];
+          const users = (acc[emoji] ?? []) as EmojiReactedUsers[number];
           users.push(data.user);
           acc[emoji] = users;
           return acc;
-        }, {} as ReactedUsers);
+        }, {} as EmojiReactedUsers);
 
-        setReactedUsers(transformedData);
+        setEmojiReactedUsers(transformedData);
       } catch (err) {
         Logger.warn("Could not prefetch reaction data");
       }
@@ -50,7 +49,7 @@ const Reactions: React.FC<Props> = ({
     if (hovered) {
       void loadReactionData();
     }
-  }, [hovered, setReactedUsers, fetchReactionData]);
+  }, [hovered, setEmojiReactedUsers, fetchReactionData]);
 
   return (
     <Container
@@ -64,7 +63,7 @@ const Reactions: React.FC<Props> = ({
         <Reaction
           key={reaction.emoji}
           reaction={reaction}
-          reactedUsers={reactedUsers[reaction.emoji] ?? []}
+          reactedUsers={emojiReactedUsers[reaction.emoji] ?? []}
           onAddReaction={onAddReaction}
           onRemoveReaction={onRemoveReaction}
         />

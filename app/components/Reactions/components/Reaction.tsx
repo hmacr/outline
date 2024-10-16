@@ -16,6 +16,8 @@ import useCurrentUser from "~/hooks/useCurrentUser";
 import { hover } from "~/styles";
 import { ReactionData } from "~/types";
 
+const MaxUsernamesInTooltip = 3;
+
 type Props = {
   reaction: TReaction;
   reactedUsers: ReactionData["user"][];
@@ -41,7 +43,6 @@ const useTooltipContent = ({
   }
 
   const usernames: string[] = [];
-  const maxNames = active ? 2 : 3;
 
   if (active) {
     usernames.push(t("You"));
@@ -51,19 +52,23 @@ const useTooltipContent = ({
     .filter((user) => user.id !== currUser.id)
     .map((user) => user.name);
 
-  usernames.push(...otherUsernames.slice(0, maxNames));
+  usernames.push(
+    ...otherUsernames.slice(
+      0,
+      active ? MaxUsernamesInTooltip - 1 : MaxUsernamesInTooltip
+    )
+  );
 
   const diff = reactedUsers.length - usernames.length;
   if (diff > 0) {
-    const others = `${diff} ` + (diff === 1 ? t("other") : t("others"));
-    usernames.push(others);
+    usernames.push(`${diff} ` + (diff === 1 ? t("other") : t("others")));
   }
 
   const joinedUsernames = usernames.reduce((content, name, idx) => {
     if (idx === 0) {
       return name;
     } else if (idx === usernames.length - 1) {
-      return `${content} and ${name}`;
+      return `${content} ${t("and")} ${name}`;
     } else {
       return `${content}, ${name}`;
     }

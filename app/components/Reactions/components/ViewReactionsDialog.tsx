@@ -1,78 +1,57 @@
-import groupBy from "lodash/groupBy";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Tab, TabPanel, useTabState } from "reakit";
 import { toast } from "sonner";
 import styled, { css } from "styled-components";
 import { s } from "@shared/styles";
-import Comment from "~/models/Comment";
-import { Avatar, AvatarSize, type IAvatar } from "~/components/Avatar";
+import { Avatar, AvatarSize } from "~/components/Avatar";
 import { Emoji } from "~/components/Emoji";
 import Flex from "~/components/Flex";
 import Text from "~/components/Text";
 import { hover } from "~/styles";
+import { EmojiReactedUsers, ReactionData } from "~/types";
 
 type Props = {
-  comment: Comment;
+  fetchReactionData: () => Promise<ReactionData[]>;
 };
 
-type Reaction = {
-  emoji: string;
-  user: IAvatar & { name: string };
-}[];
-
-const ViewReactionsDialog: React.FC<Props> = ({ comment }) => {
+const ViewReactionsDialog: React.FC<Props> = ({ fetchReactionData }) => {
   const { t } = useTranslation();
   const tab = useTabState();
 
-  const [reactions, setReactions] = React.useState<Reaction>();
+  const [emojiReactedUsers, setEmojiReactedUsers] =
+    React.useState<EmojiReactedUsers>({});
 
   React.useEffect(() => {
     const fetchReactions = async () => {
       try {
-        const allReactions = await comment.fetchReactions();
-        const mappedReactions: Reaction = allReactions.map(
-          // @ts-expect-error reaction data from server
-          (reaction) =>
-            ({
-              emoji: reaction.emoji,
-              user: {
-                name: reaction.user.name,
-                color: reaction.user.color,
-                avatarUrl: reaction.user.avatarUrl,
-                initial: reaction.user.name
-                  ? reaction.user.name[0].toUpperCase()
-                  : "?",
-              },
-            } as Reaction[number])
-        );
+        const reactionData = await fetchReactionData();
 
-        setReactions(mappedReactions);
+        const transformedData = reactionData.reduce((acc, data) => {
+          const emoji = data.emoji;
+          const users = (acc[emoji] ?? []) as EmojiReactedUsers[number];
+          users.push(data.user);
+          acc[emoji] = users;
+          return acc;
+        }, {} as EmojiReactedUsers);
+
+        setEmojiReactedUsers(transformedData);
       } catch (err) {
         toast.error(t("Could not load reactions"));
       }
     };
 
     void fetchReactions();
-  }, [t, comment, setReactions]);
+  }, [t, setEmojiReactedUsers, fetchReactionData]);
 
-  if (!reactions) {
+  if (!emojiReactedUsers) {
     return <div>No reactions info</div>;
   }
-
-  const reactionGroups = groupBy(reactions, "emoji");
-  const emojiUsers = Object.entries(reactionGroups).reduce(
-    (acc, [emoji, group]) => {
-      acc[emoji] = group.map((g) => g.user);
-      return acc;
-    },
-    {} as Record<string, Reaction[number]["user"][]>
-  );
 
   return (
     <>
       <TabActionsWrapper>
-        {Object.keys(emojiUsers).map((emoji) => (
+        {Object.keys(emojiReactedUsers).map((emoji) => (
           <StyledTab
             {...tab}
             key={emoji}
@@ -84,7 +63,7 @@ const ViewReactionsDialog: React.FC<Props> = ({ comment }) => {
           </StyledTab>
         ))}
       </TabActionsWrapper>
-      {Object.entries(emojiUsers).map(([emoji, users]) => (
+      {Object.entries(emojiReactedUsers).map(([emoji, users]) => (
         <StyledTabPanel {...tab} key={emoji}>
           {users.map((user) => (
             <UserInfo key={user.name} align="center" gap={8}>

@@ -20,6 +20,7 @@ import {
 import useActionContext from "~/hooks/useActionContext";
 import usePolicy from "~/hooks/usePolicy";
 import useStores from "~/hooks/useStores";
+import { ReactionData } from "~/types";
 import { commentPath, urlify } from "~/utils/routeHelpers";
 
 type Props = {
@@ -58,6 +59,26 @@ function CommentMenu({
     }
   }, [t, document, comment]);
 
+  const fetchReactionData = React.useCallback(async () => {
+    const allReactions = await comment.fetchReactions();
+    return allReactions.map(
+      // @ts-expect-error reaction data from server
+      (reaction) =>
+        ({
+          emoji: reaction.emoji,
+          user: {
+            id: reaction.user.id,
+            name: reaction.user.name,
+            initial: reaction.user.name
+              ? reaction.user.name[0].toUpperCase()
+              : "?",
+            color: reaction.user.color,
+            avatarUrl: reaction.user.avatarUrl,
+          },
+        } as ReactionData)
+    ) as ReactionData[];
+  }, [comment]);
+
   return (
     <>
       <EventBoundary>
@@ -95,6 +116,7 @@ function CommentMenu({
             actionToMenuItem(
               viewCommentReactionsFactory({
                 comment,
+                fetchReactionData,
               }),
               context
             ),
