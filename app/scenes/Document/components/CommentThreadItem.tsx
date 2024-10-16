@@ -85,6 +85,10 @@ type Props = {
   onUpdate: (attrs: { resolved: boolean }) => void;
   /** Text to highlight at the top of the comment */
   highlightedText?: string;
+  /** Enable scroll for the comments container */
+  enableScroll: () => void;
+  /** Disable scroll for the comments container */
+  disableScroll: () => void;
 };
 
 function CommentThreadItem({
@@ -98,6 +102,8 @@ function CommentThreadItem({
   onDelete,
   onUpdate,
   highlightedText,
+  enableScroll,
+  disableScroll,
 }: Props) {
   const { t } = useTranslation();
   const user = useCurrentUser();
@@ -254,7 +260,11 @@ function CommentThreadItem({
         <EventBoundary>
           {!isEditing && (
             <Actions dir={dir}>
-              <StyledReactionPicker onSelect={handleAddReaction} />
+              <StyledReactionPicker
+                onSelect={handleAddReaction}
+                onOpen={disableScroll}
+                onClose={enableScroll}
+              />
               <StyledMenu
                 comment={comment}
                 onEdit={setEditing}

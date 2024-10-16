@@ -14,9 +14,16 @@ type Props = {
   /** CSS class name */
   className?: string;
   onSelect: (emoji: string) => Promise<void>;
+  onOpen?: () => void;
+  onClose?: () => void;
 };
 
-const ReactionPicker: React.FC<Props> = ({ className, onSelect }) => {
+const ReactionPicker: React.FC<Props> = ({
+  className,
+  onSelect,
+  onOpen,
+  onClose,
+}) => {
   const { t } = useTranslation();
   const popover = usePopoverState({
     modal: true,
@@ -52,6 +59,15 @@ const ReactionPicker: React.FC<Props> = ({ className, onSelect }) => {
     },
     [popover, onSelect]
   );
+
+  // Popover open effect
+  React.useEffect(() => {
+    if (popover.visible) {
+      onOpen?.();
+    } else {
+      onClose?.();
+    }
+  }, [popover.visible, onOpen, onClose]);
 
   // Custom click outside handling rather than using `hideOnClickOutside` from reakit so that we can
   // prevent event bubbling.
