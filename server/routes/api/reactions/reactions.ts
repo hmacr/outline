@@ -1,7 +1,8 @@
 import Router from "koa-router";
 import auth from "@server/middlewares/authentication";
 import validate from "@server/middlewares/validate";
-import { Reaction } from "@server/models";
+import { Comment, Reaction } from "@server/models";
+import { authorize } from "@server/policies";
 import { presentReaction } from "@server/presenters";
 import { APIContext } from "@server/types";
 import * as T from "./schema";
@@ -14,6 +15,13 @@ router.post(
   validate(T.ReactionsListSchema),
   async (ctx: APIContext<T.ReactionsListReq>) => {
     const { commentId } = ctx.input.body;
+    const { user } = ctx.state.auth;
+
+    const comment = await Comment.findByPk(commentId, {
+      rejectOnEmpty: true,
+    });
+
+    authorize(user, "readReaction", comment);
 
     const reactions: Reaction[] = [];
 

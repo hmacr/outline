@@ -31,6 +31,9 @@ allow(User, ["update", "delete"], Comment, (actor, comment) =>
   )
 );
 
-allow(User, ["addReaction", "removeReaction"], Comment, (actor, comment) =>
-  isTeamModel(actor, comment?.createdBy)
+allow(
+  User,
+  ["readReaction", "addReaction", "removeReaction"],
+  Comment,
+  (actor, comment) => isTeamModel(actor, comment?.createdBy)
 );
