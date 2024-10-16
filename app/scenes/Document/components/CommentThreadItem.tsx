@@ -243,7 +243,7 @@ function CommentThreadItem({
             </Flex>
           )}
           {!!comment.reactions && (
-            <Reactions
+            <StyledReactions
               reactions={comment.reactions}
               onAddReaction={handleAddReaction}
               onRemoveReaction={handleRemoveReaction}
@@ -253,7 +253,7 @@ function CommentThreadItem({
         </Body>
         <EventBoundary>
           {!isEditing && (
-            <Actions gap={2}>
+            <Actions dir={dir}>
               <StyledReactionPicker onSelect={handleAddReaction} />
               <StyledMenu
                 comment={comment}
@@ -322,10 +322,16 @@ const Actions = styled(Flex)<{ dir?: "rtl" | "ltr" }>`
   top: 4px;
   opacity: 0;
   transition: opacity 100ms ease-in-out;
+  background: ${s("commentBackground")};
+  padding-left: 4px;
 
   &:has(${StyledReactionPicker}[aria-expanded="true"], ${StyledMenu}[aria-expanded="true"]) {
     opacity: 1;
   }
+`;
+
+const StyledReactions = styled(Reactions)`
+  margin-top: 6px;
 `;
 
 const Meta = styled(Text)`

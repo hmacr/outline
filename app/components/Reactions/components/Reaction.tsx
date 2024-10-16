@@ -1,5 +1,5 @@
 import { observer } from "mobx-react";
-import { darken } from "polished";
+import { darken, lighten } from "polished";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import styled, { css } from "styled-components";
@@ -129,24 +129,37 @@ const EmojiButton = styled(NudeButton)<{ $active: boolean }>`
   width: auto;
   height: 28px;
   padding: 8px;
-  border: 1px solid ${s("buttonNeutralBorder")};
   border-radius: 12px;
+  border: 1px solid transparent;
+  transition: ${s("backgroundTransition")};
 
   ${({ $active, theme }) =>
     $active
-      ? css`
-          background: ${darken(0, theme.accent)};
-          border: 1px solid ${darken(0.15, theme.accent)};
+      ? theme.isDark
+        ? css`
+            background-color: ${darken(0.1, theme.accent)};
+            border-color: ${darken(0.08, theme.accent)};
+
+            &: ${hover} {
+              background-color: ${darken(0.2, theme.accent)};
+            }
+          `
+        : css`
+            background-color: ${lighten(0.38, theme.accent)};
+            border-color: ${lighten(0.34, theme.accent)};
+
+            &: ${hover} {
+              background-color: ${lighten(0.3, theme.accent)};
+            }
+          `
+      : css`
+          background-color: ${s("listItemHoverBackground")};
+          border-color: ${s("buttonNeutralBorder")};
 
           &: ${hover} {
-            background: ${darken(0.24, theme.accent)};
+            background-color: ${s("buttonNeutralBackground")};
           }
-        `
-      : css`
-          &: ${hover} {
-            background: ${s("listItemHoverBackground")};
-          }
-        `};
+        `}
 `;
 
 const Count = styled(Text)`

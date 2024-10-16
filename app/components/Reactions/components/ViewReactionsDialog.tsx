@@ -7,6 +7,7 @@ import { s } from "@shared/styles";
 import { Avatar, AvatarSize } from "~/components/Avatar";
 import { Emoji } from "~/components/Emoji";
 import Flex from "~/components/Flex";
+import PlaceholderText from "~/components/PlaceholderText";
 import Text from "~/components/Text";
 import { hover } from "~/styles";
 import { EmojiReactedUsers, ReactionData } from "~/types";
@@ -45,7 +46,7 @@ const ViewReactionsDialog: React.FC<Props> = ({ fetchReactionData }) => {
   }, [t, setEmojiReactedUsers, fetchReactionData]);
 
   if (!emojiReactedUsers) {
-    return <div>No reactions info</div>;
+    return <PlaceHolder />;
   }
 
   return (
@@ -76,6 +77,27 @@ const ViewReactionsDialog: React.FC<Props> = ({ fetchReactionData }) => {
     </>
   );
 };
+
+const PlaceHolder = React.memo(
+  () => (
+    <>
+      <TabActionsWrapper gap={8} style={{ paddingBottom: "10px" }}>
+        <PlaceholderText width={40} height={32} />
+        <PlaceholderText width={40} height={32} />
+      </TabActionsWrapper>
+      <UserInfo align="center" gap={12}>
+        <PlaceholderText width={AvatarSize.Medium} height={AvatarSize.Medium} />
+        <PlaceholderText height={34} />
+      </UserInfo>
+      <UserInfo align="center" gap={12}>
+        <PlaceholderText width={AvatarSize.Medium} height={AvatarSize.Medium} />
+        <PlaceholderText height={34} />
+      </UserInfo>
+    </>
+  ),
+  () => true
+);
+PlaceHolder.displayName = "ViewReactionsPlaceholder";
 
 const TabActionsWrapper = styled(Flex)`
   border-bottom: 1px solid ${s("inputBorder")};

@@ -1,6 +1,5 @@
 import { observer } from "mobx-react";
 import React from "react";
-import styled from "styled-components";
 import type { Reaction as TReaction } from "@shared/types";
 import useHover from "~/hooks/useHover";
 import { EmojiReactedUsers, ReactionData } from "~/types";
@@ -13,6 +12,7 @@ type Props = {
   onAddReaction: (emoji: string) => Promise<void>;
   onRemoveReaction: (emoji: string) => Promise<void>;
   fetchReactionData: () => Promise<ReactionData[]>;
+  className?: string;
 };
 
 const Reactions: React.FC<Props> = ({
@@ -20,6 +20,7 @@ const Reactions: React.FC<Props> = ({
   onAddReaction,
   onRemoveReaction,
   fetchReactionData,
+  className,
 }) => {
   const [emojiReactedUsers, setEmojiReactedUsers] =
     React.useState<EmojiReactedUsers>({});
@@ -52,7 +53,8 @@ const Reactions: React.FC<Props> = ({
   }, [hovered, setEmojiReactedUsers, fetchReactionData]);
 
   return (
-    <Container
+    <Flex
+      className={className}
       align="center"
       gap={6}
       wrap
@@ -68,12 +70,8 @@ const Reactions: React.FC<Props> = ({
           onRemoveReaction={onRemoveReaction}
         />
       ))}
-    </Container>
+    </Flex>
   );
 };
-
-const Container = styled(Flex)`
-  margin-top: 5px;
-`;
 
 export default observer(Reactions);
