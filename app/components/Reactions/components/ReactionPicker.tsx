@@ -1,4 +1,4 @@
-import { SmileyIcon } from "outline-icons";
+import { ReactionIcon } from "outline-icons";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { PopoverDisclosure, usePopoverState } from "reakit";
@@ -9,13 +9,14 @@ import Popover from "~/components/Popover";
 import useMobile from "~/hooks/useMobile";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
 import useWindowSize from "~/hooks/useWindowSize";
-import { hover } from "~/styles";
 
 type Props = {
+  /** CSS class name */
+  className?: string;
   onSelect: (emoji: string) => Promise<void>;
 };
 
-const ReactionPicker: React.FC<Props> = ({ onSelect }) => {
+const ReactionPicker: React.FC<Props> = ({ className, onSelect }) => {
   const { t } = useTranslation();
   const popover = usePopoverState({
     modal: true,
@@ -73,8 +74,12 @@ const ReactionPicker: React.FC<Props> = ({ onSelect }) => {
     <>
       <PopoverDisclosure {...popover}>
         {(props) => (
-          <PopoverButton {...props} onClick={handlePopoverButtonClick}>
-            <SmileyIcon size={20} />
+          <PopoverButton
+            {...props}
+            className={className}
+            onClick={handlePopoverButtonClick}
+          >
+            <ReactionIcon size={20} />
           </PopoverButton>
         )}
       </PopoverDisclosure>
@@ -108,12 +113,6 @@ const ScrollableContainer = styled.div`
 
 const PopoverButton = styled(NudeButton)`
   border-radius: 50%;
-  opacity: 0.8;
-  transition: opacity 100ms ease;
-
-  &: ${hover} {
-    opacity: 1;
-  }
 `;
 
 export default ReactionPicker;

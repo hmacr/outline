@@ -17,6 +17,7 @@ import { Avatar } from "~/components/Avatar";
 import ButtonSmall from "~/components/ButtonSmall";
 import Flex from "~/components/Flex";
 import Reactions from "~/components/Reactions";
+import ReactionPicker from "~/components/Reactions/components/ReactionPicker";
 import Text from "~/components/Text";
 import Time from "~/components/Time";
 import useBoolean from "~/hooks/useBoolean";
@@ -230,13 +231,15 @@ function CommentThreadItem({
         </Body>
         <EventBoundary>
           {!isEditing && (
-            <Menu
-              comment={comment}
-              onEdit={setEditing}
-              onDelete={onDelete}
-              onUpdate={onUpdate}
-              dir={dir}
-            />
+            <Actions gap={2}>
+              <StyledReactionPicker onSelect={handleAddReaction} />
+              <StyledMenu
+                comment={comment}
+                onEdit={setEditing}
+                onDelete={onDelete}
+                onUpdate={onUpdate}
+              />
+            </Actions>
           )}
         </EventBoundary>
       </Bubble>
@@ -274,18 +277,32 @@ const Body = styled.form`
   border-radius: 2px;
 `;
 
-const Menu = styled(CommentMenu)<{ dir?: "rtl" | "ltr" }>`
+const StyledMenu = styled(CommentMenu)`
+  color: ${s("textSecondary")};
+
+  &: ${hover}, &[aria-expanded= "true"] {
+    background: ${s("sidebarActiveBackground")};
+  }
+`;
+
+const StyledReactionPicker = styled(ReactionPicker)`
+  color: ${s("textSecondary")};
+
+  &: ${hover}, &[aria-expanded= "true"] {
+    background: ${s("sidebarActiveBackground")};
+  }
+`;
+
+const Actions = styled(Flex)<{ dir?: "rtl" | "ltr" }>`
   position: absolute;
   left: ${(props) => (props.dir !== "rtl" ? "auto" : "4px")};
   right: ${(props) => (props.dir === "rtl" ? "auto" : "4px")};
   top: 4px;
   opacity: 0;
   transition: opacity 100ms ease-in-out;
-  color: ${s("textSecondary")};
 
-  &: ${hover}, &[aria-expanded= "true"] {
+  &:has(${StyledReactionPicker}[aria-expanded="true"], ${StyledMenu}[aria-expanded="true"]) {
     opacity: 1;
-    background: ${s("sidebarActiveBackground")};
   }
 `;
 
@@ -334,7 +351,7 @@ export const Bubble = styled(Flex)<{
     margin-bottom: 0;
   }
 
-  &: ${hover} ${Menu} {
+  &: ${hover} ${Actions} {
     opacity: 1;
   }
 
