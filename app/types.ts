@@ -7,6 +7,7 @@ import {
   DocumentPermission,
 } from "@shared/types";
 import RootStore from "~/stores/RootStore";
+import { IAvatar } from "./components/Avatar";
 import { SidebarContextType } from "./components/Sidebar/components/SidebarContext";
 import Document from "./models/Document";
 import FileOperation from "./models/FileOperation";
@@ -221,4 +222,9 @@ export type Properties<C> = {
   [Property in keyof C as C[Property] extends JSONValue
     ? Property
     : never]?: C[Property];
+};
+
+export type ReactionData = {
+  emoji: string;
+  user: Omit<IAvatar, "id"> & { id: string; name: string };
 };
