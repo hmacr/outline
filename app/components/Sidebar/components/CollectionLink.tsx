@@ -16,6 +16,7 @@ import useBoolean from "~/hooks/useBoolean";
 import usePolicy from "~/hooks/usePolicy";
 import useStores from "~/hooks/useStores";
 import CollectionMenu from "~/menus/CollectionMenu";
+import { useLocationState } from "../hooks/useLocationState";
 import DropToImport from "./DropToImport";
 import EditableTitle, { RefHandle } from "./EditableTitle";
 import Relative from "./Relative";
@@ -40,12 +41,13 @@ const CollectionLink: React.FC<Props> = ({
   depth,
   onClick,
 }: Props) => {
-  const { dialogs, documents, collections, ui } = useStores();
+  const { dialogs, documents, collections } = useStores();
   const [menuOpen, handleMenuOpen, handleMenuClose] = useBoolean();
   const [isEditing, setIsEditing] = React.useState(false);
   const can = usePolicy(collection);
   const { t } = useTranslation();
   const sidebarContext = useSidebarContext();
+  const locationSidebarContext = useLocationState();
   const editableTitleRef = React.useRef<RefHandle>(null);
 
   const handleTitleChange = React.useCallback(
@@ -130,7 +132,7 @@ const CollectionLink: React.FC<Props> = ({
           showActions={menuOpen}
           isActiveDrop={isOver && canDrop}
           isActive={(match) =>
-            !!match && ui.activeSidebarContext === sidebarContext
+            !!match && sidebarContext === locationSidebarContext
           }
           label={
             <EditableTitle

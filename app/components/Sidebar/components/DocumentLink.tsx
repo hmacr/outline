@@ -23,6 +23,7 @@ import {
   useDropToReorderDocument,
   useDropToReparentDocument,
 } from "../hooks/useDragAndDrop";
+import { useLocationState } from "../hooks/useLocationState";
 import DropCursor from "./DropCursor";
 import DropToImport from "./DropToImport";
 import EditableTitle, { RefHandle } from "./EditableTitle";
@@ -55,7 +56,7 @@ function InnerDocumentLink(
   }: Props,
   ref: React.RefObject<HTMLAnchorElement>
 ) {
-  const { documents, policies, ui } = useStores();
+  const { documents, policies } = useStores();
   const { t } = useTranslation();
   const canUpdate = usePolicy(node.id).update;
   const isActiveDocument = activeDocument && activeDocument.id === node.id;
@@ -66,6 +67,7 @@ function InnerDocumentLink(
   const [isEditing, setIsEditing] = React.useState(false);
   const editableTitleRef = React.useRef<RefHandle>(null);
   const sidebarContext = useSidebarContext();
+  const locationSidebarContext = useLocationState();
 
   React.useEffect(() => {
     if (
@@ -250,7 +252,7 @@ function InnerDocumentLink(
                   />
                 }
                 isActive={(match) =>
-                  !!match && ui.activeSidebarContext === sidebarContext
+                  !!match && sidebarContext === locationSidebarContext
                 }
                 isActiveDrop={isOverReparent && canDropToReparent}
                 depth={depth}

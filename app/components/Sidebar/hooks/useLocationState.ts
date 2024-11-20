@@ -8,5 +8,6 @@ export function useLocationState() {
   const location = useLocation<{
     sidebarContext?: SidebarContextType;
   }>();
+  console.log("location state", location.state, location.state?.sidebarContext);
   return location.state?.sidebarContext;
 }

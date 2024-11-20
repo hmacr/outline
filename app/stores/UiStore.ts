@@ -150,28 +150,35 @@ class UiStore {
       Storage.set(UI_STORE, this.asJson);
     });
 
-    // Based on current path, set the active sidebar context which helps
+    // Based on current path, set the sidebar context in location state which helps
     // 1. expand the containing sidebar link.
     // 2. set the active style for the current link.
     history.listen((location) => {
+      const replaceHistory = (sidebarCtx?: SidebarContextType) => {
+        console.log("history -", this.currSidebarContext, sidebarCtx);
+        // No need to replace state if we're in the same context.
+        if (this.currSidebarContext === sidebarCtx) {
+          return;
+        }
+
+        this.currSidebarContext = sidebarCtx;
+        history.replace({
+          ...location,
+          state: {
+            ...(location.state as object),
+            sidebarContext: sidebarCtx,
+            random: "Abc",
+          },
+        });
+      };
+
       const state = location.state as
         | { sidebarContext?: SidebarContextType }
         | undefined;
 
-      const replaceHistory = (sidebarContext?: SidebarContextType) => {
-        // No need to replace state if we're in the same context
-        if (state?.sidebarContext === sidebarContext) {
-          return;
-        }
+      console.log("history:", state);
 
-        this.currSidebarContext = sidebarContext;
-        history.replace({
-          ...location,
-          state: { ...(location.state as object), sidebarContext },
-        });
-      };
-
-      // when the link is clicked directly in the sidebar, the context state is already set.
+      // when the link is clicked directly in the sidebar, the context is already set in location state.
       if (state?.sidebarContext) {
         // this.setActiveSidebarContext(state.sidebarContext);
         this.currSidebarContext = state.sidebarContext;
@@ -189,6 +196,7 @@ class UiStore {
       const inDocumentPath = location.pathname.startsWith("/doc");
       // We are not interested in any paths other than collection (or) document.
       if (!inCollectionPath && !inDocumentPath) {
+        console.log("setting undefined");
         this.currSidebarContext = undefined;
         // this.setActiveSidebarContext(undefined);
         return;
@@ -197,8 +205,8 @@ class UiStore {
       const urlId = location.pathname.split("-").pop();
       // This is needed to prefer starred as long as we are in non-collection context (ex: home, search, shared, etc.).
       const inCollectionCtx =
-        this.activeSidebarContext === "collections" ||
-        this.activeSidebarContext === "archive";
+        this.currSidebarContext === "collections" ||
+        this.currSidebarContext === "archive";
 
       // Set the collection context based on whether it is starred or archived.
       // This helps navigating between this collection's documents under the current context.
@@ -230,25 +238,31 @@ class UiStore {
           document.collectionId ?? ""
         );
         const inStarredCollectionCtx =
-          this.activeSidebarContext === starredCollectionContext;
+          this.currSidebarContext === starredCollectionContext;
         // If the containing collection is also starred and we're currently inside it,
         // the document link inside this collection should be preferred rather than the starred link.
         const sidebarCtx: SidebarContextType =
           document.isStarred && !inStarredCollectionCtx
             ? "starred"
             : starredCollectionContext;
-        this.setActiveSidebarContext(sidebarCtx);
+        // this.setActiveSidebarContext(sidebarCtx);
+        replaceHistory(sidebarCtx);
         return;
       }
 
       // Finally, set the context based on the document membership.
       const membershipType = document.membershipType;
+      let sidebarContext: SidebarContextType;
       if (membershipType === "collection") {
-        this.setActiveSidebarContext(
-          document.collection?.isArchived ? "archive" : "collections"
-        );
+        sidebarContext = document.collection?.isArchived
+          ? "archive"
+          : "collections";
+        // this.setActiveSidebarContext(
+        //   document.collection?.isArchived ? "archive" : "collections"
+        // );
       } else if (membershipType === "document") {
-        this.setActiveSidebarContext("shared");
+        sidebarContext = "shared";
+        // this.setActiveSidebarContext("shared");
       } else {
         // A document can be part of multiple groups - In this case, prefer the first group.
         const group =
@@ -256,8 +270,10 @@ class UiStore {
             (g) =>
               !!g.documentMemberships.find((m) => m.documentId === document.id)
           );
-        this.setActiveSidebarContext(groupSidebarContext(group?.id ?? ""));
+        sidebarContext = groupSidebarContext(group?.id ?? "");
+        // this.setActiveSidebarContext(groupSidebarContext(group?.id ?? ""));
       }
+      replaceHistory(sidebarContext);
     });
   }
 

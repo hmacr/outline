@@ -2,6 +2,7 @@ import { observer } from "mobx-react";
 import * as React from "react";
 import Collection from "~/models/Collection";
 import useStores from "~/hooks/useStores";
+import { useLocationState } from "../hooks/useLocationState";
 import CollectionLink from "./CollectionLink";
 import CollectionLinkChildren from "./CollectionLinkChildren";
 import Relative from "./Relative";
@@ -16,9 +17,10 @@ export const ArchivedCollectionLink = observer(
   ({ collection, depth }: Props) => {
     const { documents, ui } = useStores();
     const sidebarContext = useSidebarContext();
+    const locationSidebarContext = useLocationState();
     const [expanded, setExpanded] = React.useState(
       collection.id === ui.activeCollectionId &&
-        sidebarContext === ui.activeSidebarContext
+        sidebarContext === locationSidebarContext
     );
 
     const handleDisclosureClick = React.useCallback((ev) => {
@@ -34,7 +36,7 @@ export const ArchivedCollectionLink = observer(
     React.useEffect(() => {
       if (
         collection.id === ui.activeCollectionId &&
-        sidebarContext === ui.activeSidebarContext
+        sidebarContext === locationSidebarContext
       ) {
         setExpanded(true);
       }
@@ -42,7 +44,7 @@ export const ArchivedCollectionLink = observer(
       collection.id,
       sidebarContext,
       ui.activeCollectionId,
-      ui.activeSidebarContext,
+      locationSidebarContext,
     ]);
 
     return (

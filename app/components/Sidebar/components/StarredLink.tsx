@@ -14,6 +14,7 @@ import {
   useDropToCreateStar,
   useDropToReorderStar,
 } from "../hooks/useDragAndDrop";
+import { useLocationState } from "../hooks/useLocationState";
 import { useSidebarLabelAndIcon } from "../hooks/useSidebarLabelAndIcon";
 import CollectionLink from "./CollectionLink";
 import CollectionLinkChildren from "./CollectionLinkChildren";
@@ -41,25 +42,33 @@ function StarredLink({ star }: Props) {
     starType === "document"
       ? "starred"
       : starredCollectionSidebarContext(star.collectionId);
+  const locationSidebarContext = useLocationState();
   const [expanded, setExpanded] = useState(
     (starType === "document"
       ? star.documentId === ui.activeDocumentId
       : star.collectionId === ui.activeCollectionId) &&
-      sidebarContext === ui.activeSidebarContext
+      sidebarContext === locationSidebarContext
+  );
+
+  console.log(
+    "starredlink -",
+    starType,
+    sidebarContext,
+    locationSidebarContext
   );
 
   React.useEffect(() => {
     if (starType === "document") {
       if (
         star.documentId === ui.activeDocumentId &&
-        sidebarContext === ui.activeSidebarContext
+        sidebarContext === locationSidebarContext
       ) {
         setExpanded(true);
       }
     } else {
       if (
         star.collectionId === ui.activeCollectionId &&
-        sidebarContext === ui.activeSidebarContext
+        sidebarContext === locationSidebarContext
       ) {
         setExpanded(true);
       }
@@ -70,7 +79,7 @@ function StarredLink({ star }: Props) {
     star.collectionId,
     ui.activeDocumentId,
     ui.activeCollectionId,
-    ui.activeSidebarContext,
+    locationSidebarContext,
     sidebarContext,
   ]);
 
@@ -147,7 +156,7 @@ function StarredLink({ star }: Props) {
             onDisclosureClick={handleDisclosureClick}
             icon={icon}
             isActive={(match) =>
-              !!match && sidebarContext === ui.activeSidebarContext
+              !!match && sidebarContext === locationSidebarContext
             }
             label={label}
             exact={false}

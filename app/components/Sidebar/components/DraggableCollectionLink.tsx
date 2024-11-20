@@ -8,6 +8,7 @@ import Collection from "~/models/Collection";
 import Document from "~/models/Document";
 import CollectionIcon from "~/components/Icons/CollectionIcon";
 import useStores from "~/hooks/useStores";
+import { useLocationState } from "../hooks/useLocationState";
 import CollectionLink from "./CollectionLink";
 import CollectionLinkChildren from "./CollectionLinkChildren";
 import DropCursor from "./DropCursor";
@@ -30,9 +31,10 @@ function DraggableCollectionLink({
 }: Props) {
   const { ui, policies, collections } = useStores();
   const sidebarContext = useSidebarContext();
+  const locationSidebarContext = useLocationState();
   const [expanded, setExpanded] = React.useState(
     collection.id === ui.activeCollectionId &&
-      sidebarContext === ui.activeSidebarContext
+      sidebarContext === locationSidebarContext
   );
   const belowCollectionIndex = belowCollection ? belowCollection.index : null;
 
@@ -80,14 +82,14 @@ function DraggableCollectionLink({
   React.useEffect(() => {
     if (
       collection.id === ui.activeCollectionId &&
-      sidebarContext === ui.activeSidebarContext
+      sidebarContext === locationSidebarContext
     ) {
       setExpanded(true);
     }
   }, [
     collection.id,
     ui.activeCollectionId,
-    ui.activeSidebarContext,
+    locationSidebarContext,
     sidebarContext,
   ]);
 

@@ -15,6 +15,7 @@ import {
   useDropToReorderUserMembership,
   useDropToReparentDocument,
 } from "../hooks/useDragAndDrop";
+import { useLocationState } from "../hooks/useLocationState";
 import { useSidebarLabelAndIcon } from "../hooks/useSidebarLabelAndIcon";
 import DocumentLink from "./DocumentLink";
 import DropCursor from "./DropCursor";
@@ -31,6 +32,7 @@ type Props = {
 function SharedWithMeLink({ membership, depth = 0 }: Props) {
   const { ui, collections, documents } = useStores();
   const sidebarContext = useSidebarContext();
+  const locationSidebarContext = useLocationState();
   const { fetchChildDocuments } = documents;
   const [menuOpen, handleMenuOpen, handleMenuClose] = useBoolean();
   const { documentId } = membership;
@@ -39,20 +41,20 @@ function SharedWithMeLink({ membership, depth = 0 }: Props) {
 
   const [expanded, setExpanded, setCollapsed] = useBoolean(
     membership.documentId === ui.activeDocumentId &&
-      sidebarContext === ui.activeSidebarContext
+      sidebarContext === locationSidebarContext
   );
 
   React.useEffect(() => {
     if (
       membership.documentId === ui.activeDocumentId &&
-      sidebarContext === ui.activeSidebarContext
+      sidebarContext === locationSidebarContext
     ) {
       setExpanded();
     }
   }, [
     membership.documentId,
     ui.activeDocumentId,
-    ui.activeSidebarContext,
+    locationSidebarContext,
     sidebarContext,
     setExpanded,
   ]);
@@ -138,7 +140,7 @@ function SharedWithMeLink({ membership, depth = 0 }: Props) {
                 onDisclosureClick={handleDisclosureClick}
                 icon={icon}
                 isActive={(match) =>
-                  !!match && sidebarContext === ui.activeSidebarContext
+                  !!match && sidebarContext === locationSidebarContext
                 }
                 label={label}
                 exact={false}

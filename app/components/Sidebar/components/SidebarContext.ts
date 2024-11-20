@@ -5,7 +5,7 @@ export type SidebarContextType =
   | "archive"
   | "shared"
   | "starred"
-  | `starred-${string}` // starred collection id
+  | `starred-col-${string}` // starred collection id
   | `group-${string}` // group id
   | undefined;
 
@@ -15,7 +15,7 @@ export const useSidebarContext = () => React.useContext(SidebarContext);
 
 export const starredCollectionSidebarContext = (
   collectionId: string
-): SidebarContextType => `starred-${collectionId}`;
+): SidebarContextType => `starred-col-${collectionId}`;
 
 export const groupSidebarContext = (groupId: string): SidebarContextType =>
   `group-${groupId}`;
