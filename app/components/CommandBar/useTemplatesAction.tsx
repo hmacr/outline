@@ -27,14 +27,11 @@ const useTemplatesAction = () => {
             <NewDocumentIcon />
           ),
           keywords: "create",
-          perform: ({ activeCollectionId, sidebarContext }) =>
+          perform: ({ activeCollectionId }) =>
             history.push(
               newDocumentPath(item.collectionId ?? activeCollectionId, {
                 templateId: item.id,
-              }),
-              {
-                sidebarContext,
-              }
+              })
             ),
         })
       ),

@@ -1,5 +1,4 @@
 import fractionalIndex from "fractional-index";
-import { Location } from "history";
 import { observer } from "mobx-react";
 import { StarredIcon } from "outline-icons";
 import * as React from "react";
@@ -15,7 +14,6 @@ import {
   useDropToCreateStar,
   useDropToReorderStar,
 } from "../hooks/useDragAndDrop";
-import { useLocationState } from "../hooks/useLocationState";
 import { useSidebarLabelAndIcon } from "../hooks/useSidebarLabelAndIcon";
 import CollectionLink from "./CollectionLink";
 import CollectionLinkChildren from "./CollectionLinkChildren";
@@ -24,8 +22,7 @@ import DropCursor from "./DropCursor";
 import Folder from "./Folder";
 import Relative from "./Relative";
 import SidebarContext, {
-  SidebarContextType,
-  useSidebarContext,
+  starredCollectionSidebarContext,
 } from "./SidebarContext";
 import SidebarLink from "./SidebarLink";
 
@@ -39,25 +36,42 @@ function StarredLink({ star }: Props) {
   const [menuOpen, handleMenuOpen, handleMenuClose] = useBoolean();
   const { documentId, collectionId } = star;
   const collection = collections.get(collectionId);
-  const locationSidebarContext = useLocationState();
-  const sidebarContext = useSidebarContext();
+  const starType = star.documentId ? "document" : "collection";
+  const sidebarContext =
+    starType === "document"
+      ? "starred"
+      : starredCollectionSidebarContext(star.collectionId);
   const [expanded, setExpanded] = useState(
-    star.collectionId === ui.activeCollectionId &&
-      sidebarContext === locationSidebarContext
+    (starType === "document"
+      ? star.documentId === ui.activeDocumentId
+      : star.collectionId === ui.activeCollectionId) &&
+      sidebarContext === ui.activeSidebarContext
   );
 
   React.useEffect(() => {
-    if (
-      star.collectionId === ui.activeCollectionId &&
-      sidebarContext === locationSidebarContext
-    ) {
-      setExpanded(true);
+    if (starType === "document") {
+      if (
+        star.documentId === ui.activeDocumentId &&
+        sidebarContext === ui.activeSidebarContext
+      ) {
+        setExpanded(true);
+      }
+    } else {
+      if (
+        star.collectionId === ui.activeCollectionId &&
+        sidebarContext === ui.activeSidebarContext
+      ) {
+        setExpanded(true);
+      }
     }
   }, [
+    starType,
+    star.documentId,
     star.collectionId,
+    ui.activeDocumentId,
     ui.activeCollectionId,
+    ui.activeSidebarContext,
     sidebarContext,
-    locationSidebarContext,
   ]);
 
   useEffect(() => {
@@ -132,10 +146,9 @@ function StarredLink({ star }: Props) {
             expanded={hasChildDocuments && !isDragging ? expanded : undefined}
             onDisclosureClick={handleDisclosureClick}
             icon={icon}
-            isActive={(
-              match,
-              location: Location<{ sidebarContext?: SidebarContextType }>
-            ) => !!match && location.state?.sidebarContext === sidebarContext}
+            isActive={(match) =>
+              !!match && sidebarContext === ui.activeSidebarContext
+            }
             label={label}
             exact={false}
             showActions={menuOpen}
@@ -152,7 +165,7 @@ function StarredLink({ star }: Props) {
             }
           />
         </Draggable>
-        <SidebarContext.Provider value={document.id}>
+        <SidebarContext.Provider value={sidebarContext}>
           <Relative>
             <Folder expanded={displayChildDocuments}>
               {childDocuments.map((node, index) => (
@@ -176,7 +189,7 @@ function StarredLink({ star }: Props) {
 
   if (collection) {
     return (
-      <>
+      <SidebarContext.Provider value={sidebarContext}>
         <Draggable key={star?.id} ref={draggableRef} $isDragging={isDragging}>
           <CollectionLink
             collection={collection}
@@ -186,16 +199,14 @@ function StarredLink({ star }: Props) {
             isDraggingAnyCollection={reorderStarProps.isDragging}
           />
         </Draggable>
-        <SidebarContext.Provider value={collection.id}>
-          <Relative>
-            <CollectionLinkChildren
-              collection={collection}
-              expanded={displayChildDocuments}
-            />
-            {cursor}
-          </Relative>
-        </SidebarContext.Provider>
-      </>
+        <Relative>
+          <CollectionLinkChildren
+            collection={collection}
+            expanded={displayChildDocuments}
+          />
+          {cursor}
+        </Relative>
+      </SidebarContext.Provider>
     );
   }
 

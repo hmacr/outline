@@ -1,4 +1,3 @@
-import { Location } from "history";
 import { observer } from "mobx-react";
 import { PlusIcon } from "outline-icons";
 import * as React from "react";
@@ -20,7 +19,7 @@ import CollectionMenu from "~/menus/CollectionMenu";
 import DropToImport from "./DropToImport";
 import EditableTitle, { RefHandle } from "./EditableTitle";
 import Relative from "./Relative";
-import { SidebarContextType, useSidebarContext } from "./SidebarContext";
+import { useSidebarContext } from "./SidebarContext";
 import SidebarLink, { DragObject } from "./SidebarLink";
 
 type Props = {
@@ -41,7 +40,7 @@ const CollectionLink: React.FC<Props> = ({
   depth,
   onClick,
 }: Props) => {
-  const { dialogs, documents, collections } = useStores();
+  const { dialogs, documents, collections, ui } = useStores();
   const [menuOpen, handleMenuOpen, handleMenuClose] = useBoolean();
   const [isEditing, setIsEditing] = React.useState(false);
   const can = usePolicy(collection);
@@ -109,7 +108,6 @@ const CollectionLink: React.FC<Props> = ({
 
   const context = useActionContext({
     activeCollectionId: collection.id,
-    sidebarContext,
   });
 
   const handleRename = React.useCallback(() => {
@@ -131,10 +129,9 @@ const CollectionLink: React.FC<Props> = ({
           icon={<CollectionIcon collection={collection} expanded={expanded} />}
           showActions={menuOpen}
           isActiveDrop={isOver && canDrop}
-          isActive={(
-            match,
-            location: Location<{ sidebarContext?: SidebarContextType }>
-          ) => !!match && location.state?.sidebarContext === sidebarContext}
+          isActive={(match) =>
+            !!match && ui.activeSidebarContext === sidebarContext
+          }
           label={
             <EditableTitle
               title={collection.name}

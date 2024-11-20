@@ -436,6 +436,20 @@ export default class Document extends ArchivableModel {
     }
   }
 
+  @computed
+  get membershipType(): "collection" | "document" | "group" {
+    if (this.collection) {
+      return "collection";
+    }
+
+    const hasDocumentMembership =
+      this.store.rootStore.auth.user?.documentMemberships.find(
+        (m) => m.documentId === this.id
+      ) ?? false;
+
+    return hasDocumentMembership ? "document" : "group";
+  }
+
   @action
   share = async () =>
     this.store.rootStore.shares.create({

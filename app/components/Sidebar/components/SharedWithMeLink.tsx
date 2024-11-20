@@ -1,5 +1,4 @@
 import fractionalIndex from "fractional-index";
-import { Location } from "history";
 import { observer } from "mobx-react";
 import * as React from "react";
 import styled from "styled-components";
@@ -16,13 +15,12 @@ import {
   useDropToReorderUserMembership,
   useDropToReparentDocument,
 } from "../hooks/useDragAndDrop";
-import { useLocationState } from "../hooks/useLocationState";
 import { useSidebarLabelAndIcon } from "../hooks/useSidebarLabelAndIcon";
 import DocumentLink from "./DocumentLink";
 import DropCursor from "./DropCursor";
 import Folder from "./Folder";
 import Relative from "./Relative";
-import { useSidebarContext, type SidebarContextType } from "./SidebarContext";
+import { useSidebarContext } from "./SidebarContext";
 import SidebarLink from "./SidebarLink";
 
 type Props = {
@@ -32,31 +30,30 @@ type Props = {
 
 function SharedWithMeLink({ membership, depth = 0 }: Props) {
   const { ui, collections, documents } = useStores();
+  const sidebarContext = useSidebarContext();
   const { fetchChildDocuments } = documents;
   const [menuOpen, handleMenuOpen, handleMenuClose] = useBoolean();
   const { documentId } = membership;
   const isActiveDocument = documentId === ui.activeDocumentId;
-  const locationSidebarContext = useLocationState();
-  const sidebarContext = useSidebarContext();
   const document = documentId ? documents.get(documentId) : undefined;
 
   const [expanded, setExpanded, setCollapsed] = useBoolean(
     membership.documentId === ui.activeDocumentId &&
-      locationSidebarContext === sidebarContext
+      sidebarContext === ui.activeSidebarContext
   );
 
   React.useEffect(() => {
     if (
       membership.documentId === ui.activeDocumentId &&
-      locationSidebarContext === sidebarContext
+      sidebarContext === ui.activeSidebarContext
     ) {
       setExpanded();
     }
   }, [
     membership.documentId,
     ui.activeDocumentId,
+    ui.activeSidebarContext,
     sidebarContext,
-    locationSidebarContext,
     setExpanded,
   ]);
 
@@ -140,11 +137,8 @@ function SharedWithMeLink({ membership, depth = 0 }: Props) {
                 }
                 onDisclosureClick={handleDisclosureClick}
                 icon={icon}
-                isActive={(
-                  match,
-                  location: Location<{ sidebarContext?: SidebarContextType }>
-                ) =>
-                  !!match && location.state?.sidebarContext === sidebarContext
+                isActive={(match) =>
+                  !!match && sidebarContext === ui.activeSidebarContext
                 }
                 label={label}
                 exact={false}

@@ -1,4 +1,3 @@
-import { Location } from "history";
 import { observer } from "mobx-react";
 import { PlusIcon } from "outline-icons";
 import * as React from "react";
@@ -29,7 +28,7 @@ import DropToImport from "./DropToImport";
 import EditableTitle, { RefHandle } from "./EditableTitle";
 import Folder from "./Folder";
 import Relative from "./Relative";
-import { SidebarContextType, useSidebarContext } from "./SidebarContext";
+import { useSidebarContext } from "./SidebarContext";
 import SidebarLink from "./SidebarLink";
 
 type Props = {
@@ -56,7 +55,7 @@ function InnerDocumentLink(
   }: Props,
   ref: React.RefObject<HTMLAnchorElement>
 ) {
-  const { documents, policies } = useStores();
+  const { documents, policies, ui } = useStores();
   const { t } = useTranslation();
   const canUpdate = usePolicy(node.id).update;
   const isActiveDocument = activeDocument && activeDocument.id === node.id;
@@ -250,25 +249,14 @@ function InnerDocumentLink(
                     ref={editableTitleRef}
                   />
                 }
-                isActive={(
-                  match,
-                  location: Location<{
-                    sidebarContext?: SidebarContextType;
-                  }>
-                ) => {
-                  if (sidebarContext !== location.state?.sidebarContext) {
-                    return false;
-                  }
-                  return (
-                    (document && location.pathname.endsWith(document.urlId)) ||
-                    !!match
-                  );
-                }}
+                isActive={(match) =>
+                  !!match && ui.activeSidebarContext === sidebarContext
+                }
                 isActiveDrop={isOverReparent && canDropToReparent}
                 depth={depth}
                 exact={false}
                 showActions={menuOpen}
-                scrollIntoViewIfNeeded={sidebarContext === "collections"}
+                scrollIntoViewIfNeeded={true}
                 isDraft={isDraft}
                 ref={ref}
                 menu={
