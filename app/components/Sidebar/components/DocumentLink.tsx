@@ -279,7 +279,6 @@ function InnerDocumentLink(
                 depth={depth}
                 exact={false}
                 showActions={menuOpen}
-                scrollIntoViewIfNeeded={true}
                 isDraft={isDraft}
                 ref={ref}
                 menu={
