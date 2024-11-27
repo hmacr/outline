@@ -5,7 +5,7 @@ import {
   determineSidebarContext,
   SidebarContextType,
 } from "~/components/Sidebar/components/SidebarContext";
-import { useLocationState } from "~/components/Sidebar/hooks/useLocationState";
+import { useLocationSidebarContext } from "~/hooks/useLocationSidebarContext";
 import { isModKey } from "~/utils/keyboard";
 import { sharedDocumentPath } from "~/utils/routeHelpers";
 import { isHash } from "~/utils/urls";
@@ -21,7 +21,7 @@ export default function useEditorClickHandlers({ shareId }: Params) {
   const { documents } = useStores();
   const history = useHistory();
   const user = useCurrentUser({ rejectOnEmpty: false });
-  const locationSidebarContext = useLocationState();
+  const locationSidebarContext = useLocationSidebarContext();
 
   const handleClickLink = React.useCallback(
     (href: string, event: MouseEvent) => {

@@ -1,7 +1,7 @@
 import * as React from "react";
 import Collection from "~/models/Collection";
+import { useLocationSidebarContext } from "~/hooks/useLocationSidebarContext";
 import useStores from "~/hooks/useStores";
-import { useLocationState } from "../hooks/useLocationState";
 import CollectionLink from "./CollectionLink";
 import CollectionLinkChildren from "./CollectionLinkChildren";
 import Relative from "./Relative";
@@ -15,7 +15,7 @@ type Props = {
 export function ArchivedCollectionLink({ collection, depth }: Props) {
   const { documents, ui } = useStores();
   const sidebarContext = useSidebarContext();
-  const locationSidebarContext = useLocationState();
+  const locationSidebarContext = useLocationSidebarContext();
   const [expanded, setExpanded] = React.useState(
     collection.id === ui.activeCollectionId &&
       sidebarContext === locationSidebarContext

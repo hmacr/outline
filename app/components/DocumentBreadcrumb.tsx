@@ -8,6 +8,7 @@ import Document from "~/models/Document";
 import Breadcrumb from "~/components/Breadcrumb";
 import Icon from "~/components/Icon";
 import CollectionIcon from "~/components/Icons/CollectionIcon";
+import { useLocationSidebarContext } from "~/hooks/useLocationSidebarContext";
 import usePolicy from "~/hooks/usePolicy";
 import useStores from "~/hooks/useStores";
 import { MenuInternalLink } from "~/types";
@@ -17,7 +18,6 @@ import {
   settingsPath,
   trashPath,
 } from "~/utils/routeHelpers";
-import { useLocationState } from "./Sidebar/hooks/useLocationState";
 
 type Props = {
   children?: React.ReactNode;
@@ -70,7 +70,7 @@ const DocumentBreadcrumb: React.FC<Props> = ({
     ? collections.get(document.collectionId)
     : undefined;
   const can = usePolicy(collection);
-  const locationSidebarContext = useLocationState();
+  const locationSidebarContext = useLocationSidebarContext();
 
   React.useEffect(() => {
     void document.loadRelations({ withoutPolicies: true });

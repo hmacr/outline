@@ -6,11 +6,11 @@ import { useTranslation } from "react-i18next";
 import Flex from "@shared/components/Flex";
 import Collection from "~/models/Collection";
 import PaginatedList from "~/components/PaginatedList";
+import { useLocationSidebarContext } from "~/hooks/useLocationSidebarContext";
 import useRequest from "~/hooks/useRequest";
 import useStores from "~/hooks/useStores";
 import { archivePath } from "~/utils/routeHelpers";
 import { useDropToArchive } from "../hooks/useDragAndDrop";
-import { useLocationState } from "../hooks/useLocationState";
 import { ArchivedCollectionLink } from "./ArchivedCollectionLink";
 import { StyledError } from "./Collections";
 import PlaceholderCollections from "./PlaceholderCollections";
@@ -22,7 +22,7 @@ function ArchiveLink() {
   const { collections } = useStores();
   const { t } = useTranslation();
   const sidebarContext: SidebarContextType = "archive";
-  const locationSidebarContext = useLocationState();
+  const locationSidebarContext = useLocationSidebarContext();
 
   const [disclosure, setDisclosure] = React.useState<boolean>(false);
   const [expanded, setExpanded] = React.useState<boolean>(
