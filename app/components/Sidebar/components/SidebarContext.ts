@@ -5,6 +5,7 @@ import User from "~/models/User";
 export type SidebarContextType =
   | "collections"
   | "shared"
+  | "archive"
   | `group-${string}`
   | `starred-${string}`
   | undefined;
@@ -28,6 +29,10 @@ export const determineSidebarContext = ({
   user?: User;
   currentContext?: SidebarContextType;
 }): SidebarContextType => {
+  if (document.isArchived) {
+    return "archive";
+  }
+
   const isStarred = document.isStarred || !!document.collection?.isStarred;
   const preferStarred = !currentContext || currentContext.startsWith("starred");
 

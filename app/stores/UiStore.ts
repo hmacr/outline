@@ -166,7 +166,7 @@ class UiStore {
     this.activeDocumentId = document.id;
     this.observingUserId = undefined;
 
-    if (document.isActive) {
+    if (document.isActive || document.isArchived) {
       this.activeCollectionId = document.collectionId;
     }
   };

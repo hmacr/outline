@@ -10,18 +10,24 @@ import useRequest from "~/hooks/useRequest";
 import useStores from "~/hooks/useStores";
 import { archivePath } from "~/utils/routeHelpers";
 import { useDropToArchive } from "../hooks/useDragAndDrop";
+import { useLocationState } from "../hooks/useLocationState";
 import { ArchivedCollectionLink } from "./ArchivedCollectionLink";
 import { StyledError } from "./Collections";
 import PlaceholderCollections from "./PlaceholderCollections";
 import Relative from "./Relative";
+import SidebarContext, { SidebarContextType } from "./SidebarContext";
 import SidebarLink from "./SidebarLink";
 
 function ArchiveLink() {
   const { collections } = useStores();
   const { t } = useTranslation();
+  const sidebarContext: SidebarContextType = "archive";
+  const locationSidebarContext = useLocationState();
 
   const [disclosure, setDisclosure] = React.useState<boolean>(false);
-  const [expanded, setExpanded] = React.useState<boolean | undefined>();
+  const [expanded, setExpanded] = React.useState<boolean>(
+    sidebarContext === locationSidebarContext
+  );
 
   const { request, data, loading, error } = useRequest(
     collections.fetchArchived,
@@ -50,6 +56,12 @@ function ArchiveLink() {
     }
   }, [expanded, request]);
 
+  React.useEffect(() => {
+    if (sidebarContext === locationSidebarContext) {
+      setExpanded(true);
+    }
+  }, [locationSidebarContext]);
+
   const handleDisclosureClick = React.useCallback((ev) => {
     ev.preventDefault();
     ev.stopPropagation();
@@ -64,38 +76,40 @@ function ArchiveLink() {
     useDropToArchive();
 
   return (
-    <Flex column>
-      <div ref={dropToArchiveRef}>
-        <SidebarLink
-          to={archivePath()}
-          icon={<ArchiveIcon open={isOverArchiveSection && isDragging} />}
-          exact={false}
-          label={t("Archive")}
-          isActiveDrop={isOverArchiveSection && isDragging}
-          depth={0}
-          expanded={disclosure ? expanded : undefined}
-          onDisclosureClick={handleDisclosureClick}
-          onClick={handleClick}
-        />
-      </div>
-      {expanded === true ? (
-        <Relative>
-          <PaginatedList
-            aria-label={t("Archived collections")}
-            items={collections.archived}
-            loading={<PlaceholderCollections />}
-            renderError={(props) => <StyledError {...props} />}
-            renderItem={(item: Collection) => (
-              <ArchivedCollectionLink
-                key={item.id}
-                depth={1}
-                collection={item}
-              />
-            )}
+    <SidebarContext.Provider value={sidebarContext}>
+      <Flex column>
+        <div ref={dropToArchiveRef}>
+          <SidebarLink
+            to={{ pathname: archivePath(), state: { sidebarContext } }}
+            icon={<ArchiveIcon open={isOverArchiveSection && isDragging} />}
+            exact={false}
+            label={t("Archive")}
+            isActiveDrop={isOverArchiveSection && isDragging}
+            depth={0}
+            expanded={disclosure ? expanded : undefined}
+            onDisclosureClick={handleDisclosureClick}
+            onClick={handleClick}
           />
-        </Relative>
-      ) : null}
-    </Flex>
+        </div>
+        {expanded === true ? (
+          <Relative>
+            <PaginatedList
+              aria-label={t("Archived collections")}
+              items={collections.archived}
+              loading={<PlaceholderCollections />}
+              renderError={(props) => <StyledError {...props} />}
+              renderItem={(item: Collection) => (
+                <ArchivedCollectionLink
+                  key={item.id}
+                  depth={1}
+                  collection={item}
+                />
+              )}
+            />
+          </Relative>
+        ) : null}
+      </Flex>
+    </SidebarContext.Provider>
   );
 }
 

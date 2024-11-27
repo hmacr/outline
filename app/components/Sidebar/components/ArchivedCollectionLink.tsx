@@ -1,9 +1,11 @@
 import * as React from "react";
 import Collection from "~/models/Collection";
 import useStores from "~/hooks/useStores";
+import { useLocationState } from "../hooks/useLocationState";
 import CollectionLink from "./CollectionLink";
 import CollectionLinkChildren from "./CollectionLinkChildren";
 import Relative from "./Relative";
+import { useSidebarContext } from "./SidebarContext";
 
 type Props = {
   collection: Collection;
@@ -11,9 +13,13 @@ type Props = {
 };
 
 export function ArchivedCollectionLink({ collection, depth }: Props) {
-  const { documents } = useStores();
-
-  const [expanded, setExpanded] = React.useState(false);
+  const { documents, ui } = useStores();
+  const sidebarContext = useSidebarContext();
+  const locationSidebarContext = useLocationState();
+  const [expanded, setExpanded] = React.useState(
+    collection.id === ui.activeCollectionId &&
+      sidebarContext === locationSidebarContext
+  );
 
   const handleDisclosureClick = React.useCallback((ev) => {
     ev.preventDefault();
@@ -24,6 +30,22 @@ export function ArchivedCollectionLink({ collection, depth }: Props) {
   const handleClick = React.useCallback(() => {
     setExpanded(true);
   }, []);
+
+  // If the current collection is active and relevant to the sidebar section we
+  // are in then expand it automatically
+  React.useEffect(() => {
+    if (
+      collection.id === ui.activeCollectionId &&
+      sidebarContext === locationSidebarContext
+    ) {
+      setExpanded(true);
+    }
+  }, [
+    collection.id,
+    ui.activeCollectionId,
+    sidebarContext,
+    locationSidebarContext,
+  ]);
 
   return (
     <>
