@@ -138,7 +138,7 @@ function StarredLink({ star }: Props) {
     const hasChildDocuments = childDocuments.length > 0;
 
     return (
-      <>
+      <SidebarContext.Provider value={sidebarContext}>
         <Draggable key={star.id} ref={draggableRef} $isDragging={isDragging}>
           <SidebarLink
             depth={0}
@@ -169,25 +169,23 @@ function StarredLink({ star }: Props) {
             }
           />
         </Draggable>
-        <SidebarContext.Provider value={sidebarContext}>
-          <Relative>
-            <Folder expanded={displayChildDocuments}>
-              {childDocuments.map((node, index) => (
-                <DocumentLink
-                  key={node.id}
-                  node={node}
-                  collection={collection}
-                  activeDocument={documents.active}
-                  isDraft={node.isDraft}
-                  depth={2}
-                  index={index}
-                />
-              ))}
-            </Folder>
-            {cursor}
-          </Relative>
-        </SidebarContext.Provider>
-      </>
+        <Relative>
+          <Folder expanded={displayChildDocuments}>
+            {childDocuments.map((node, index) => (
+              <DocumentLink
+                key={node.id}
+                node={node}
+                collection={collection}
+                activeDocument={documents.active}
+                isDraft={node.isDraft}
+                depth={2}
+                index={index}
+              />
+            ))}
+          </Folder>
+          {cursor}
+        </Relative>
+      </SidebarContext.Provider>
     );
   }
 

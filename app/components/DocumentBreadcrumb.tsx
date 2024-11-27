@@ -17,6 +17,7 @@ import {
   settingsPath,
   trashPath,
 } from "~/utils/routeHelpers";
+import { useLocationState } from "./Sidebar/hooks/useLocationState";
 
 type Props = {
   children?: React.ReactNode;
@@ -69,6 +70,7 @@ const DocumentBreadcrumb: React.FC<Props> = ({
     ? collections.get(document.collectionId)
     : undefined;
   const can = usePolicy(collection);
+  const locationSidebarContext = useLocationState();
 
   React.useEffect(() => {
     void document.loadRelations({ withoutPolicies: true });
@@ -81,7 +83,10 @@ const DocumentBreadcrumb: React.FC<Props> = ({
       type: "route",
       title: collection.name,
       icon: <CollectionIcon collection={collection} expanded />,
-      to: collectionPath(collection.path),
+      to: {
+        pathname: collectionPath(collection.path),
+        state: { sidebarContext: locationSidebarContext },
+      },
     };
   } else if (document.isCollectionDeleted) {
     collectionNode = {
@@ -95,7 +100,7 @@ const DocumentBreadcrumb: React.FC<Props> = ({
   const path = document.pathTo;
 
   const items = React.useMemo(() => {
-    const output = [];
+    const output: MenuInternalLink[] = [];
 
     if (category) {
       output.push(category);
@@ -115,11 +120,14 @@ const DocumentBreadcrumb: React.FC<Props> = ({
         ) : (
           node.title
         ),
-        to: node.url,
+        to: {
+          pathname: node.url,
+          state: { sidebarContext: locationSidebarContext },
+        },
       });
     });
     return output;
-  }, [path, category, collectionNode]);
+  }, [path, category, collectionNode, locationSidebarContext]);
 
   if (!collections.isLoaded) {
     return null;

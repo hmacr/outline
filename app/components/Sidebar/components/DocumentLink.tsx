@@ -24,6 +24,7 @@ import {
   useDropToReorderDocument,
   useDropToReparentDocument,
 } from "../hooks/useDragAndDrop";
+import { useLocationState } from "../hooks/useLocationState";
 import DropCursor from "./DropCursor";
 import DropToImport from "./DropToImport";
 import EditableTitle, { RefHandle } from "./EditableTitle";
@@ -67,6 +68,7 @@ function InnerDocumentLink(
   const [isEditing, setIsEditing] = React.useState(false);
   const editableTitleRef = React.useRef<RefHandle>(null);
   const sidebarContext = useSidebarContext();
+  const locationSidebarContext = useLocationState();
 
   React.useEffect(() => {
     if (
@@ -89,13 +91,22 @@ function InnerDocumentLink(
         hasChildDocuments &&
         activeDocument &&
         collection &&
+        sidebarContext === locationSidebarContext &&
         (collection
           .pathToDocument(activeDocument.id)
           .map((entry) => entry.id)
           .includes(node.id) ||
           isActiveDocument)
       ),
-    [hasChildDocuments, activeDocument, isActiveDocument, node, collection]
+    [
+      hasChildDocuments,
+      activeDocument,
+      isActiveDocument,
+      node,
+      collection,
+      sidebarContext,
+      locationSidebarContext,
+    ]
   );
 
   const [expanded, setExpanded, setCollapsed] = useBoolean(showChildren);
@@ -268,7 +279,7 @@ function InnerDocumentLink(
                 depth={depth}
                 exact={false}
                 showActions={menuOpen}
-                scrollIntoViewIfNeeded={sidebarContext === "collections"}
+                scrollIntoViewIfNeeded={true}
                 isDraft={isDraft}
                 ref={ref}
                 menu={

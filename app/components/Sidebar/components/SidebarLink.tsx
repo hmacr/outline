@@ -7,10 +7,12 @@ import { s } from "@shared/styles";
 import { NavigationNode } from "@shared/types";
 import NudeButton from "~/components/NudeButton";
 import { UnreadBadge } from "~/components/UnreadBadge";
+import useStores from "~/hooks/useStores";
 import useUnmount from "~/hooks/useUnmount";
 import { undraggableOnDesktop } from "~/styles";
 import Disclosure from "./Disclosure";
 import NavLink, { Props as NavLinkProps } from "./NavLink";
+import { useSidebarContext } from "./SidebarContext";
 
 export type DragObject = NavigationNode & {
   depth: number;
@@ -67,6 +69,8 @@ function SidebarLink(
   }: Props,
   ref: React.RefObject<HTMLAnchorElement>
 ) {
+  const { ui } = useStores();
+  const sidebarContext = useSidebarContext();
   const timer = React.useRef<number>();
   const theme = useTheme();
   const style = React.useMemo(
@@ -102,6 +106,14 @@ function SidebarLink(
     }
   }, []);
 
+  const handleClick = React.useCallback(
+    (ev) => {
+      ui.setActiveSidebarContext(sidebarContext);
+      onClick?.(ev);
+    },
+    [ui, sidebarContext, onClick]
+  );
+
   useUnmount(() => {
     if (timer.current) {
       clearTimeout(timer.current);
@@ -116,7 +128,7 @@ function SidebarLink(
         $disabled={disabled}
         activeStyle={isActiveDrop ? activeDropStyle : activeStyle}
         style={active ? activeStyle : style}
-        onClick={onClick}
+        onClick={handleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         // @ts-expect-error exact does not exist on div
