@@ -85,7 +85,13 @@ const DocumentBreadcrumb: React.FC<Props> = ({
       icon: <CollectionIcon collection={collection} expanded />,
       to: {
         pathname: collectionPath(collection.path),
-        state: { sidebarContext: locationSidebarContext },
+        state: {
+          sidebarContext: collection.isArchived
+            ? "archive"
+            : locationSidebarContext !== "archive"
+            ? locationSidebarContext
+            : "collections",
+        },
       },
     };
   } else if (document.isCollectionDeleted) {
