@@ -25,7 +25,7 @@ export const determineSidebarContext = ({
   currentContext,
 }: {
   document: Document;
-  user: User;
+  user?: User;
   currentContext?: SidebarContextType;
 }): SidebarContextType => {
   const isStarred = document.isStarred || !!document.collection?.isStarred;
@@ -42,22 +42,9 @@ export const determineSidebarContext = ({
 
   const membershipType = document.membershipType;
 
-  // if (document.isStarred && preferStarred) {
-  //   return starredSidebarContext(document.id);
-  // } else if (document.collection?.isStarred && preferStarred) {
-  //   return starredSidebarContext(document.collectionId!);
-  // } else if (membershipType === "direct") {
-  //   return "shared";
-  // } else if (membershipType === "group") {
-  //   const group = user.groupsWithDocumentMemberships.find(
-  //     (g) => !!g.documentMemberships.find((m) => m.documentId === document.id)
-  //   );
-  //   return groupSidebarContext(group?.id ?? "");
-  // }
-
   if (membershipType === "document") {
     return "shared";
-  } else if (membershipType === "group") {
+  } else if (membershipType === "group" && user) {
     const group = user.groupsWithDocumentMemberships.find(
       (g) => !!g.documentMemberships.find((m) => m.documentId === document.id)
     );

@@ -1,9 +1,16 @@
 import * as React from "react";
 import { useHistory } from "react-router-dom";
 import { isInternalUrl } from "@shared/utils/urls";
+import {
+  determineSidebarContext,
+  SidebarContextType,
+} from "~/components/Sidebar/components/SidebarContext";
+import { useLocationState } from "~/components/Sidebar/hooks/useLocationState";
 import { isModKey } from "~/utils/keyboard";
 import { sharedDocumentPath } from "~/utils/routeHelpers";
 import { isHash } from "~/utils/urls";
+import useCurrentUser from "./useCurrentUser";
+import useStores from "./useStores";
 
 type Params = {
   /** The share ID of the document being viewed, if any */
@@ -11,7 +18,11 @@ type Params = {
 };
 
 export default function useEditorClickHandlers({ shareId }: Params) {
+  const { documents } = useStores();
   const history = useHistory();
+  const user = useCurrentUser({ rejectOnEmpty: false });
+  const locationSidebarContext = useLocationState();
+
   const handleClickLink = React.useCallback(
     (href: string, event: MouseEvent) => {
       // on page hash
@@ -56,7 +67,19 @@ export default function useEditorClickHandlers({ shareId }: Params) {
         }
 
         if (!isModKey(event) && !event.shiftKey) {
-          history.push(navigateTo, { sidebarContext: "collections" });
+          let sidebarContext: SidebarContextType = "collections";
+          if (navigateTo.includes("/doc/")) {
+            const document = documents.getByUrl(navigateTo);
+            if (document) {
+              sidebarContext = determineSidebarContext({
+                document,
+                user,
+                currentContext: locationSidebarContext,
+              });
+            }
+          }
+
+          history.push(navigateTo, { sidebarContext });
         } else {
           window.open(navigateTo, "_blank");
         }
@@ -64,7 +87,7 @@ export default function useEditorClickHandlers({ shareId }: Params) {
         window.open(href, "_blank");
       }
     },
-    [history, shareId]
+    [documents, user, history, shareId, locationSidebarContext]
   );
 
   return { handleClickLink };
