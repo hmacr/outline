@@ -52,23 +52,18 @@ function StarredLink({ star }: Props) {
   );
 
   React.useEffect(() => {
-    if (starType === "document") {
-      if (
-        star.documentId === ui.activeDocumentId &&
-        sidebarContext === locationSidebarContext
-      ) {
-        setExpanded(true);
-      }
-    } else {
-      if (
-        star.collectionId === ui.activeCollectionId &&
-        sidebarContext === locationSidebarContext
-      ) {
-        setExpanded(true);
-      }
+    if (
+      star.documentId === ui.activeDocumentId &&
+      sidebarContext === locationSidebarContext
+    ) {
+      setExpanded(true);
+    } else if (
+      star.collectionId === ui.activeCollectionId &&
+      sidebarContext === locationSidebarContext
+    ) {
+      setExpanded(true);
     }
   }, [
-    starType,
     star.documentId,
     star.collectionId,
     ui.activeDocumentId,
