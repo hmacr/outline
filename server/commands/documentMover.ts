@@ -164,7 +164,7 @@ async function documentMover({
             },
           }
         );
-      } else {
+      } else if (!document.isArchived) {
         // document will be moved to drafts
         document.publishedAt = null;
 

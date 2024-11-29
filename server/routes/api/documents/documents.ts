@@ -343,7 +343,11 @@ router.post(
       const collectionIds = await user.collectionIds();
       where = {
         ...where,
-        collectionId: collectionIds,
+        collectionId: can(user, "readDocument", user.team)
+          ? {
+              [Op.or]: [{ [Op.in]: collectionIds }, { [Op.is]: null }],
+            }
+          : collectionIds,
       };
     }
 
@@ -373,6 +377,8 @@ router.post(
       documents.map((document) => presentDocument(ctx, document))
     );
     const policies = presentPolicies(user, documents);
+
+    console.log(data);
 
     ctx.body = {
       pagination: ctx.state.pagination,

@@ -423,17 +423,24 @@ class WebsocketProvider extends React.Component<Props> {
       "collections.delete",
       action((event: WebsocketEntityDeletedEvent) => {
         const collectionId = event.modelId;
+        const collection = collections.get(collectionId);
         const deletedAt = new Date().toISOString();
-        const deletedDocuments = documents.inCollection(collectionId);
-        deletedDocuments.forEach((doc) => {
-          if (!doc.publishedAt) {
-            // draft is to be detached from collection, not deleted
+
+        // Drafts and published documents including that are archived.
+        const allDocuments = [
+          ...documents.inCollection(collectionId),
+          ...documents.archivedInCollection(collectionId),
+        ];
+        allDocuments.forEach((doc) => {
+          // Detach drafts and archived documents when an unarchived collection is deleted.
+          if (!doc.publishedAt || (doc.isArchived && !collection?.isArchived)) {
             doc.collectionId = null;
           } else {
             doc.deletedAt = deletedAt;
           }
           policies.remove(doc.id);
         });
+
         memberships.removeAll({ collectionId });
         collections.remove(collectionId);
       })

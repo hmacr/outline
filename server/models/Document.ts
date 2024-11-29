@@ -1080,6 +1080,7 @@ class Document extends ArchivableModel<
 
     if (this.deletedAt) {
       await this.restore({ transaction });
+      this.archivedAt = null;
       this.collectionId = collectionId;
       await this.save({ transaction });
     }

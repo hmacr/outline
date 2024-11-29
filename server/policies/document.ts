@@ -29,7 +29,13 @@ allow(User, "read", Document, (actor, document) =>
         !!document?.isWorkspaceTemplate,
         can(actor, "readTemplate", actor.team)
       ),
-      can(actor, "readDocument", document?.collection)
+      can(actor, "readDocument", document?.collection),
+      // Archived documents can be detached when the containing collection is deleted
+      and(
+        !!document?.isArchived,
+        !document?.collectionId,
+        or(actor.id === document?.createdById, actor.isAdmin)
+      )
     )
   )
 );
@@ -243,7 +249,7 @@ allow(User, "unarchive", Document, (actor, document) =>
     !document?.template,
     !document?.isDraft,
     !document?.isDeleted,
-    !!document?.archivedAt,
+    !!document?.isArchived,
     can(actor, "read", document),
     or(
       includesMembership(document, [
