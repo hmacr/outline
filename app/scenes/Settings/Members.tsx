@@ -1,11 +1,11 @@
-import sortBy from "lodash/sortBy";
 import { observer } from "mobx-react";
 import { PlusIcon, UserIcon } from "outline-icons";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import styled from "styled-components";
-import { PAGINATION_SYMBOL } from "~/stores/base/Store";
+import { Pagination } from "@shared/constants";
 import User from "~/models/User";
 import { Action } from "~/components/Actions";
 import Button from "~/components/Button";
@@ -18,9 +18,11 @@ import { inviteUser } from "~/actions/definitions/users";
 import env from "~/env";
 import useActionContext from "~/hooks/useActionContext";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
+import usePaginatedRequest from "~/hooks/usePaginatedRequest";
 import usePolicy from "~/hooks/usePolicy";
 import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
+import { PaginationParams } from "~/types";
 import PeopleTable from "./components/PeopleTable";
 import UserRoleFilter from "./components/UserRoleFilter";
 import UserStatusFilter from "./components/UserStatusFilter";
@@ -33,11 +35,8 @@ function Members() {
   const { users } = useStores();
   const { t } = useTranslation();
   const params = useQuery();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [data, setData] = React.useState<User[]>([]);
-  const [totalPages, setTotalPages] = React.useState(0);
-  const [userIds, setUserIds] = React.useState<string[]>([]);
   const can = usePolicy(team);
+
   const query = params.get("query") || undefined;
   const filter = params.get("filter") || undefined;
   const role = params.get("role") || undefined;
@@ -45,63 +44,32 @@ function Members() {
   const direction = (params.get("direction") || "asc").toUpperCase() as
     | "ASC"
     | "DESC";
-  const page = parseInt(params.get("page") || "0", 10);
-  const limit = 25;
+
+  const requestFn = React.useCallback(
+    (paginationParams: PaginationParams) =>
+      users.fetchPage({
+        sort,
+        direction,
+        query,
+        filter,
+        role,
+        ...paginationParams,
+      }),
+    [users, sort, direction, query, filter, role]
+  );
+
+  const { data, loading, next, end, error } = usePaginatedRequest<User>(
+    requestFn,
+    {
+      limit: Pagination.defaultLimit,
+    }
+  );
 
   React.useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-
-      try {
-        const response = await users.fetchPage({
-          offset: page * limit,
-          limit,
-          sort,
-          direction,
-          query,
-          filter,
-          role,
-        });
-        if (response[PAGINATION_SYMBOL]) {
-          setTotalPages(Math.ceil(response[PAGINATION_SYMBOL].total / limit));
-        }
-        setUserIds(response.map((u: User) => u.id));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void fetchData();
-  }, [query, sort, filter, role, page, direction, users]);
-
-  React.useEffect(() => {
-    let filtered = users.orderedData;
-
-    if (!filter) {
-      filtered = users.active.filter((u) => userIds.includes(u.id));
-    } else if (filter === "all") {
-      filtered = users.orderedData.filter((u) => userIds.includes(u.id));
-    } else if (filter === "suspended") {
-      filtered = users.suspended.filter((u) => userIds.includes(u.id));
-    } else if (filter === "invited") {
-      filtered = users.invited.filter((u) => userIds.includes(u.id));
+    if (error) {
+      toast.error(t("Could not load members"));
     }
-
-    if (role) {
-      filtered = filtered.filter((u) => u.role === role);
-    }
-
-    // sort the resulting data by the original order from the server
-    setData(sortBy(filtered, (item) => userIds.indexOf(item.id)));
-  }, [
-    filter,
-    role,
-    users.active,
-    users.orderedData,
-    users.suspended,
-    users.invited,
-    userIds,
-  ]);
+  }, [t, error]);
 
   const handleStatusFilter = React.useCallback(
     (f) => {
@@ -208,13 +176,14 @@ function Members() {
         />
       </Flex>
       <PeopleTable
-        data={data}
+        data={data ?? []}
         canManage={can.update}
-        isLoading={isLoading}
-        page={page}
-        pageSize={limit}
-        totalPages={totalPages}
-        defaultSortDirection="ASC"
+        loading={loading}
+        page={{
+          size: Pagination.defaultLimit,
+          hasNext: !end,
+          fetchNext: next,
+        }}
       />
     </Scene>
   );

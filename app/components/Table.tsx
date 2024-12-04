@@ -1,9 +1,22 @@
+import {
+  ColumnDef,
+  useReactTable,
+  getCoreRowModel,
+  SortingState,
+  flexRender,
+  ColumnSort,
+  functionalUpdate,
+  Row as TRow,
+} from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import isEqual from "lodash/isEqual";
 import { observer } from "mobx-react";
 import { CollapsedIcon } from "outline-icons";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useHistory, useLocation } from "react-router-dom";
 import { useTable, useSortBy, usePagination } from "react-table";
+import { Waypoint } from "react-waypoint";
 import styled from "styled-components";
 import { s } from "@shared/styles";
 import Button from "~/components/Button";
@@ -12,6 +25,7 @@ import Empty from "~/components/Empty";
 import Flex from "~/components/Flex";
 import NudeButton from "~/components/NudeButton";
 import PlaceholderText from "~/components/PlaceholderText";
+import useQuery from "~/hooks/useQuery";
 
 export type Props = {
   data: any[];
@@ -32,6 +46,148 @@ export type Props = {
   columns: any;
   defaultSortDirection: "ASC" | "DESC";
 };
+
+export type NewProps<TData> = {
+  data: TData[];
+  columns: ColumnDef<TData>[];
+  sort: ColumnSort;
+  loading: boolean;
+  page: {
+    size: number;
+    hasNext: boolean;
+    fetchNext: () => void;
+  };
+};
+
+export const NewTable = observer(
+  <TData,>({ data, columns, sort, loading, page }: NewProps<TData>) => {
+    const { t } = useTranslation();
+    const location = useLocation();
+    const history = useHistory();
+    const params = useQuery();
+    const containerRef = React.useRef(null);
+
+    const handleSortChange = React.useCallback(
+      (sortState: SortingState) => {
+        const newState = functionalUpdate(sortState, [sort]);
+        const newSort = newState[0];
+
+        if (newSort) {
+          params.set("sort", newSort.id);
+          params.set("direction", newSort.desc ? "desc" : "asc");
+        } else {
+          params.delete("sort");
+          params.delete("direction");
+        }
+
+        history.replace({
+          pathname: location.pathname,
+          search: params.toString(),
+        });
+      },
+      [params, history, location.pathname, sort]
+    );
+
+    const table = useReactTable({
+      data,
+      columns,
+      getCoreRowModel: getCoreRowModel(),
+      enableMultiSort: false,
+      manualSorting: true,
+      state: {
+        sorting: [sort],
+      },
+      onSortingChange: handleSortChange,
+    });
+
+    const isEmpty = !loading && data.length === 0;
+    const showPlaceholder = loading && data.length === 0;
+
+    const { rows } = table.getRowModel();
+
+    const rowVirtualizer = useVirtualizer({
+      count: rows.length,
+      estimateSize: () => 60,
+      getScrollElement: () => containerRef.current,
+    });
+
+    return (
+      <div style={{ overflow: "auto", height: "700px" }} ref={containerRef}>
+        <InnerTable>
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <Head key={header.id}>
+                    <SortWrapper
+                      align="center"
+                      $sortable={header.column.getCanSort()}
+                      gap={4}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {header.column.getIsSorted() === "asc" ? (
+                        <AscSortIcon />
+                      ) : header.column.getIsSorted() === "desc" ? (
+                        <DescSortIcon />
+                      ) : null}
+                    </SortWrapper>
+                  </Head>
+                ))}
+              </tr>
+            ))}
+          </thead>
+
+          <tbody
+            style={{
+              position: "relative",
+              height: `${rowVirtualizer.getTotalSize()}px`,
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const row = rows[virtualRow.index] as TRow<TData>;
+              return (
+                <Row
+                  key={row.id}
+                  data-index={virtualRow.index}
+                  style={{
+                    position: "absolute",
+                    transform: `translateY(${virtualRow.start}px)`,
+                    width: "100%",
+                  }}
+                >
+                  {row.getAllCells().map((cell) => (
+                    <Cell
+                      key={cell.id}
+                      style={{ width: cell.column.getSize() }}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </Cell>
+                  ))}
+                </Row>
+              );
+            })}
+          </tbody>
+          {showPlaceholder && <Placeholder columns={columns.length} />}
+        </InnerTable>
+        {page.hasNext && !!data.length && (
+          <Waypoint key={data.length} onEnter={page.fetchNext} />
+        )}
+        {isEmpty && (
+          <DelayedMount>
+            <Empty>{t("No results")}</Empty>
+          </DelayedMount>
+        )}
+      </div>
+    );
+  }
+);
 
 function Table({
   data,

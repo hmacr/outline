@@ -23,6 +23,8 @@ type RequestResponse<T> = {
 const INITIAL_OFFSET = 0;
 const DEFAULT_LIMIT = 10;
 
+type RequestFn<T> = (params?: PaginationParams | undefined) => Promise<T[]>;
+
 /**
  * A hook to make paginated API request and track its state within a component.
  *
@@ -31,7 +33,7 @@ const DEFAULT_LIMIT = 10;
  * @returns
  */
 export default function usePaginatedRequest<T = unknown>(
-  requestFn: (params?: PaginationParams | undefined) => Promise<T[]>,
+  requestFn: RequestFn<T>,
   params: PaginationParams = {}
 ): RequestResponse<T> {
   const [data, setData] = React.useState<T[]>();
@@ -40,13 +42,8 @@ export default function usePaginatedRequest<T = unknown>(
   const [end, setEnd] = React.useState(false);
   const displayLimit = params.limit || DEFAULT_LIMIT;
   const fetchLimit = displayLimit + 1;
-  const [paginatedReq, setPaginatedReq] = React.useState(
-    () => () =>
-      requestFn({
-        ...params,
-        offset: 0,
-        limit: fetchLimit,
-      })
+  const [paginatedReq, setPaginatedReq] = React.useState<RequestFn<T>>(
+    () => async () => []
   );
 
   const {
@@ -70,6 +67,22 @@ export default function usePaginatedRequest<T = unknown>(
     }
   }, [response, displayLimit, loading]);
 
+  const next = React.useCallback(() => {
+    setOffset((prev) => prev + displayLimit);
+  }, [displayLimit]);
+
+  // Reset request when requestFn changes
+  React.useEffect(() => {
+    setEnd(false);
+    setData(undefined);
+    setPage(0);
+    setOffset(0);
+    setPaginatedReq(
+      () => () => requestFn({ ...params, offset: 0, limit: fetchLimit })
+    );
+  }, [requestFn]);
+
+  // Update request when offset changes
   React.useEffect(() => {
     if (offset) {
       setPaginatedReq(
@@ -81,18 +94,7 @@ export default function usePaginatedRequest<T = unknown>(
           })
       );
     }
-  }, [offset, fetchLimit, requestFn]);
-
-  const next = React.useCallback(() => {
-    setOffset((prev) => prev + displayLimit);
-  }, [displayLimit]);
-
-  React.useEffect(() => {
-    setEnd(false);
-    setData(undefined);
-    setPage(0);
-    setOffset(0);
-  }, [requestFn]);
+  }, [offset]);
 
   return { data, next, loading, error, page, offset, end };
 }

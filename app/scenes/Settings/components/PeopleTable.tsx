@@ -1,3 +1,5 @@
+import { ColumnDef, ColumnSort } from "@tanstack/react-table";
+import compact from "lodash/compact";
 import { observer } from "mobx-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -6,56 +8,65 @@ import User from "~/models/User";
 import { Avatar } from "~/components/Avatar";
 import Badge from "~/components/Badge";
 import Flex from "~/components/Flex";
-import TableFromParams from "~/components/TableFromParams";
+import { NewProps, NewTable } from "~/components/Table";
 import Time from "~/components/Time";
 import useCurrentUser from "~/hooks/useCurrentUser";
+import useQuery from "~/hooks/useQuery";
 import UserMenu from "~/menus/UserMenu";
 
-type Props = Omit<React.ComponentProps<typeof TableFromParams>, "columns"> & {
-  data: User[];
+type Props = Omit<NewProps<User>, "columns" | "sort"> & {
   canManage: boolean;
 };
 
 function PeopleTable({ canManage, ...rest }: Props) {
   const { t } = useTranslation();
   const currentUser = useCurrentUser();
-  const columns = React.useMemo(
+  const params = useQuery();
+
+  const sort: ColumnSort = React.useMemo(
+    () => ({
+      id: params.get("sort") ?? "name",
+      desc: (params.get("direction") ?? "asc") === "desc",
+    }),
+    [params]
+  );
+
+  const columns = React.useMemo<ColumnDef<User>[]>(
     () =>
-      [
+      compact([
         {
           id: "name",
-          Header: t("Name"),
-          accessor: "name",
-          Cell: observer(
-            ({ value, row }: { value: string; row: { original: User } }) => (
-              <Flex align="center" gap={8}>
-                <Avatar model={row.original} size={32} /> {value}{" "}
-                {currentUser.id === row.original.id && `(${t("You")})`}
-              </Flex>
-            )
+          header: t("Name"),
+          accessorKey: "name",
+          cell: ({ cell, row }) => (
+            <Flex align="center" gap={8}>
+              <Avatar model={row.original} size={32} /> {cell.getValue()}{" "}
+              {currentUser.id === row.original.id && `(${t("You")})`}
+            </Flex>
           ),
         },
         canManage
           ? {
               id: "email",
-              Header: t("Email"),
-              accessor: "email",
-              Cell: observer(({ value }: { value: string }) => <>{value}</>),
+              header: t("Email"),
+              accessorKey: "email",
+              cell: ({ cell }) => <>{cell.renderValue()}</>,
             }
           : undefined,
         {
           id: "lastActiveAt",
-          Header: t("Last active"),
-          accessor: "lastActiveAt",
-          Cell: observer(({ value }: { value: string }) =>
-            value ? <Time dateTime={value} addSuffix /> : null
-          ),
+          header: t("Last active"),
+          accessorKey: "lastActiveAt",
+          cell: ({ cell }) =>
+            cell.getValue() ? (
+              <Time dateTime={cell.getValue() as string} addSuffix />
+            ) : null,
         },
         {
           id: "role",
-          Header: t("Role"),
-          accessor: "rank",
-          Cell: observer(({ row }: { row: { original: User } }) => (
+          header: t("Role"),
+          accessorKey: "role",
+          cell: ({ row }) => (
             <Badges>
               {!row.original.lastActiveAt && <Badge>{t("Invited")}</Badge>}
               {row.original.isAdmin ? (
@@ -69,27 +80,25 @@ function PeopleTable({ canManage, ...rest }: Props) {
               )}
               {row.original.isSuspended && <Badge>{t("Suspended")}</Badge>}
             </Badges>
-          )),
+          ),
         },
         canManage
           ? {
-              Header: " ",
-              accessor: "id",
-              className: "actions",
-              disableSortBy: true,
-              Cell: observer(
-                ({ row, value }: { value: string; row: { original: User } }) =>
-                  currentUser.id !== value ? (
-                    <UserMenu user={row.original} />
-                  ) : null
-              ),
+              id: "action",
+              header: " ",
+              accessorKey: "id",
+              enableSorting: false,
+              cell: ({ cell, row }) =>
+                currentUser.id !== cell.getValue() ? (
+                  <UserMenu user={row.original} />
+                ) : null,
             }
           : undefined,
-      ].filter((i) => i),
-    [t, canManage, currentUser]
+      ]),
+    [t, currentUser, canManage]
   );
 
-  return <TableFromParams columns={columns} {...rest} />;
+  return <NewTable columns={columns} sort={sort} {...rest} />;
 }
 
 const Badges = styled.div`
