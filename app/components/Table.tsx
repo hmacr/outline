@@ -112,13 +112,18 @@ export const NewTable = observer(
     });
 
     return (
-      <div style={{ overflow: "auto", height: "700px" }} ref={containerRef}>
+      <Container ref={containerRef}>
         <InnerTable>
-          <thead>
+          <thead style={{ position: "sticky", top: 0, zIndex: 1 }}>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <Head key={header.id}>
+                  <Head
+                    key={header.id}
+                    style={{
+                      border: "1px solid red",
+                    }}
+                  >
                     <SortWrapper
                       align="center"
                       $sortable={header.column.getCanSort()}
@@ -133,7 +138,9 @@ export const NewTable = observer(
                         <AscSortIcon />
                       ) : header.column.getIsSorted() === "desc" ? (
                         <DescSortIcon />
-                      ) : null}
+                      ) : (
+                        <div />
+                      )}
                     </SortWrapper>
                   </Head>
                 ))}
@@ -156,13 +163,14 @@ export const NewTable = observer(
                   style={{
                     position: "absolute",
                     transform: `translateY(${virtualRow.start}px)`,
-                    width: "100%",
                   }}
                 >
                   {row.getAllCells().map((cell) => (
                     <Cell
                       key={cell.id}
-                      style={{ width: cell.column.getSize() }}
+                      style={{
+                        border: "1px solid blue",
+                      }}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -184,7 +192,7 @@ export const NewTable = observer(
             <Empty>{t("No results")}</Empty>
           </DelayedMount>
         )}
-      </div>
+      </Container>
     );
   }
 );
@@ -395,9 +403,14 @@ const AscSortIcon = styled(DescSortIcon)`
   transform: rotate(180deg);
 `;
 
+const Container = styled.div`
+  overflow: auto;
+  height: max(700px, 70vh);
+  margin-top: 16px;
+`;
+
 const InnerTable = styled.table`
   border-collapse: collapse;
-  margin: 16px 0;
   min-width: 100%;
 `;
 

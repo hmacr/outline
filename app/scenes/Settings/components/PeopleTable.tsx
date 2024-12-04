@@ -33,7 +33,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
 
   const columns = React.useMemo<ColumnDef<User>[]>(
     () =>
-      compact([
+      compact<ColumnDef<User>>([
         {
           id: "name",
           header: t("Name"),
@@ -44,6 +44,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {currentUser.id === row.original.id && `(${t("You")})`}
             </Flex>
           ),
+          size: 200,
         },
         canManage
           ? {
@@ -51,6 +52,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               header: t("Email"),
               accessorKey: "email",
               cell: ({ cell }) => <>{cell.renderValue()}</>,
+              size: 300,
             }
           : undefined,
         {
@@ -61,6 +63,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
             cell.getValue() ? (
               <Time dateTime={cell.getValue() as string} addSuffix />
             ) : null,
+          size: 300,
         },
         {
           id: "role",
@@ -81,6 +84,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {row.original.isSuspended && <Badge>{t("Suspended")}</Badge>}
             </Badges>
           ),
+          size: 100,
         },
         canManage
           ? {
@@ -92,6 +96,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
                 currentUser.id !== cell.getValue() ? (
                   <UserMenu user={row.original} />
                 ) : null,
+              size: 50,
             }
           : undefined,
       ]),

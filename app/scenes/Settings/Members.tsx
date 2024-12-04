@@ -150,6 +150,7 @@ function Members() {
         </>
       }
       wide
+      shrink
     >
       <Heading>{t("Members")}</Heading>
       <Text as="p" type="secondary">
