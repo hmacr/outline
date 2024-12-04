@@ -9,6 +9,7 @@ import { Pagination } from "@shared/constants";
 import User from "~/models/User";
 import { Action } from "~/components/Actions";
 import Button from "~/components/Button";
+import Fade from "~/components/Fade";
 import Flex from "~/components/Flex";
 import Heading from "~/components/Heading";
 import InputSearch from "~/components/InputSearch";
@@ -20,6 +21,7 @@ import useActionContext from "~/hooks/useActionContext";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import usePaginatedRequest from "~/hooks/usePaginatedRequest";
 import usePolicy from "~/hooks/usePolicy";
+import usePrevious from "~/hooks/usePrevious";
 import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
 import { PaginationParams } from "~/types";
@@ -58,12 +60,22 @@ function Members() {
     [users, sort, direction, query, filter, role]
   );
 
-  const { data, loading, next, end, error } = usePaginatedRequest<User>(
-    requestFn,
-    {
+  // helps avoid flashing when sort / filter changes
+  const [prevData, setPrevData] = React.useState<User[]>([]);
+
+  const prevRef = React.useRef<User[]>();
+
+  const { data, fetching, loaded, next, end, error } =
+    usePaginatedRequest<User>(requestFn, {
       limit: Pagination.defaultLimit,
+    });
+
+  React.useEffect(() => {
+    if (loaded) {
+      // setPrevData(data);
+      prevRef.current = data;
     }
-  );
+  }, [loaded, data]);
 
   React.useEffect(() => {
     if (error) {
@@ -176,16 +188,17 @@ function Members() {
           onSelect={handleRoleFilter}
         />
       </Flex>
-      <PeopleTable
-        data={data ?? []}
-        canManage={can.update}
-        loading={loading}
-        page={{
-          size: Pagination.defaultLimit,
-          hasNext: !end,
-          fetchNext: next,
-        }}
-      />
+      <Fade>
+        <PeopleTable
+          data={(loaded ? data : prevRef.current) ?? []}
+          canManage={can.update}
+          loading={loaded}
+          page={{
+            hasNext: !end,
+            fetchNext: next,
+          }}
+        />
+      </Fade>
     </Scene>
   );
 }

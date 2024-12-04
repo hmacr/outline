@@ -53,19 +53,24 @@ export type NewProps<TData> = {
   sort: ColumnSort;
   loading: boolean;
   page: {
-    size: number;
     hasNext: boolean;
     fetchNext: () => void;
+  };
+  row: {
+    height: number;
+    gridColumnsStyle: string;
   };
 };
 
 export const NewTable = observer(
-  <TData,>({ data, columns, sort, loading, page }: NewProps<TData>) => {
+  <TData,>({ data, columns, sort, loading, page, row }: NewProps<TData>) => {
     const { t } = useTranslation();
     const location = useLocation();
     const history = useHistory();
     const params = useQuery();
     const containerRef = React.useRef(null);
+
+    const prevSort = React.useRef(sort);
 
     const handleSortChange = React.useCallback(
       (sortState: SortingState) => {
@@ -100,30 +105,47 @@ export const NewTable = observer(
       onSortingChange: handleSortChange,
     });
 
-    const isEmpty = !loading && data.length === 0;
-    const showPlaceholder = loading && data.length === 0;
+    const isEmpty = data.length === 0;
+    const showPlaceholder = !loading && isEmpty;
 
     const { rows } = table.getRowModel();
 
     const rowVirtualizer = useVirtualizer({
       count: rows.length,
-      estimateSize: () => 60,
+      estimateSize: () => row.height,
       getScrollElement: () => containerRef.current,
     });
 
+    React.useEffect(() => {
+      if (!loading) {
+        return;
+      }
+      if (prevSort.current !== sort) {
+        rowVirtualizer.scrollToOffset?.(0);
+        prevSort.current = sort;
+      }
+    }, [loading, sort, rowVirtualizer]);
+
     return (
-      <Container ref={containerRef}>
+      <Container ref={containerRef} $empty={isEmpty}>
         <InnerTable>
-          <thead style={{ position: "sticky", top: 0, zIndex: 1 }}>
+          <thead
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 1,
+            }}
+          >
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
+              <tr
+                key={headerGroup.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: row.gridColumnsStyle,
+                }}
+              >
                 {headerGroup.headers.map((header) => (
-                  <Head
-                    key={header.id}
-                    style={{
-                      border: "1px solid red",
-                    }}
-                  >
+                  <Head key={header.id}>
                     <SortWrapper
                       align="center"
                       $sortable={header.column.getCanSort()}
@@ -155,23 +177,21 @@ export const NewTable = observer(
             }}
           >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const row = rows[virtualRow.index] as TRow<TData>;
+              const tableRow = rows[virtualRow.index] as TRow<TData>;
               return (
                 <Row
-                  key={row.id}
+                  key={tableRow.id}
                   data-index={virtualRow.index}
                   style={{
+                    display: "grid",
+                    gridTemplateColumns: row.gridColumnsStyle,
+                    width: "100%",
                     position: "absolute",
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  {row.getAllCells().map((cell) => (
-                    <Cell
-                      key={cell.id}
-                      style={{
-                        border: "1px solid blue",
-                      }}
-                    >
+                  {tableRow.getAllCells().map((cell) => (
+                    <Cell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -188,9 +208,9 @@ export const NewTable = observer(
           <Waypoint key={data.length} onEnter={page.fetchNext} />
         )}
         {isEmpty && (
-          <DelayedMount>
-            <Empty>{t("No results")}</Empty>
-          </DelayedMount>
+          // <DelayedMount>
+          <Empty>{t("No results")}</Empty>
+          // </DelayedMount>
         )}
       </Container>
     );
@@ -403,9 +423,9 @@ const AscSortIcon = styled(DescSortIcon)`
   transform: rotate(180deg);
 `;
 
-const Container = styled.div`
+const Container = styled.div<{ $empty: boolean }>`
   overflow: auto;
-  height: max(700px, 70vh);
+  height: ${({ $empty }) => !$empty && "max(700px, 70vh)"};
   margin-top: 16px;
 `;
 
@@ -434,7 +454,8 @@ const Cell = styled.td`
   padding: 10px 6px;
   border-bottom: 1px solid ${s("divider")};
   font-size: 14px;
-  text-wrap: nowrap;
+  text-wrap: wrap;
+  word-break: break-word;
 
   &:first-child {
     font-size: 15px;

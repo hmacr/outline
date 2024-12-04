@@ -14,7 +14,7 @@ import useCurrentUser from "~/hooks/useCurrentUser";
 import useQuery from "~/hooks/useQuery";
 import UserMenu from "~/menus/UserMenu";
 
-type Props = Omit<NewProps<User>, "columns" | "sort"> & {
+type Props = Omit<NewProps<User>, "columns" | "sort" | "row"> & {
   canManage: boolean;
 };
 
@@ -31,6 +31,10 @@ function PeopleTable({ canManage, ...rest }: Props) {
     [params]
   );
 
+  React.useEffect(() => {
+    console.log("sort change");
+  }, [sort]);
+
   const columns = React.useMemo<ColumnDef<User>[]>(
     () =>
       compact<ColumnDef<User>>([
@@ -44,7 +48,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {currentUser.id === row.original.id && `(${t("You")})`}
             </Flex>
           ),
-          size: 200,
+          size: 450,
         },
         canManage
           ? {
@@ -52,7 +56,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               header: t("Email"),
               accessorKey: "email",
               cell: ({ cell }) => <>{cell.renderValue()}</>,
-              size: 300,
+              size: 450,
             }
           : undefined,
         {
@@ -63,7 +67,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
             cell.getValue() ? (
               <Time dateTime={cell.getValue() as string} addSuffix />
             ) : null,
-          size: 300,
+          size: 200,
         },
         {
           id: "role",
@@ -84,7 +88,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {row.original.isSuspended && <Badge>{t("Suspended")}</Badge>}
             </Badges>
           ),
-          size: 100,
+          size: 150,
         },
         canManage
           ? {
@@ -103,7 +107,14 @@ function PeopleTable({ canManage, ...rest }: Props) {
     [t, currentUser, canManage]
   );
 
-  return <NewTable columns={columns} sort={sort} {...rest} />;
+  return (
+    <NewTable
+      columns={columns}
+      sort={sort}
+      row={{ height: 60, gridColumnsStyle: "35% 35% 15% 10% 5%" }}
+      {...rest}
+    />
+  );
 }
 
 const Badges = styled.div`
