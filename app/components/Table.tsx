@@ -60,17 +60,24 @@ export type NewProps<TData> = {
     height: number;
     gridColumnsStyle: string;
   };
+  resetScroll: boolean;
 };
 
 export const NewTable = observer(
-  <TData,>({ data, columns, sort, loading, page, row }: NewProps<TData>) => {
+  <TData,>({
+    data,
+    columns,
+    sort,
+    loading,
+    page,
+    row,
+    resetScroll,
+  }: NewProps<TData>) => {
     const { t } = useTranslation();
     const location = useLocation();
     const history = useHistory();
     const params = useQuery();
     const containerRef = React.useRef(null);
-
-    const prevSort = React.useRef(sort);
 
     const handleSortChange = React.useCallback(
       (sortState: SortingState) => {
@@ -105,8 +112,10 @@ export const NewTable = observer(
       onSortingChange: handleSortChange,
     });
 
-    const isEmpty = data.length === 0;
+    const isEmpty = !loading && data.length === 0;
     const showPlaceholder = !loading && isEmpty;
+
+    console.log(isEmpty, showPlaceholder);
 
     const { rows } = table.getRowModel();
 
@@ -117,14 +126,10 @@ export const NewTable = observer(
     });
 
     React.useEffect(() => {
-      if (!loading) {
-        return;
-      }
-      if (prevSort.current !== sort) {
+      if (resetScroll) {
         rowVirtualizer.scrollToOffset?.(0);
-        prevSort.current = sort;
       }
-    }, [loading, sort, rowVirtualizer]);
+    }, [resetScroll, rowVirtualizer]);
 
     return (
       <Container ref={containerRef} $empty={isEmpty}>

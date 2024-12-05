@@ -10,6 +10,7 @@ type RequestResponse<T> = {
   error: unknown;
   /** Whether the request is currently in progress. */
   fetching: boolean;
+  /** Whether the request has completed and data has been loaded. */
   loaded: boolean;
   /** Function to trigger next page request. */
   next: () => void;
@@ -72,6 +73,7 @@ export default function usePaginatedRequest<T = unknown>(
   }, [response, displayLimit, fetching]);
 
   const next = React.useCallback(() => {
+    setLoaded(false);
     setOffset((prev) => prev + displayLimit);
   }, [displayLimit]);
 

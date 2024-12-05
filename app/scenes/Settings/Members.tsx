@@ -39,40 +39,40 @@ function Members() {
   const params = useQuery();
   const can = usePolicy(team);
 
-  const query = params.get("query") || undefined;
-  const filter = params.get("filter") || undefined;
-  const role = params.get("role") || undefined;
-  const sort = params.get("sort") || "name";
-  const direction = (params.get("direction") || "asc").toUpperCase() as
-    | "ASC"
-    | "DESC";
+  const reqParams = React.useMemo(
+    () => ({
+      query: params.get("query") || undefined,
+      filter: params.get("filter") || undefined,
+      role: params.get("role") || undefined,
+      sort: params.get("sort") || "name",
+      direction: (params.get("direction") || "asc").toUpperCase() as
+        | "ASC"
+        | "DESC",
+    }),
+    [params]
+  );
+  const prevReqParams = usePrevious(reqParams);
 
   const requestFn = React.useCallback(
     (paginationParams: PaginationParams) =>
       users.fetchPage({
-        sort,
-        direction,
-        query,
-        filter,
-        role,
+        ...reqParams,
         ...paginationParams,
       }),
-    [users, sort, direction, query, filter, role]
+    [users, reqParams]
   );
-
-  // helps avoid flashing when sort / filter changes
-  const [prevData, setPrevData] = React.useState<User[]>([]);
 
   const prevRef = React.useRef<User[]>();
 
-  const { data, fetching, loaded, next, end, error } =
-    usePaginatedRequest<User>(requestFn, {
+  const { data, loaded, next, end, error } = usePaginatedRequest<User>(
+    requestFn,
+    {
       limit: Pagination.defaultLimit,
-    });
+    }
+  );
 
   React.useEffect(() => {
     if (loaded) {
-      // setPrevData(data);
       prevRef.current = data;
     }
   }, [loaded, data]);
@@ -138,6 +138,8 @@ function Members() {
 
   const appName = env.APP_NAME;
 
+  console.log("reset scroll", reqParams !== prevReqParams && loaded);
+
   return (
     <Scene
       title={t("Members")}
@@ -175,16 +177,16 @@ function Members() {
       <Flex gap={8}>
         <InputSearch
           short
-          value={query ?? ""}
+          value={reqParams.query ?? ""}
           placeholder={`${t("Filter")}…`}
           onChange={handleSearch}
         />
         <LargeUserStatusFilter
-          activeKey={filter ?? ""}
+          activeKey={reqParams.filter ?? ""}
           onSelect={handleStatusFilter}
         />
         <LargeUserRoleFilter
-          activeKey={role ?? ""}
+          activeKey={reqParams.role ?? ""}
           onSelect={handleRoleFilter}
         />
       </Flex>
@@ -197,6 +199,7 @@ function Members() {
             hasNext: !end,
             fetchNext: next,
           }}
+          resetScroll={reqParams !== prevReqParams && loaded}
         />
       </Fade>
     </Scene>

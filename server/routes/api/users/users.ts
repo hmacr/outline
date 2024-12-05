@@ -168,6 +168,8 @@ router.post(
       }),
     ]);
 
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
     ctx.body = {
       pagination: { ...ctx.state.pagination, total },
       data: users.map((user) =>

@@ -31,10 +31,6 @@ function PeopleTable({ canManage, ...rest }: Props) {
     [params]
   );
 
-  React.useEffect(() => {
-    console.log("sort change");
-  }, [sort]);
-
   const columns = React.useMemo<ColumnDef<User>[]>(
     () =>
       compact<ColumnDef<User>>([
