@@ -25,7 +25,7 @@ function Starred() {
   const { stars } = useStores();
   const { t } = useTranslation();
 
-  const { fetching: loading, next, end, error, page } = usePaginatedRequest<Star>(
+  const { loading, next, end, error, page } = usePaginatedRequest<Star>(
     stars.fetchPage
   );
   const [reorderStarProps, dropToReorder] = useDropToReorderStar();

@@ -1,5 +1,4 @@
 import {
-  ColumnDef,
   useReactTable,
   getCoreRowModel,
   SortingState,
@@ -10,7 +9,6 @@ import {
   createColumnHelper,
   AccessorColumnDef,
   DisplayColumnDef,
-  AccessorKeyColumnDef,
   AccessorFn,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -19,9 +17,7 @@ import { CollapsedIcon } from "outline-icons";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import AutoSizer from "react-virtualized-auto-sizer";
 import { Waypoint } from "react-waypoint";
-import { FixedSizeList } from "react-window";
 import styled from "styled-components";
 import { s } from "@shared/styles";
 import DelayedMount from "~/components/DelayedMount";
@@ -29,6 +25,7 @@ import Empty from "~/components/Empty";
 import Flex from "~/components/Flex";
 import NudeButton from "~/components/NudeButton";
 import PlaceholderText from "~/components/PlaceholderText";
+import usePrevious from "~/hooks/usePrevious";
 import useQuery from "~/hooks/useQuery";
 
 type DataColumn<TData> = {
@@ -36,6 +33,7 @@ type DataColumn<TData> = {
   header: string;
   component: AccessorColumnDef<TData>["cell"];
   accessor: AccessorFn<TData>;
+  sortable?: boolean;
 };
 
 type ActionColumn<TData> = {
@@ -49,8 +47,10 @@ export type Column<TData> = { id: string; width: string } & (
   | ActionColumn<TData>
 );
 
+type ColumnMeta = { width: string };
+
 export type Props<TData> = {
-  data: TData[];
+  data?: TData[];
   columns: Column<TData>[];
   sort: ColumnSort;
   loading: boolean;
@@ -58,186 +58,187 @@ export type Props<TData> = {
     hasNext: boolean;
     fetchNext: () => void;
   };
-  row: {
-    height: number;
-    gridColumnsStyle: string;
-  };
-  resetScroll: boolean;
+  rowHeight: number;
 };
 
-export const VirtualTable = observer(
-  <TData,>({
-    data,
-    columns,
-    sort,
-    loading,
-    page,
-    row,
-    resetScroll,
-  }: Props<TData>) => {
-    const { t } = useTranslation();
-    const location = useLocation();
-    const history = useHistory();
-    const params = useQuery();
-    const containerRef = React.useRef(null);
+export const VirtualTable = observer(function <TData>({
+  data,
+  columns,
+  sort,
+  loading,
+  page,
+  rowHeight,
+}: Props<TData>) {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const history = useHistory();
+  const params = useQuery();
+  const containerRef = React.useRef(null);
 
-    const columnHelper = createColumnHelper<TData>();
-
-    const transformedColumns = columns.map((column) => {
-      if (column.type === "data") {
-        return columnHelper.accessor(column.accessor, {
+  const columnHelper = createColumnHelper<TData>();
+  const transformedColumns = columns.map((column) => {
+    const meta: ColumnMeta = { width: column.width };
+    return column.type === "data"
+      ? columnHelper.accessor(column.accessor, {
           id: column.id,
           header: column.header,
           cell: column.component,
-          size: 500,
-        });
-      } else {
-        return columnHelper.display({
+          enableSorting: column.sortable ?? true,
+          meta,
+        })
+      : columnHelper.display({
           id: column.id,
           header: column.header ?? "",
           cell: column.component,
-          size: 100,
+          meta,
         });
+  });
+
+  const handleSortChange = React.useCallback(
+    (sortState: SortingState) => {
+      const newState = functionalUpdate(sortState, [sort]);
+      const newSort = newState[0];
+
+      if (newSort) {
+        params.set("sort", newSort.id);
+        params.set("direction", newSort.desc ? "desc" : "asc");
+      } else {
+        params.delete("sort");
+        params.delete("direction");
       }
-    });
 
-    const handleSortChange = React.useCallback(
-      (sortState: SortingState) => {
-        const newState = functionalUpdate(sortState, [sort]);
-        const newSort = newState[0];
+      history.replace({
+        pathname: location.pathname,
+        search: params.toString(),
+      });
+    },
+    [params, history, location.pathname, sort]
+  );
 
-        if (newSort) {
-          params.set("sort", newSort.id);
-          params.set("direction", newSort.desc ? "desc" : "asc");
-        } else {
-          params.delete("sort");
-          params.delete("direction");
-        }
+  const prevSort = usePrevious(sort);
+  const sortChanged = sort !== prevSort;
+  const prevData = usePrevious(data, true);
 
-        history.replace({
-          pathname: location.pathname,
-          search: params.toString(),
-        });
-      },
-      [params, history, location.pathname, sort]
-    );
+  const finalData = data ?? prevData ?? [];
 
-    const table = useReactTable({
-      data,
-      columns: transformedColumns,
-      getCoreRowModel: getCoreRowModel(),
-      enableMultiSort: false,
-      manualSorting: true,
-      state: {
-        sorting: [sort],
-      },
-      onSortingChange: handleSortChange,
-    });
+  const isEmpty = !loading && finalData.length === 0;
+  const showPlaceholder = loading && finalData.length === 0;
 
-    const isEmpty = !loading && data.length === 0;
-    const showPlaceholder = !loading && isEmpty;
+  const table = useReactTable({
+    data: finalData,
+    columns: transformedColumns,
+    getCoreRowModel: getCoreRowModel(),
+    enableMultiSort: false,
+    manualSorting: true,
+    state: {
+      sorting: [sort],
+    },
+    onSortingChange: handleSortChange,
+  });
 
-    const { rows } = table.getRowModel();
+  const { rows } = table.getRowModel();
 
-    const rowVirtualizer = useVirtualizer({
-      count: rows.length,
-      estimateSize: () => row.height,
-      getScrollElement: () => containerRef.current,
-    });
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    estimateSize: () => rowHeight,
+    getScrollElement: () => containerRef.current,
+  });
 
-    React.useEffect(() => {
-      if (resetScroll) {
-        rowVirtualizer.scrollToOffset?.(0);
-      }
-    }, [resetScroll, rowVirtualizer]);
+  React.useEffect(() => {
+    rowVirtualizer.scrollToOffset?.(0);
+  }, [sortChanged, rowVirtualizer]);
 
-    return (
-      <Container ref={containerRef} $empty={isEmpty}>
-        <InnerTable>
-          <thead
-            style={{
-              position: "sticky",
-              top: 0,
-              zIndex: 1,
-            }}
-          >
-            {table.getHeaderGroups().map((headerGroup) => (
-              <Row key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <Head
-                    key={header.id}
-                    style={{ width: header.column.getSize() }}
-                  >
-                    <SortWrapper
-                      align="center"
-                      $sortable={header.column.getCanSort()}
-                      gap={4}
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      {header.column.getIsSorted() === "asc" ? (
-                        <AscSortIcon />
-                      ) : header.column.getIsSorted() === "desc" ? (
-                        <DescSortIcon />
-                      ) : (
-                        <div />
-                      )}
-                    </SortWrapper>
-                  </Head>
-                ))}
-              </Row>
-            ))}
-          </thead>
-
-          <tbody
-            style={{
-              position: "relative",
-              height: `${rowVirtualizer.getTotalSize()}px`,
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const tableRow = rows[virtualRow.index] as TRow<TData>;
-              return (
-                <Row
-                  key={tableRow.id}
-                  data-index={virtualRow.index}
+  return (
+    <Container ref={containerRef} $empty={isEmpty}>
+      <InnerTable>
+        <thead
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+          }}
+        >
+          {table.getHeaderGroups().map((headerGroup) => (
+            <Row key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <Head
+                  key={header.id}
                   style={{
-                    position: "absolute",
-                    transform: `translateY(${virtualRow.start}px)`,
+                    width: (header.column.columnDef.meta as ColumnMeta).width,
                   }}
                 >
-                  {tableRow.getAllCells().map((cell) => (
-                    <Cell
-                      key={cell.id}
-                      style={{ width: cell.column.getSize() }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </Cell>
-                  ))}
-                </Row>
-              );
-            })}
-          </tbody>
-          {showPlaceholder && <Placeholder columns={columns.length} />}
-        </InnerTable>
-        {page.hasNext && !!data.length && (
-          <Waypoint key={data.length} onEnter={page.fetchNext} />
-        )}
-        {isEmpty && (
-          // <DelayedMount>
+                  <SortWrapper
+                    align="center"
+                    $sortable={header.column.getCanSort()}
+                    gap={4}
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {header.column.getIsSorted() === "asc" ? (
+                      <AscSortIcon />
+                    ) : header.column.getIsSorted() === "desc" ? (
+                      <DescSortIcon />
+                    ) : (
+                      <div />
+                    )}
+                  </SortWrapper>
+                </Head>
+              ))}
+            </Row>
+          ))}
+        </thead>
+
+        <tbody
+          style={{
+            position: "relative",
+            height: `${rowVirtualizer.getTotalSize()}px`,
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const tableRow = rows[virtualRow.index] as TRow<TData>;
+            return (
+              <Row
+                key={tableRow.id}
+                data-index={virtualRow.index}
+                style={{
+                  position: "absolute",
+                  display: "flex",
+                  alignItems: "center",
+                  width: "100%",
+                  transform: `translateY(${virtualRow.start}px)`,
+                  height: `${virtualRow.size}px`,
+                }}
+              >
+                {tableRow.getAllCells().map((cell) => (
+                  <Cell
+                    key={cell.id}
+                    style={{
+                      width: (cell.column.columnDef.meta as ColumnMeta).width,
+                    }}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </Cell>
+                ))}
+              </Row>
+            );
+          })}
+        </tbody>
+        {showPlaceholder && <Placeholder columns={columns.length} />}
+      </InnerTable>
+      {page.hasNext && !!data?.length && (
+        <Waypoint key={data?.length} onEnter={page.fetchNext} />
+      )}
+      {isEmpty && (
+        <DelayedMount>
           <Empty>{t("No results")}</Empty>
-          // </DelayedMount>
-        )}
-      </Container>
-    );
-  }
-);
+        </DelayedMount>
+      )}
+    </Container>
+  );
+});
 
 function Placeholder({
   columns,
@@ -283,6 +284,7 @@ const Container = styled.div<{ $empty: boolean }>`
 `;
 
 const InnerTable = styled.table`
+  table-layout: fixed;
   border-collapse: collapse;
   min-width: 100%;
 `;
@@ -305,7 +307,6 @@ const SortWrapper = styled(Flex)<{ $sortable: boolean }>`
 
 const Cell = styled.td`
   padding: 10px 6px;
-  border-bottom: 1px solid ${s("divider")};
   font-size: 14px;
   text-wrap: wrap;
   word-break: break-word;
@@ -336,6 +337,8 @@ const Cell = styled.td`
 `;
 
 const Row = styled.tr`
+  border-bottom: 1px solid ${s("divider")};
+
   ${Cell} {
     &:first-child {
       padding-left: 0;
@@ -345,9 +348,7 @@ const Row = styled.tr`
     }
   }
   &:last-child {
-    ${Cell} {
-      border-bottom: 0;
-    }
+    border-bottom: 0;
   }
 `;
 

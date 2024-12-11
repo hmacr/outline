@@ -6,7 +6,7 @@ export default function useQuery() {
 
   const query = React.useMemo(
     () => new URLSearchParams(location.search),
-    [location]
+    [location.search]
   );
 
   return query;

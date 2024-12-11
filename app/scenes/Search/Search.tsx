@@ -125,7 +125,7 @@ function Search(props: Props) {
     return () => Promise.resolve([] as SearchResult[]);
   }, [query, titleFilter, filters, searches, documents, isSearchable]);
 
-  const { data, next, end, error, fetching: loading } = usePaginatedRequest(requestFn, {
+  const { data, next, end, error, loading } = usePaginatedRequest(requestFn, {
     limit: Pagination.defaultLimit,
   });
 

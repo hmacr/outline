@@ -1,3 +1,4 @@
+import { ColumnSort } from "@tanstack/react-table";
 import { observer } from "mobx-react";
 import { PlusIcon, UserIcon } from "outline-icons";
 import * as React from "react";
@@ -21,7 +22,6 @@ import useActionContext from "~/hooks/useActionContext";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import usePaginatedRequest from "~/hooks/usePaginatedRequest";
 import usePolicy from "~/hooks/usePolicy";
-import usePrevious from "~/hooks/usePrevious";
 import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
 import { PaginationParams } from "~/types";
@@ -51,7 +51,13 @@ function Members() {
     }),
     [params]
   );
-  const prevReqParams = usePrevious(reqParams);
+  const sort: ColumnSort = React.useMemo(
+    () => ({
+      id: reqParams.sort,
+      desc: reqParams.direction === "DESC",
+    }),
+    [reqParams]
+  );
 
   const requestFn = React.useCallback(
     (paginationParams: PaginationParams) =>
@@ -182,14 +188,14 @@ function Members() {
       </Flex>
       <Fade>
         <PeopleTable
-          data={data ?? []}
+          data={data}
+          sort={sort}
           canManage={can.update}
           loading={loading}
           page={{
             hasNext: !end,
             fetchNext: next,
           }}
-          resetScroll={reqParams !== prevReqParams && loading}
         />
       </Fade>
     </Scene>

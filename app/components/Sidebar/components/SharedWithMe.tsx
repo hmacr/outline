@@ -28,7 +28,7 @@ function SharedWithMe() {
 
   usePaginatedRequest<GroupMembership>(groupMemberships.fetchAll);
 
-  const { fetching: loading, next, end, error, page } =
+  const { loading, next, end, error, page } =
     usePaginatedRequest<UserMembership>(userMemberships.fetchPage, {
       limit: Pagination.sidebarLimit,
     });
