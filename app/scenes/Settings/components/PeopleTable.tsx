@@ -10,6 +10,7 @@ import Badge from "~/components/Badge";
 import Flex from "~/components/Flex";
 import { NewProps, NewTable } from "~/components/Table";
 import Time from "~/components/Time";
+import { Column, VirtualTable } from "~/components/VirtualTable";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import useQuery from "~/hooks/useQuery";
 import UserMenu from "~/menus/UserMenu";
@@ -31,45 +32,121 @@ function PeopleTable({ canManage, ...rest }: Props) {
     [params]
   );
 
-  const columns = React.useMemo<ColumnDef<User>[]>(
+  // const columns = React.useMemo<ColumnDef<User>[]>(
+  //   () =>
+  //     compact<ColumnDef<User>>([
+  //       {
+  //         id: "name",
+  //         header: t("Name"),
+  //         accessorKey: "name",
+  //         cell: ({ cell, row }) => (
+  //           <Flex align="center" gap={8}>
+  //             <Avatar model={row.original} size={32} /> {cell.getValue()}{" "}
+  //             {currentUser.id === row.original.id && `(${t("You")})`}
+  //           </Flex>
+  //         ),
+  //         // size: 450
+  //       },
+  //       canManage
+  //         ? {
+  //             id: "email",
+  //             header: t("Email"),
+  //             accessorKey: "email",
+  //             cell: ({ cell }) => <>{cell.renderValue()}</>,
+  //             // size: 450,
+  //           }
+  //         : undefined,
+  //       {
+  //         id: "lastActiveAt",
+  //         header: t("Last active"),
+  //         accessorKey: "lastActiveAt",
+  //         cell: ({ cell }) =>
+  //           cell.getValue() ? (
+  //             <Time dateTime={cell.getValue() as string} addSuffix />
+  //           ) : null,
+  //         // size: 200,
+  //       },
+  //       {
+  //         id: "role",
+  //         header: t("Role"),
+  //         accessorKey: "role",
+  //         cell: ({ row }) => (
+  //           <Badges>
+  //             {!row.original.lastActiveAt && <Badge>{t("Invited")}</Badge>}
+  //             {row.original.isAdmin ? (
+  //               <Badge primary>{t("Admin")}</Badge>
+  //             ) : row.original.isViewer ? (
+  //               <Badge>{t("Viewer")}</Badge>
+  //             ) : row.original.isGuest ? (
+  //               <Badge yellow>{t("Guest")}</Badge>
+  //             ) : (
+  //               <Badge>{t("Editor")}</Badge>
+  //             )}
+  //             {row.original.isSuspended && <Badge>{t("Suspended")}</Badge>}
+  //           </Badges>
+  //         ),
+  //         // size: 150,
+  //       },
+  //       canManage
+  //         ? {
+  //             id: "action",
+  //             header: " ",
+  //             accessorKey: "id",
+  //             enableSorting: false,
+  //             cell: ({ cell, row }) =>
+  //               currentUser.id !== cell.getValue() ? (
+  //                 <UserMenu user={row.original} />
+  //               ) : null,
+  //             // size: 50,
+  //           }
+  //         : undefined,
+  //     ]),
+  //   [t, currentUser, canManage]
+  // );
+
+  const columns = React.useMemo<Column<User>[]>(
     () =>
-      compact<ColumnDef<User>>([
+      compact<Column<User>>([
         {
+          type: "data",
           id: "name",
           header: t("Name"),
-          accessorKey: "name",
-          cell: ({ cell, row }) => (
+          accessor: (user) => user.name,
+          component: ({ cell, row }) => (
             <Flex align="center" gap={8}>
               <Avatar model={row.original} size={32} /> {cell.getValue()}{" "}
               {currentUser.id === row.original.id && `(${t("You")})`}
             </Flex>
           ),
-          size: 450,
+          width: "35%",
         },
         canManage
           ? {
+              type: "data",
               id: "email",
               header: t("Email"),
-              accessorKey: "email",
-              cell: ({ cell }) => <>{cell.renderValue()}</>,
-              size: 450,
+              accessor: (user) => user.email,
+              component: ({ cell }) => <>{cell.renderValue()}</>,
+              width: "35%",
             }
           : undefined,
         {
+          type: "data",
           id: "lastActiveAt",
           header: t("Last active"),
-          accessorKey: "lastActiveAt",
-          cell: ({ cell }) =>
+          accessor: (user) => user.lastActiveAt,
+          component: ({ cell }) =>
             cell.getValue() ? (
               <Time dateTime={cell.getValue() as string} addSuffix />
             ) : null,
-          size: 200,
+          width: "15%",
         },
         {
+          type: "data",
           id: "role",
           header: t("Role"),
-          accessorKey: "role",
-          cell: ({ row }) => (
+          accessor: (user) => user.role,
+          component: ({ row }) => (
             <Badges>
               {!row.original.lastActiveAt && <Badge>{t("Invited")}</Badge>}
               {row.original.isAdmin ? (
@@ -84,19 +161,17 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {row.original.isSuspended && <Badge>{t("Suspended")}</Badge>}
             </Badges>
           ),
-          size: 150,
+          width: "10%",
         },
         canManage
           ? {
+              type: "action",
               id: "action",
-              header: " ",
-              accessorKey: "id",
-              enableSorting: false,
-              cell: ({ cell, row }) =>
+              component: ({ cell, row }) =>
                 currentUser.id !== cell.getValue() ? (
                   <UserMenu user={row.original} />
                 ) : null,
-              size: 50,
+              width: "5%",
             }
           : undefined,
       ]),
@@ -104,7 +179,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
   );
 
   return (
-    <NewTable
+    <VirtualTable
       columns={columns}
       sort={sort}
       row={{ height: 60, gridColumnsStyle: "35% 35% 15% 10% 5%" }}

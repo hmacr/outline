@@ -9,9 +9,7 @@ type RequestResponse<T> = {
   /** The request error, if any. */
   error: unknown;
   /** Whether the request is currently in progress. */
-  fetching: boolean;
-  /** Whether the request has completed and data has been loaded. */
-  loaded: boolean;
+  loading: boolean;
   /** Function to trigger next page request. */
   next: () => void;
   /** Page number */
@@ -39,7 +37,7 @@ export default function usePaginatedRequest<T = unknown>(
   params: PaginationParams = {}
 ): RequestResponse<T> {
   const [data, setData] = React.useState<T[]>();
-  const [loaded, setLoaded] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [offset, setOffset] = React.useState(INITIAL_OFFSET);
   const [page, setPage] = React.useState(0);
   const [end, setEnd] = React.useState(false);
@@ -56,26 +54,29 @@ export default function usePaginatedRequest<T = unknown>(
     request,
   } = useRequest<T[]>(paginatedReq);
 
+  const next = React.useCallback(() => {
+    setOffset((prev) => prev + displayLimit);
+  }, [displayLimit]);
+
   React.useEffect(() => {
-    setLoaded(false);
+    setLoading(true);
     void request();
   }, [request]);
 
   React.useEffect(() => {
     if (response && !fetching) {
+      setLoading(false);
       setData((prev) =>
         uniqBy((prev ?? []).concat(response.slice(0, displayLimit)), "id")
       );
       setPage((prev) => prev + 1);
       setEnd(response.length <= displayLimit);
-      setLoaded(true);
     }
   }, [response, displayLimit, fetching]);
 
-  const next = React.useCallback(() => {
-    setLoaded(false);
-    setOffset((prev) => prev + displayLimit);
-  }, [displayLimit]);
+  React.useEffect(() => {
+    setLoading(false);
+  }, [error]);
 
   // Reset request when requestFn changes
   React.useEffect(() => {
@@ -86,7 +87,6 @@ export default function usePaginatedRequest<T = unknown>(
     setPaginatedReq(
       () => () => requestFn({ ...params, offset: 0, limit: fetchLimit })
     );
-    setLoaded(false);
   }, [requestFn]);
 
   // Update request when offset changes
@@ -103,5 +103,5 @@ export default function usePaginatedRequest<T = unknown>(
     }
   }, [offset]);
 
-  return { data, next, fetching, loaded, error, page, offset, end };
+  return { data, next, loading, error, page, offset, end };
 }

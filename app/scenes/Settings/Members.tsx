@@ -62,20 +62,12 @@ function Members() {
     [users, reqParams]
   );
 
-  const prevRef = React.useRef<User[]>();
-
-  const { data, loaded, next, end, error } = usePaginatedRequest<User>(
+  const { data, loading, next, end, error } = usePaginatedRequest<User>(
     requestFn,
     {
       limit: Pagination.defaultLimit,
     }
   );
-
-  React.useEffect(() => {
-    if (loaded) {
-      prevRef.current = data;
-    }
-  }, [loaded, data]);
 
   React.useEffect(() => {
     if (error) {
@@ -138,8 +130,6 @@ function Members() {
 
   const appName = env.APP_NAME;
 
-  console.log("reset scroll", reqParams !== prevReqParams && loaded);
-
   return (
     <Scene
       title={t("Members")}
@@ -192,14 +182,14 @@ function Members() {
       </Flex>
       <Fade>
         <PeopleTable
-          data={(loaded ? data : prevRef.current) ?? []}
+          data={data ?? []}
           canManage={can.update}
-          loading={loaded}
+          loading={loading}
           page={{
             hasNext: !end,
             fetchNext: next,
           }}
-          resetScroll={reqParams !== prevReqParams && loaded}
+          resetScroll={reqParams !== prevReqParams && loading}
         />
       </Fade>
     </Scene>
