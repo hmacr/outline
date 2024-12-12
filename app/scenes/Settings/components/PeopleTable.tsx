@@ -32,10 +32,10 @@ function PeopleTable({ canManage, ...rest }: Props) {
           id: "name",
           header: t("Name"),
           accessor: (user) => user.name,
-          component: ({ cell, row }) => (
+          component: (user) => (
             <Flex align="center" gap={8}>
-              <Avatar model={row.original} size={32} /> {cell.getValue()}{" "}
-              {currentUser.id === row.original.id && `(${t("You")})`}
+              <Avatar model={user} size={32} /> {user.name}{" "}
+              {currentUser.id === user.id && `(${t("You")})`}
             </Flex>
           ),
           width: "35%",
@@ -46,7 +46,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               id: "email",
               header: t("Email"),
               accessor: (user) => user.email,
-              component: ({ cell }) => <>{cell.renderValue()}</>,
+              component: (user) => <>{user.email}</>,
               width: "35%",
             }
           : undefined,
@@ -55,9 +55,9 @@ function PeopleTable({ canManage, ...rest }: Props) {
           id: "lastActiveAt",
           header: t("Last active"),
           accessor: (user) => user.lastActiveAt,
-          component: ({ cell }) =>
-            cell.getValue() ? (
-              <Time dateTime={cell.getValue() as string} addSuffix />
+          component: (user) =>
+            user.lastActiveAt ? (
+              <Time dateTime={user.lastActiveAt} addSuffix />
             ) : null,
           width: "15%",
         },
@@ -66,19 +66,19 @@ function PeopleTable({ canManage, ...rest }: Props) {
           id: "role",
           header: t("Role"),
           accessor: (user) => user.role,
-          component: ({ row }) => (
+          component: (user) => (
             <Badges>
-              {!row.original.lastActiveAt && <Badge>{t("Invited")}</Badge>}
-              {row.original.isAdmin ? (
+              {!user.lastActiveAt && <Badge>{t("Invited")}</Badge>}
+              {user.isAdmin ? (
                 <Badge primary>{t("Admin")}</Badge>
-              ) : row.original.isViewer ? (
+              ) : user.isViewer ? (
                 <Badge>{t("Viewer")}</Badge>
-              ) : row.original.isGuest ? (
+              ) : user.isGuest ? (
                 <Badge yellow>{t("Guest")}</Badge>
               ) : (
                 <Badge>{t("Editor")}</Badge>
               )}
-              {row.original.isSuspended && <Badge>{t("Suspended")}</Badge>}
+              {user.isSuspended && <Badge>{t("Suspended")}</Badge>}
             </Badges>
           ),
           width: "10%",
@@ -87,10 +87,8 @@ function PeopleTable({ canManage, ...rest }: Props) {
           ? {
               type: "action",
               id: "action",
-              component: ({ cell, row }) =>
-                currentUser.id !== cell.getValue() ? (
-                  <UserMenu user={row.original} />
-                ) : null,
+              component: (user) =>
+                currentUser.id !== user.id ? <UserMenu user={user} /> : null,
               width: "5%",
             }
           : undefined,

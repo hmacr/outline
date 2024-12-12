@@ -7,9 +7,8 @@ import {
   functionalUpdate,
   Row as TRow,
   createColumnHelper,
-  AccessorColumnDef,
-  DisplayColumnDef,
   AccessorFn,
+  CellContext,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { observer } from "mobx-react";
@@ -31,21 +30,20 @@ import useQuery from "~/hooks/useQuery";
 type DataColumn<TData> = {
   type: "data";
   header: string;
-  component: AccessorColumnDef<TData>["cell"];
   accessor: AccessorFn<TData>;
   sortable?: boolean;
 };
 
-type ActionColumn<TData> = {
+type ActionColumn = {
   type: "action";
   header?: string;
-  component: DisplayColumnDef<TData>["cell"];
 };
 
-export type Column<TData> = { id: string; width: string } & (
-  | DataColumn<TData>
-  | ActionColumn<TData>
-);
+export type Column<TData> = {
+  id: string;
+  component: (data: TData) => React.ReactNode;
+  width: string;
+} & (DataColumn<TData> | ActionColumn);
 
 type ColumnMeta = { width: string };
 
@@ -77,19 +75,23 @@ export const VirtualTable = observer(function <TData>({
 
   const columnHelper = createColumnHelper<TData>();
   const transformedColumns = columns.map((column) => {
+    const cell = ({ row }: CellContext<TData, unknown>) => (
+      <ObservedCell data={row.original} render={column.component} />
+    );
     const meta: ColumnMeta = { width: column.width };
+
     return column.type === "data"
       ? columnHelper.accessor(column.accessor, {
           id: column.id,
           header: column.header,
-          cell: column.component,
           enableSorting: column.sortable ?? true,
+          cell,
           meta,
         })
       : columnHelper.display({
           id: column.id,
           header: column.header ?? "",
-          cell: column.component,
+          cell,
           meta,
         });
   });
@@ -145,7 +147,7 @@ export const VirtualTable = observer(function <TData>({
   });
 
   React.useEffect(() => {
-    rowVirtualizer.scrollToOffset?.(0);
+    rowVirtualizer.scrollToOffset?.(0, { behavior: "smooth" });
   }, [sortChanged, rowVirtualizer]);
 
   return (
@@ -240,6 +242,16 @@ export const VirtualTable = observer(function <TData>({
   );
 });
 
+const ObservedCell = observer(function <TData>({
+  data,
+  render,
+}: {
+  data: TData;
+  render: (data: TData) => React.ReactNode;
+}) {
+  return <>{render(data)}</>;
+});
+
 function Placeholder({
   columns,
   rows = 3,
@@ -250,9 +262,9 @@ function Placeholder({
   return (
     <DelayedMount>
       <tbody>
-        {new Array(rows).fill(1).map((_, row) => (
+        {new Array(rows).fill(1).map((_r, row) => (
           <Row key={row}>
-            {new Array(columns).fill(1).map((_, col) => (
+            {new Array(columns).fill(1).map((_c, col) => (
               <Cell key={col}>
                 <PlaceholderText minWidth={25} maxWidth={75} />
               </Cell>
