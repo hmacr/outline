@@ -104,7 +104,7 @@ function Members() {
   //   }
   // );
 
-  const { data, error, loading, end, next } = useTableRequest({
+  const { data, error, loading, next } = useTableRequest({
     requestFn: users.fetchPage,
     sort,
     filters,
@@ -228,7 +228,7 @@ function Members() {
           canManage={can.update}
           loading={loading}
           page={{
-            hasNext: !end,
+            hasNext: !!next,
             fetchNext: next,
           }}
         />

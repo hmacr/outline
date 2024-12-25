@@ -230,9 +230,7 @@ export const VirtualTable = observer(function <TData>({
         </tbody>
         {showPlaceholder && <Placeholder columns={columns.length} />}
       </InnerTable>
-      {page.hasNext && !loading && (
-        <Waypoint key={data?.length} onEnter={page.fetchNext} />
-      )}
+      {page.hasNext && <Waypoint onEnter={page.fetchNext} />}
       {isEmpty && (
         <DelayedMount>
           <Empty>{t("No results")}</Empty>

@@ -28,7 +28,6 @@ type Response<T> = {
   data: T[] | undefined;
   error: unknown;
   loading: boolean;
-  end: boolean;
   next?: () => Promise<void>;
 };
 
@@ -73,16 +72,14 @@ export function useTableRequest<T = unknown>({
       }
 
       setTotal(response[PAGINATION_SYMBOL]?.total);
+      offsetRef.current += PAGE_SIZE;
     },
     []
   );
 
   const { loading, error, request } = useRequest(fetchPage);
 
-  const end = !loading && !!data && !!total && data.length >= total;
-
   const next = React.useCallback(async () => {
-    offsetRef.current += PAGE_SIZE;
     handleResponse(await request(), "append");
   }, [request, handleResponse]);
 
@@ -108,7 +105,6 @@ export function useTableRequest<T = unknown>({
           filters?.every((filter) => filter.fn(item))
         );
         offsetRef.current = filteredData.length;
-        console.log("offset", offsetRef.current);
         return orderBy(filteredData, sort.id, sort.desc ? "desc" : "asc");
       });
     };
@@ -116,11 +112,12 @@ export function useTableRequest<T = unknown>({
     void handleRequest();
   }, [request, handleResponse, sort, filters]);
 
+  console.log("loading", loading);
+
   return {
     data,
     error,
     loading,
-    end,
-    next: end ? undefined : next,
+    next: loading || !data || !total || data.length >= total ? undefined : next,
   };
 }
