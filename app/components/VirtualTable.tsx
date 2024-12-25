@@ -54,7 +54,7 @@ export type Props<TData> = {
   loading: boolean;
   page: {
     hasNext: boolean;
-    fetchNext: () => void;
+    fetchNext?: () => Promise<void>;
   };
   rowHeight: number;
 };
@@ -230,7 +230,7 @@ export const VirtualTable = observer(function <TData>({
         </tbody>
         {showPlaceholder && <Placeholder columns={columns.length} />}
       </InnerTable>
-      {page.hasNext && !!data?.length && (
+      {page.hasNext && !loading && (
         <Waypoint key={data?.length} onEnter={page.fetchNext} />
       )}
       {isEmpty && (

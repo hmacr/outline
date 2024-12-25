@@ -14,14 +14,14 @@ type RequestResponse<T> = {
   next: () => void;
   /** Page number */
   page: number;
+  /** Offset */
+  offset: number;
   /** Marks the end of pagination */
   end: boolean;
 };
 
 const INITIAL_OFFSET = 0;
 const DEFAULT_LIMIT = 10;
-
-type RequestFn<T> = (params?: PaginationParams | undefined) => Promise<T[]>;
 
 /**
  * A hook to make paginated API request and track its state within a component.
@@ -31,41 +31,23 @@ type RequestFn<T> = (params?: PaginationParams | undefined) => Promise<T[]>;
  * @returns
  */
 export default function usePaginatedRequest<T = unknown>(
-  requestFn: RequestFn<T>,
+  requestFn: (params?: PaginationParams | undefined) => Promise<T[]>,
   params: PaginationParams = {}
 ): RequestResponse<T> {
   const [data, setData] = React.useState<T[]>();
+  const [offset, setOffset] = React.useState(INITIAL_OFFSET);
   const [page, setPage] = React.useState(0);
   const [end, setEnd] = React.useState(false);
-  const [paginatedReq, setPaginatedReq] = React.useState<RequestFn<T>>(
-    () => () => requestFn({ ...params, offset: 0, limit: fetchLimit })
-  );
-  const offset = React.useRef(INITIAL_OFFSET);
-  const initial = React.useRef(true);
   const displayLimit = params.limit || DEFAULT_LIMIT;
   const fetchLimit = displayLimit + 1;
-
-  const reset = React.useCallback(() => {
-    offset.current = INITIAL_OFFSET;
-    setData(undefined);
-    setPage(0);
-    setEnd(false);
-    setPaginatedReq(
-      () => () => requestFn({ ...params, offset: 0, limit: fetchLimit })
-    );
-  }, [requestFn]);
-
-  const next = React.useCallback(() => {
-    offset.current = offset.current + displayLimit;
-    setPaginatedReq(
-      () => () =>
-        requestFn({
-          ...params,
-          offset: offset.current,
-          limit: fetchLimit,
-        })
-    );
-  }, [requestFn]);
+  const [paginatedReq, setPaginatedReq] = React.useState(
+    () => () =>
+      requestFn({
+        ...params,
+        offset: 0,
+        limit: fetchLimit,
+      })
+  );
 
   const {
     data: response,
@@ -89,11 +71,28 @@ export default function usePaginatedRequest<T = unknown>(
   }, [response, displayLimit, loading]);
 
   React.useEffect(() => {
-    if (!initial.current) {
-      reset();
+    if (offset) {
+      setPaginatedReq(
+        () => () =>
+          requestFn({
+            ...params,
+            offset,
+            limit: fetchLimit,
+          })
+      );
     }
-    initial.current = false;
+  }, [offset, fetchLimit, requestFn]);
+
+  const next = React.useCallback(() => {
+    setOffset((prev) => prev + displayLimit);
+  }, [displayLimit]);
+
+  React.useEffect(() => {
+    setEnd(false);
+    setData(undefined);
+    setPage(0);
+    setOffset(0);
   }, [requestFn]);
 
-  return { data, next, loading, error, page, end };
+  return { data, next, loading, error, page, offset, end };
 }

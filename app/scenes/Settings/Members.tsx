@@ -1,4 +1,5 @@
 import { ColumnSort } from "@tanstack/react-table";
+import deburr from "lodash/deburr";
 import { observer } from "mobx-react";
 import { PlusIcon, UserIcon } from "outline-icons";
 import * as React from "react";
@@ -24,6 +25,10 @@ import usePaginatedRequest from "~/hooks/usePaginatedRequest";
 import usePolicy from "~/hooks/usePolicy";
 import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
+import {
+  Filter as TableFilter,
+  useTableRequest,
+} from "~/hooks/useTableRequestNew";
 import { PaginationParams } from "~/types";
 import PeopleTable from "./components/PeopleTable";
 import UserRoleFilter from "./components/UserRoleFilter";
@@ -59,21 +64,51 @@ function Members() {
     [reqParams]
   );
 
-  const requestFn = React.useCallback(
-    (paginationParams: PaginationParams) =>
-      users.fetchPage({
-        ...reqParams,
-        ...paginationParams,
-      }),
-    [users, reqParams]
-  );
-
-  const { data, loading, next, end, error } = usePaginatedRequest<User>(
-    requestFn,
-    {
-      limit: Pagination.defaultLimit,
+  const filters = React.useMemo<TableFilter<User>[] | undefined>(() => {
+    if (!reqParams.query && !reqParams.filter && !reqParams.role) {
+      return;
     }
-  );
+
+    const tableFilters: TableFilter<User>[] = [];
+
+    if (reqParams.query) {
+      const deburredQuery = deburr(reqParams.query);
+      tableFilters.push({
+        name: "query",
+        value: reqParams.query,
+        fn: (user) =>
+          deburr(user.email).toLowerCase().includes(deburredQuery) ||
+          deburr(user.name).toLowerCase().includes(deburredQuery),
+      });
+    }
+
+    if (reqParams.filter) {
+    }
+
+    return tableFilters;
+  }, [reqParams]);
+
+  // const requestFn = React.useCallback(
+  //   (paginationParams: PaginationParams) =>
+  //     users.fetchPage({
+  //       ...reqParams,
+  //       ...paginationParams,
+  //     }),
+  //   [users, reqParams]
+  // );
+
+  // const { data, loading, next, end, error } = usePaginatedRequest<User>(
+  //   requestFn,
+  //   {
+  //     limit: Pagination.defaultLimit,
+  //   }
+  // );
+
+  const { data, error, loading, end, next } = useTableRequest({
+    requestFn: users.fetchPage,
+    sort,
+    filters,
+  });
 
   React.useEffect(() => {
     if (error) {
