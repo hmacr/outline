@@ -1,5 +1,4 @@
 import { ColumnSort } from "@tanstack/react-table";
-import deburr from "lodash/deburr";
 import { observer } from "mobx-react";
 import { PlusIcon, UserIcon } from "outline-icons";
 import * as React from "react";
@@ -7,8 +6,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import styled from "styled-components";
-import { Pagination } from "@shared/constants";
-import User from "~/models/User";
 import { Action } from "~/components/Actions";
 import Button from "~/components/Button";
 import Fade from "~/components/Fade";
@@ -21,20 +18,16 @@ import { inviteUser } from "~/actions/definitions/users";
 import env from "~/env";
 import useActionContext from "~/hooks/useActionContext";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
-import usePaginatedRequest from "~/hooks/usePaginatedRequest";
 import usePolicy from "~/hooks/usePolicy";
 import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
-import {
-  Filter as TableFilter,
-  useTableRequest,
-} from "~/hooks/useTableRequestNew";
-import { PaginationParams } from "~/types";
+import { useTableRequest } from "~/hooks/useTableRequestNew";
 import PeopleTable from "./components/PeopleTable";
 import UserRoleFilter from "./components/UserRoleFilter";
 import UserStatusFilter from "./components/UserStatusFilter";
 
 function Members() {
+  const appName = env.APP_NAME;
   const location = useLocation();
   const history = useHistory();
   const team = useCurrentTeam();
@@ -43,6 +36,7 @@ function Members() {
   const { t } = useTranslation();
   const params = useQuery();
   const can = usePolicy(team);
+  const [query, setQuery] = React.useState("");
 
   const reqParams = React.useMemo(
     () => ({
@@ -56,59 +50,50 @@ function Members() {
     }),
     [params]
   );
+
   const sort: ColumnSort = React.useMemo(
     () => ({
       id: reqParams.sort,
       desc: reqParams.direction === "DESC",
     }),
-    [reqParams]
+    [reqParams.sort, reqParams.direction]
   );
-
-  const filters = React.useMemo<TableFilter<User>[] | undefined>(() => {
-    if (!reqParams.query && !reqParams.filter && !reqParams.role) {
-      return;
-    }
-
-    const tableFilters: TableFilter<User>[] = [];
-
-    if (reqParams.query) {
-      const deburredQuery = deburr(reqParams.query);
-      tableFilters.push({
-        name: "query",
-        value: reqParams.query,
-        fn: (user) =>
-          deburr(user.email).toLowerCase().includes(deburredQuery) ||
-          deburr(user.name).toLowerCase().includes(deburredQuery),
-      });
-    }
-
-    if (reqParams.filter) {
-    }
-
-    return tableFilters;
-  }, [reqParams]);
-
-  // const requestFn = React.useCallback(
-  //   (paginationParams: PaginationParams) =>
-  //     users.fetchPage({
-  //       ...reqParams,
-  //       ...paginationParams,
-  //     }),
-  //   [users, reqParams]
-  // );
-
-  // const { data, loading, next, end, error } = usePaginatedRequest<User>(
-  //   requestFn,
-  //   {
-  //     limit: Pagination.defaultLimit,
-  //   }
-  // );
 
   const { data, error, loading, next } = useTableRequest({
     requestFn: users.fetchPage,
-    sort,
-    filters,
+    params: reqParams,
   });
+
+  const updateParams = React.useCallback(
+    (name: string, value: string) => {
+      if (value) {
+        params.set(name, value);
+      } else {
+        params.delete(name);
+      }
+
+      history.replace({
+        pathname: location.pathname,
+        search: params.toString(),
+      });
+    },
+    [params, history, location.pathname]
+  );
+
+  const handleStatusFilter = React.useCallback(
+    (status) => updateParams("filter", status),
+    [updateParams]
+  );
+
+  const handleRoleFilter = React.useCallback(
+    (role) => updateParams("role", role),
+    [updateParams]
+  );
+
+  const handleSearch = React.useCallback((event) => {
+    const { value } = event.target;
+    setQuery(value);
+  }, []);
 
   React.useEffect(() => {
     if (error) {
@@ -116,60 +101,10 @@ function Members() {
     }
   }, [t, error]);
 
-  const handleStatusFilter = React.useCallback(
-    (f) => {
-      if (f) {
-        params.set("filter", f);
-        params.delete("page");
-      } else {
-        params.delete("filter");
-      }
-
-      history.replace({
-        pathname: location.pathname,
-        search: params.toString(),
-      });
-    },
-    [params, history, location.pathname]
-  );
-
-  const handleRoleFilter = React.useCallback(
-    (r) => {
-      if (r) {
-        params.set("role", r);
-        params.delete("page");
-      } else {
-        params.delete("role");
-      }
-
-      history.replace({
-        pathname: location.pathname,
-        search: params.toString(),
-      });
-    },
-    [params, history, location.pathname]
-  );
-
-  const handleSearch = React.useCallback(
-    (event) => {
-      const { value } = event.target;
-
-      if (value) {
-        params.set("query", event.target.value);
-        params.delete("page");
-      } else {
-        params.delete("query");
-      }
-
-      history.replace({
-        pathname: location.pathname,
-        search: params.toString(),
-      });
-    },
-    [params, history, location.pathname]
-  );
-
-  const appName = env.APP_NAME;
+  React.useEffect(() => {
+    const timeout = setTimeout(() => updateParams("query", query), 250);
+    return () => clearTimeout(timeout);
+  }, [query, updateParams]);
 
   return (
     <Scene
@@ -208,7 +143,7 @@ function Members() {
       <Flex gap={8}>
         <InputSearch
           short
-          value={reqParams.query ?? ""}
+          value={query}
           placeholder={`${t("Filter")}…`}
           onChange={handleSearch}
         />

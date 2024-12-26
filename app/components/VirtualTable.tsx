@@ -54,7 +54,7 @@ export type Props<TData> = {
   loading: boolean;
   page: {
     hasNext: boolean;
-    fetchNext?: () => Promise<void>;
+    fetchNext?: () => void;
   };
   rowHeight: number;
 };
