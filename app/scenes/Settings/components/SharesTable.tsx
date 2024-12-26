@@ -1,3 +1,4 @@
+import compact from "lodash/compact";
 import { observer } from "mobx-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -5,15 +6,28 @@ import { unicodeCLDRtoBCP47 } from "@shared/utils/date";
 import Share from "~/models/Share";
 import { Avatar } from "~/components/Avatar";
 import Flex from "~/components/Flex";
-import TableFromParams from "~/components/TableFromParams";
 import Time from "~/components/Time";
+import {
+  VirtualTable,
+  type Column as TableColumn,
+  type Props as TableProps,
+} from "~/components/VirtualTable";
 import useUserLocale from "~/hooks/useUserLocale";
 import ShareMenu from "~/menus/ShareMenu";
 import { formatNumber } from "~/utils/language";
 
-type Props = Omit<React.ComponentProps<typeof TableFromParams>, "columns"> & {
-  data: Share[];
+type Props = Omit<TableProps<Share>, "columns" | "rowHeight"> & {
   canManage: boolean;
+};
+
+type ColumnWidths = {
+  title: string;
+  createdBy: string;
+  createdAt: string;
+  lastAccessedAt: string;
+  domain: string;
+  views: string;
+  action: string;
 };
 
 function SharesTable({ canManage, data, ...rest }: Props) {
@@ -21,88 +35,126 @@ function SharesTable({ canManage, data, ...rest }: Props) {
   const language = useUserLocale();
   const hasDomain = data.some((share) => share.domain);
 
-  const columns = React.useMemo(
+  const columnWidths = React.useMemo<ColumnWidths>(() => {
+    if (canManage) {
+      return {
+        title: "35%",
+        createdBy: "15%",
+        createdAt: hasDomain ? "15%" : "20%",
+        lastAccessedAt: hasDomain ? "15%" : "20%",
+        domain: hasDomain ? "10%" : "0%",
+        views: "5%",
+        action: "5%",
+      };
+    }
+
+    return {
+      title: "40%",
+      createdBy: "15%",
+      createdAt: hasDomain ? "15%" : "20%",
+      lastAccessedAt: hasDomain ? "15%" : "20%",
+      domain: hasDomain ? "10%" : "0%",
+      views: "5%",
+      action: "0%",
+    };
+  }, [canManage, hasDomain]);
+
+  const columns = React.useMemo<TableColumn<Share>[]>(
     () =>
-      [
+      compact<TableColumn<Share>>([
         {
-          id: "documentTitle",
-          Header: t("Document"),
-          accessor: "documentTitle",
-          disableSortBy: true,
-          Cell: observer(({ value }: { value: string }) => <>{value}</>),
+          type: "data",
+          id: "title",
+          header: t("Document"),
+          accessor: (share) => share.documentTitle,
+          sortable: false,
+          component: (share) => <>{share.documentTitle}</>,
+          width: columnWidths.title,
         },
         {
-          id: "who",
-          Header: t("Shared by"),
-          accessor: "createdById",
-          disableSortBy: true,
-          Cell: observer(
-            ({ row }: { value: string; row: { original: Share } }) => (
-              <Flex align="center" gap={4}>
-                {row.original.createdBy && (
-                  <Avatar model={row.original.createdBy} />
-                )}
-                {row.original.createdBy.name}
-              </Flex>
-            )
+          type: "data",
+          id: "createdBy",
+          header: t("Shared by"),
+          accessor: (share) => share.createdBy,
+          sortable: false,
+          component: (share) => (
+            <Flex align="center" gap={4}>
+              {share.createdBy && (
+                <>
+                  <Avatar model={share.createdBy} />
+                  {share.createdBy.name}
+                </>
+              )}
+            </Flex>
           ),
+          width: columnWidths.createdBy,
         },
         {
+          type: "data",
           id: "createdAt",
-          Header: t("Date shared"),
-          accessor: "createdAt",
-          Cell: observer(({ value }: { value: string }) =>
-            value ? <Time dateTime={value} addSuffix /> : null
-          ),
+          header: t("Date shared"),
+          accessor: (share) => share.createdAt,
+          component: (share) =>
+            share.createdAt ? (
+              <Time dateTime={share.createdAt} addSuffix />
+            ) : null,
+          width: columnWidths.createdAt,
         },
         {
+          type: "data",
           id: "lastAccessedAt",
-          Header: t("Last accessed"),
-          accessor: "lastAccessedAt",
-          Cell: observer(({ value }: { value: string }) =>
-            value ? <Time dateTime={value} addSuffix /> : null
-          ),
+          header: t("Last accessed"),
+          accessor: (share) => share.lastAccessedAt,
+          component: (share) =>
+            share.lastAccessedAt ? (
+              <Time dateTime={share.lastAccessedAt} addSuffix />
+            ) : null,
+          width: columnWidths.lastAccessedAt,
         },
         hasDomain
           ? {
+              type: "data",
               id: "domain",
-              Header: t("Domain"),
-              accessor: "domain",
-              disableSortBy: true,
+              header: t("Domain"),
+              accessor: (share) => share.domain,
+              sortable: false,
+              component: (share) => <>{share.domain}</>,
+              width: columnWidths.domain,
             }
           : undefined,
         {
+          type: "data",
           id: "views",
-          Header: t("Views"),
-          accessor: "views",
-          Cell: observer(({ value }: { value: number }) => (
+          header: t("Views"),
+          accessor: (share) => share.views,
+          component: (share) => (
             <>
               {language
-                ? formatNumber(value, unicodeCLDRtoBCP47(language))
-                : value}
+                ? formatNumber(share.views, unicodeCLDRtoBCP47(language))
+                : share.views}
             </>
-          )),
+          ),
+          width: columnWidths.views,
         },
         canManage
           ? {
-              Header: " ",
-              accessor: "id",
-              className: "actions",
-              disableSortBy: true,
-              Cell: observer(
-                ({ row }: { value: string; row: { original: Share } }) => (
-                  <Flex align="center">
-                    <ShareMenu share={row.original} />
-                  </Flex>
-                )
+              type: "action",
+              id: "action",
+              component: (share) => (
+                <Flex align="center">
+                  <ShareMenu share={share} />
+                </Flex>
               ),
+              width: columnWidths.action,
             }
           : undefined,
-      ].filter((i) => i),
-    [t, hasDomain, canManage]
+      ]),
+    [t, language, hasDomain, canManage, columnWidths]
   );
 
-  return <TableFromParams columns={columns} data={data} {...rest} />;
+  return (
+    <VirtualTable data={data} columns={columns} rowHeight={50} {...rest} />
+  );
 }
 
-export default SharesTable;
+export default observer(SharesTable);
