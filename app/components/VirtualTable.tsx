@@ -48,7 +48,7 @@ export type Column<TData> = {
 type ColumnMeta = { width: string };
 
 export type Props<TData> = {
-  data?: TData[];
+  data: TData[];
   columns: Column<TData>[];
   sort: ColumnSort;
   loading: boolean;
@@ -119,15 +119,12 @@ export const VirtualTable = observer(function <TData>({
 
   const prevSort = usePrevious(sort);
   const sortChanged = sort !== prevSort;
-  const prevData = usePrevious(data, true);
 
-  const finalData = data ?? prevData ?? [];
-
-  const isEmpty = !loading && finalData.length === 0;
-  const showPlaceholder = loading && finalData.length === 0;
+  const isEmpty = !loading && data.length === 0;
+  const showPlaceholder = loading && data.length === 0;
 
   const table = useReactTable({
-    data: finalData,
+    data,
     columns: transformedColumns,
     getCoreRowModel: getCoreRowModel(),
     enableMultiSort: false,

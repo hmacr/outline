@@ -1,4 +1,4 @@
-import uniqBy from "lodash/uniqBy";
+import sortBy from "lodash/sortBy";
 import React from "react";
 import {
   FetchPageParams,
@@ -11,8 +11,9 @@ const INITIAL_OFFSET = 0;
 const PAGE_SIZE = 25;
 
 type Props<T> = {
-  requestFn: (params: FetchPageParams) => Promise<PaginatedResponse<T>>;
-  params: Omit<FetchPageParams, "offset" | "limit">;
+  data: T[];
+  reqFn: (params: FetchPageParams) => Promise<PaginatedResponse<T>>;
+  reqParams: Omit<FetchPageParams, "offset" | "limit">;
 };
 
 type Response<T> = {
@@ -22,23 +23,24 @@ type Response<T> = {
   next: (() => void) | undefined;
 };
 
-export function useTableRequest<T>({
-  requestFn,
-  params,
+export function useTableRequest<T extends { id: string }>({
+  data,
+  reqFn,
+  reqParams,
 }: Props<T>): Response<T> {
-  const [data, setData] = React.useState<T[]>();
+  const [dataIds, setDataIds] = React.useState<string[]>();
   const [total, setTotal] = React.useState<number>();
   const [offset, setOffset] = React.useState({ value: INITIAL_OFFSET });
-  const prevParamsRef = React.useRef(params);
+  const prevParamsRef = React.useRef(reqParams);
 
   const fetchPage = React.useCallback(
-    () => requestFn({ ...params, offset: offset.value, limit: PAGE_SIZE }),
-    [requestFn, params, offset]
+    () => reqFn({ ...reqParams, offset: offset.value, limit: PAGE_SIZE }),
+    [reqFn, reqParams, offset]
   );
 
   const { request, loading, error } = useRequest(fetchPage);
 
-  const next = React.useCallback(
+  const nextPage = React.useCallback(
     () =>
       setOffset((prev) => ({
         value: prev.value + PAGE_SIZE,
@@ -47,8 +49,8 @@ export function useTableRequest<T>({
   );
 
   React.useEffect(() => {
-    if (prevParamsRef.current !== params) {
-      prevParamsRef.current = params;
+    if (prevParamsRef.current !== reqParams) {
+      prevParamsRef.current = reqParams;
       setOffset({ value: INITIAL_OFFSET });
       return;
     }
@@ -61,10 +63,12 @@ export function useTableRequest<T>({
         return;
       }
 
+      const ids = response.map((item) => item.id);
+
       if (offset.value === INITIAL_OFFSET) {
-        setData(response);
+        setDataIds(response.map((item) => item.id));
       } else {
-        setData((prev) => uniqBy((prev ?? []).concat(response), "id"));
+        setDataIds((prev) => (prev ?? []).concat(ids));
       }
 
       setTotal(response[PAGINATION_SYMBOL]?.total);
@@ -75,12 +79,24 @@ export function useTableRequest<T>({
     return () => {
       ignore = true;
     };
-  }, [params, offset, request]);
+  }, [reqParams, offset, request]);
+
+  const filteredData = dataIds
+    ? sortBy(
+        data.filter((item) => dataIds.includes(item.id)),
+        (item) => dataIds.indexOf(item.id)
+      )
+    : undefined;
+
+  const next =
+    !loading && dataIds && total && dataIds.length < total
+      ? nextPage
+      : undefined;
 
   return {
-    data,
+    data: filteredData,
     error,
     loading,
-    next: !loading && data && total && data.length < total ? next : undefined,
+    next,
   };
 }

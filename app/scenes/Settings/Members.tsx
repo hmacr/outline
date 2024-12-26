@@ -6,6 +6,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import styled from "styled-components";
+import UsersStore from "~/stores/UsersStore";
 import { Action } from "~/components/Actions";
 import Button from "~/components/Button";
 import Fade from "~/components/Fade";
@@ -60,8 +61,13 @@ function Members() {
   );
 
   const { data, error, loading, next } = useTableRequest({
-    requestFn: users.fetchPage,
-    params: reqParams,
+    data: getFilteredUsers({
+      users,
+      filter: reqParams.filter,
+      role: reqParams.role,
+    }),
+    reqFn: users.fetchPage,
+    reqParams,
   });
 
   const updateParams = React.useCallback(
@@ -158,7 +164,7 @@ function Members() {
       </Flex>
       <Fade>
         <PeopleTable
-          data={data}
+          data={data ?? []}
           sort={sort}
           canManage={can.update}
           loading={loading}
@@ -170,6 +176,36 @@ function Members() {
       </Fade>
     </Scene>
   );
+}
+
+function getFilteredUsers({
+  users,
+  filter,
+  role,
+}: {
+  users: UsersStore;
+  filter?: string;
+  role?: string;
+}) {
+  let filteredUsers;
+
+  switch (filter) {
+    case "all":
+      filteredUsers = users.orderedData;
+      break;
+    case "suspended":
+      filteredUsers = users.suspended;
+      break;
+    case "invited":
+      filteredUsers = users.invited;
+      break;
+    default:
+      filteredUsers = users.active;
+  }
+
+  return role
+    ? filteredUsers.filter((user) => user.role === role)
+    : filteredUsers;
 }
 
 const LargeUserStatusFilter = styled(UserStatusFilter)`

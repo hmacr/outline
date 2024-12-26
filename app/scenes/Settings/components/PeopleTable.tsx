@@ -59,7 +59,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
             user.lastActiveAt ? (
               <Time dateTime={user.lastActiveAt} addSuffix />
             ) : null,
-          width: "15%",
+          width: "13%",
         },
         {
           type: "data",
@@ -67,7 +67,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
           header: t("Role"),
           accessor: (user) => user.role,
           component: (user) => (
-            <Badges>
+            <Badges wrap>
               {!user.lastActiveAt && <Badge>{t("Invited")}</Badge>}
               {user.isAdmin ? (
                 <Badge primary>{t("Admin")}</Badge>
@@ -81,7 +81,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {user.isSuspended && <Badge>{t("Suspended")}</Badge>}
             </Badges>
           ),
-          width: "10%",
+          width: "13%",
         },
         canManage
           ? {
@@ -89,7 +89,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               id: "action",
               component: (user) =>
                 currentUser.id !== user.id ? <UserMenu user={user} /> : null,
-              width: "5%",
+              width: "4%",
             }
           : undefined,
       ]),
@@ -99,7 +99,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
   return <VirtualTable columns={columns} rowHeight={60} {...rest} />;
 }
 
-const Badges = styled.div`
+const Badges = styled(Flex)`
   margin-left: -10px;
 `;
 
