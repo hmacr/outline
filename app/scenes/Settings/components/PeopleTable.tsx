@@ -24,6 +24,26 @@ function PeopleTable({ canManage, ...rest }: Props) {
   const { t } = useTranslation();
   const currentUser = useCurrentUser();
 
+  const columnWidths = React.useMemo(() => {
+    if (canManage) {
+      return {
+        name: "35%",
+        email: "35%",
+        lastActiveAt: "15%",
+        role: "10%",
+        action: "5%",
+      };
+    }
+
+    return {
+      name: "50%",
+      email: "0%",
+      lastActiveAt: "30%",
+      role: "20%",
+      action: "0%",
+    };
+  }, [canManage]);
+
   const columns = React.useMemo<TableColumn<User>[]>(
     () =>
       compact<TableColumn<User>>([
@@ -38,7 +58,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {currentUser.id === user.id && `(${t("You")})`}
             </Flex>
           ),
-          width: "35%",
+          width: columnWidths["name"],
         },
         canManage
           ? {
@@ -47,7 +67,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               header: t("Email"),
               accessor: (user) => user.email,
               component: (user) => <>{user.email}</>,
-              width: "35%",
+              width: columnWidths["email"],
             }
           : undefined,
         {
@@ -59,7 +79,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
             user.lastActiveAt ? (
               <Time dateTime={user.lastActiveAt} addSuffix />
             ) : null,
-          width: "13%",
+          width: columnWidths["lastActiveAt"],
         },
         {
           type: "data",
@@ -81,7 +101,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {user.isSuspended && <Badge>{t("Suspended")}</Badge>}
             </Badges>
           ),
-          width: "13%",
+          width: columnWidths["role"],
         },
         canManage
           ? {
@@ -89,11 +109,11 @@ function PeopleTable({ canManage, ...rest }: Props) {
               id: "action",
               component: (user) =>
                 currentUser.id !== user.id ? <UserMenu user={user} /> : null,
-              width: "4%",
+              width: columnWidths["action"],
             }
           : undefined,
       ]),
-    [t, currentUser, canManage]
+    [t, currentUser, canManage, columnWidths]
   );
 
   return <VirtualTable columns={columns} rowHeight={60} {...rest} />;
