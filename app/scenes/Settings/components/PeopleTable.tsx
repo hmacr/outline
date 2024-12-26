@@ -121,6 +121,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
 
 const Badges = styled(Flex)`
   margin-left: -10px;
+  row-gap: 4px;
 `;
 
 export default observer(PeopleTable);

@@ -127,8 +127,9 @@ export const VirtualTable = observer(function <TData>({
     data,
     columns: transformedColumns,
     getCoreRowModel: getCoreRowModel(),
-    enableMultiSort: false,
     manualSorting: true,
+    enableMultiSort: false,
+    enableSortingRemoval: false,
     state: {
       sorting: [sort],
     },
