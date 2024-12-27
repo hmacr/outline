@@ -214,7 +214,13 @@ export const VirtualTable2 = observer(function <TData>({
           <Placeholder columns={columns.length} gridColumns={gridColumns} />
         )}
       </InnerTable>
-      {page.hasNext && <Waypoint key={data?.length} onEnter={page.fetchNext} />}
+      {page.hasNext && (
+        <Waypoint
+          key={data?.length}
+          onEnter={page.fetchNext}
+          bottomOffset={-rowHeight * 5}
+        />
+      )}
       {isEmpty && (
         <DelayedMount>
           <Empty>{t("No results")}</Empty>
@@ -352,6 +358,7 @@ const Row = styled.tr<{ $columns: string }>`
 `;
 
 const Head = styled.th`
+  height: 100%;
   text-align: left;
   padding: 6px 6px 2px;
   border-bottom: 1px solid ${s("divider")};
