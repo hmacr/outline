@@ -8,26 +8,19 @@ import { Avatar } from "~/components/Avatar";
 import Flex from "~/components/Flex";
 import Time from "~/components/Time";
 import {
-  VirtualTable,
+  VirtualTable2,
   type Column as TableColumn,
   type Props as TableProps,
-} from "~/components/VirtualTable";
+} from "~/components/VirtualTable2";
 import useUserLocale from "~/hooks/useUserLocale";
 import ShareMenu from "~/menus/ShareMenu";
 import { formatNumber } from "~/utils/language";
 
-type Props = Omit<TableProps<Share>, "columns" | "rowHeight"> & {
+type Props = Omit<
+  TableProps<Share>,
+  "columns" | "rowHeight" | "gridColumns"
+> & {
   canManage: boolean;
-};
-
-type ColumnWidths = {
-  title: string;
-  createdBy: string;
-  createdAt: string;
-  lastAccessedAt: string;
-  domain: string;
-  views: string;
-  action: string;
 };
 
 function SharesTable({ canManage, data, ...rest }: Props) {
@@ -35,28 +28,16 @@ function SharesTable({ canManage, data, ...rest }: Props) {
   const language = useUserLocale();
   const hasDomain = data.some((share) => share.domain);
 
-  const columnWidths = React.useMemo<ColumnWidths>(() => {
-    if (canManage) {
-      return {
-        title: "35%",
-        createdBy: "15%",
-        createdAt: hasDomain ? "15%" : "20%",
-        lastAccessedAt: hasDomain ? "15%" : "20%",
-        domain: hasDomain ? "10%" : "0%",
-        views: "5%",
-        action: "5%",
-      };
+  const gridColumns = React.useMemo(() => {
+    if (canManage && hasDomain) {
+      return "4fr 2fr 2fr 2fr 1.5fr 1fr 0.5fr"; // all columns will be displayed.
+    } else if (canManage && !hasDomain) {
+      return "4fr 2fr 2fr 2fr 1fr 0.5fr"; // domain won't be displayed.
+    } else if (!canManage && hasDomain) {
+      return "4fr 2fr 2fr 2fr 1.5fr 1fr"; // action won't be displayed.
+    } else {
+      return "4fr 2fr 2fr 2fr 1fr"; // domain and action won't be displayed.
     }
-
-    return {
-      title: "40%",
-      createdBy: "15%",
-      createdAt: hasDomain ? "15%" : "20%",
-      lastAccessedAt: hasDomain ? "15%" : "20%",
-      domain: hasDomain ? "10%" : "0%",
-      views: "5%",
-      action: "0%",
-    };
   }, [canManage, hasDomain]);
 
   const columns = React.useMemo<TableColumn<Share>[]>(
@@ -69,7 +50,6 @@ function SharesTable({ canManage, data, ...rest }: Props) {
           accessor: (share) => share.documentTitle,
           sortable: false,
           component: (share) => <>{share.documentTitle}</>,
-          width: columnWidths.title,
         },
         {
           type: "data",
@@ -87,7 +67,6 @@ function SharesTable({ canManage, data, ...rest }: Props) {
               )}
             </Flex>
           ),
-          width: columnWidths.createdBy,
         },
         {
           type: "data",
@@ -98,7 +77,6 @@ function SharesTable({ canManage, data, ...rest }: Props) {
             share.createdAt ? (
               <Time dateTime={share.createdAt} addSuffix />
             ) : null,
-          width: columnWidths.createdAt,
         },
         {
           type: "data",
@@ -109,7 +87,6 @@ function SharesTable({ canManage, data, ...rest }: Props) {
             share.lastAccessedAt ? (
               <Time dateTime={share.lastAccessedAt} addSuffix />
             ) : null,
-          width: columnWidths.lastAccessedAt,
         },
         hasDomain
           ? {
@@ -119,7 +96,6 @@ function SharesTable({ canManage, data, ...rest }: Props) {
               accessor: (share) => share.domain,
               sortable: false,
               component: (share) => <>{share.domain}</>,
-              width: columnWidths.domain,
             }
           : undefined,
         {
@@ -134,7 +110,6 @@ function SharesTable({ canManage, data, ...rest }: Props) {
                 : share.views}
             </>
           ),
-          width: columnWidths.views,
         },
         canManage
           ? {
@@ -145,15 +120,20 @@ function SharesTable({ canManage, data, ...rest }: Props) {
                   <ShareMenu share={share} />
                 </Flex>
               ),
-              width: columnWidths.action,
             }
           : undefined,
       ]),
-    [t, language, hasDomain, canManage, columnWidths]
+    [t, language, hasDomain, canManage]
   );
 
   return (
-    <VirtualTable data={data} columns={columns} rowHeight={50} {...rest} />
+    <VirtualTable2
+      data={data}
+      columns={columns}
+      rowHeight={50}
+      gridColumns={gridColumns}
+      {...rest}
+    />
   );
 }
 

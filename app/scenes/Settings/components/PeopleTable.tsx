@@ -9,14 +9,14 @@ import Badge from "~/components/Badge";
 import Flex from "~/components/Flex";
 import Time from "~/components/Time";
 import {
-  VirtualTable,
+  VirtualTable2,
   type Column as TableColumn,
   type Props as TableProps,
-} from "~/components/VirtualTable";
+} from "~/components/VirtualTable2";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import UserMenu from "~/menus/UserMenu";
 
-type Props = Omit<TableProps<User>, "columns" | "rowHeight"> & {
+type Props = Omit<TableProps<User>, "columns" | "rowHeight" | "gridColumns"> & {
   canManage: boolean;
 };
 
@@ -24,24 +24,11 @@ function PeopleTable({ canManage, ...rest }: Props) {
   const { t } = useTranslation();
   const currentUser = useCurrentUser();
 
-  const columnWidths = React.useMemo(() => {
+  const gridColumns = React.useMemo(() => {
     if (canManage) {
-      return {
-        name: "35%",
-        email: "35%",
-        lastActiveAt: "15%",
-        role: "10%",
-        action: "5%",
-      };
+      return "4fr 4fr 2fr 1fr 0.5fr"; // all columns will be displayed.
     }
-
-    return {
-      name: "50%",
-      email: "0%",
-      lastActiveAt: "30%",
-      role: "20%",
-      action: "0%",
-    };
+    return "4fr 2fr 1fr"; // email and action won't be displayed.
   }, [canManage]);
 
   const columns = React.useMemo<TableColumn<User>[]>(
@@ -58,7 +45,6 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {currentUser.id === user.id && `(${t("You")})`}
             </Flex>
           ),
-          width: columnWidths["name"],
         },
         canManage
           ? {
@@ -67,7 +53,6 @@ function PeopleTable({ canManage, ...rest }: Props) {
               header: t("Email"),
               accessor: (user) => user.email,
               component: (user) => <>{user.email}</>,
-              width: columnWidths["email"],
             }
           : undefined,
         {
@@ -79,7 +64,6 @@ function PeopleTable({ canManage, ...rest }: Props) {
             user.lastActiveAt ? (
               <Time dateTime={user.lastActiveAt} addSuffix />
             ) : null,
-          width: columnWidths["lastActiveAt"],
         },
         {
           type: "data",
@@ -101,7 +85,6 @@ function PeopleTable({ canManage, ...rest }: Props) {
               {user.isSuspended && <Badge>{t("Suspended")}</Badge>}
             </Badges>
           ),
-          width: columnWidths["role"],
         },
         canManage
           ? {
@@ -109,14 +92,20 @@ function PeopleTable({ canManage, ...rest }: Props) {
               id: "action",
               component: (user) =>
                 currentUser.id !== user.id ? <UserMenu user={user} /> : null,
-              width: columnWidths["action"],
             }
           : undefined,
       ]),
-    [t, currentUser, canManage, columnWidths]
+    [t, currentUser, canManage]
   );
 
-  return <VirtualTable columns={columns} rowHeight={60} {...rest} />;
+  return (
+    <VirtualTable2
+      columns={columns}
+      rowHeight={60}
+      gridColumns={gridColumns}
+      {...rest}
+    />
+  );
 }
 
 const Badges = styled(Flex)`
