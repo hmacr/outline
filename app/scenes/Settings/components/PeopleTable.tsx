@@ -1,5 +1,4 @@
 import compact from "lodash/compact";
-import { observer } from "mobx-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
@@ -7,12 +6,12 @@ import User from "~/models/User";
 import { Avatar } from "~/components/Avatar";
 import Badge from "~/components/Badge";
 import Flex from "~/components/Flex";
-import Time from "~/components/Time";
 import {
-  VirtualTable2,
-  type Column as TableColumn,
   type Props as TableProps,
-} from "~/components/VirtualTable2";
+  SortableTable,
+} from "~/components/SortableTable";
+import { type Column as TableColumn } from "~/components/Table";
+import Time from "~/components/Time";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import UserMenu from "~/menus/UserMenu";
 
@@ -20,15 +19,15 @@ type Props = Omit<TableProps<User>, "columns" | "rowHeight" | "gridColumns"> & {
   canManage: boolean;
 };
 
-function PeopleTable({ canManage, ...rest }: Props) {
+export function PeopleTable({ canManage, ...rest }: Props) {
   const { t } = useTranslation();
   const currentUser = useCurrentUser();
 
   const gridColumns = React.useMemo(() => {
     if (canManage) {
-      return "4fr 4fr 2fr 1fr 0.5fr"; // all columns will be displayed.
+      return "4fr 4fr 2fr 2fr 0.5fr"; // all columns will be displayed.
     }
-    return "4fr 2fr 1fr"; // email and action won't be displayed.
+    return "4fr 2fr 2fr"; // email and action won't be displayed.
   }, [canManage]);
 
   const columns = React.useMemo<TableColumn<User>[]>(
@@ -99,7 +98,7 @@ function PeopleTable({ canManage, ...rest }: Props) {
   );
 
   return (
-    <VirtualTable2
+    <SortableTable
       columns={columns}
       rowHeight={60}
       gridColumns={gridColumns}
@@ -112,5 +111,3 @@ const Badges = styled(Flex)`
   margin-left: -10px;
   row-gap: 4px;
 `;
-
-export default observer(PeopleTable);

@@ -1,5 +1,4 @@
 import {
-  ColumnDef,
   useReactTable,
   getCoreRowModel,
   SortingState,
@@ -7,414 +6,247 @@ import {
   ColumnSort,
   functionalUpdate,
   Row as TRow,
+  createColumnHelper,
+  AccessorFn,
+  CellContext,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import isEqual from "lodash/isEqual";
 import { observer } from "mobx-react";
 import { CollapsedIcon } from "outline-icons";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory, useLocation } from "react-router-dom";
-import { useTable, useSortBy, usePagination } from "react-table";
 import { Waypoint } from "react-waypoint";
 import styled from "styled-components";
 import { s } from "@shared/styles";
-import Button from "~/components/Button";
 import DelayedMount from "~/components/DelayedMount";
 import Empty from "~/components/Empty";
 import Flex from "~/components/Flex";
 import NudeButton from "~/components/NudeButton";
 import PlaceholderText from "~/components/PlaceholderText";
-import useQuery from "~/hooks/useQuery";
+import usePrevious from "~/hooks/usePrevious";
 
-export type Props = {
-  data: any[];
-  offset?: number;
-  isLoading: boolean;
-  empty?: React.ReactNode;
-  currentPage?: number;
-  page: number;
-  pageSize?: number;
-  totalPages?: number;
-  defaultSort?: string;
-  topRef?: React.Ref<any>;
-  onChangePage: (index: number) => void;
-  onChangeSort: (
-    sort: string | null | undefined,
-    direction: "ASC" | "DESC"
-  ) => void;
-  columns: any;
-  defaultSortDirection: "ASC" | "DESC";
+type DataColumn<TData> = {
+  type: "data";
+  header: string;
+  accessor: AccessorFn<TData>;
+  sortable?: boolean;
 };
 
-export type NewProps<TData> = {
+type ActionColumn = {
+  type: "action";
+  header?: string;
+};
+
+export type Column<TData> = {
+  id: string;
+  component: (data: TData) => React.ReactNode;
+} & (DataColumn<TData> | ActionColumn);
+
+export type Props<TData> = {
   data: TData[];
-  columns: ColumnDef<TData>[];
+  columns: Column<TData>[];
   sort: ColumnSort;
+  onChangeSort: (sort: ColumnSort) => void;
   loading: boolean;
   page: {
     hasNext: boolean;
-    fetchNext: () => void;
+    fetchNext?: () => void;
   };
-  row: {
-    height: number;
-    gridColumnsStyle: string;
-  };
-  resetScroll: boolean;
+  rowHeight: number;
+  gridColumns: string;
 };
 
-export const NewTable = observer(
-  <TData,>({
-    data,
-    columns,
-    sort,
-    loading,
-    page,
-    row,
-    resetScroll,
-  }: NewProps<TData>) => {
-    const { t } = useTranslation();
-    const location = useLocation();
-    const history = useHistory();
-    const params = useQuery();
-    const containerRef = React.useRef(null);
-
-    const handleSortChange = React.useCallback(
-      (sortState: SortingState) => {
-        const newState = functionalUpdate(sortState, [sort]);
-        const newSort = newState[0];
-
-        if (newSort) {
-          params.set("sort", newSort.id);
-          params.set("direction", newSort.desc ? "desc" : "asc");
-        } else {
-          params.delete("sort");
-          params.delete("direction");
-        }
-
-        history.replace({
-          pathname: location.pathname,
-          search: params.toString(),
-        });
-      },
-      [params, history, location.pathname, sort]
-    );
-
-    const table = useReactTable({
-      data,
-      columns,
-      getCoreRowModel: getCoreRowModel(),
-      enableMultiSort: false,
-      manualSorting: true,
-      state: {
-        sorting: [sort],
-      },
-      onSortingChange: handleSortChange,
-    });
-
-    const isEmpty = !loading && data.length === 0;
-    const showPlaceholder = loading && isEmpty;
-
-    const { rows } = table.getRowModel();
-
-    const rowVirtualizer = useVirtualizer({
-      count: rows.length,
-      estimateSize: () => row.height,
-      getScrollElement: () => containerRef.current,
-    });
-
-    React.useEffect(() => {
-      if (resetScroll) {
-        rowVirtualizer.scrollToOffset?.(0);
-      }
-    }, [resetScroll, rowVirtualizer]);
-
-    return (
-      <Container ref={containerRef} $empty={isEmpty}>
-        <InnerTable>
-          <thead
-            style={{
-              position: "sticky",
-              top: 0,
-              zIndex: 1,
-            }}
-          >
-            {table.getHeaderGroups().map((headerGroup) => (
-              <Row
-                key={headerGroup.id}
-                style={
-                  {
-                    // display: "grid",
-                    // gridTemplateColumns: row.gridColumnsStyle,
-                  }
-                }
-              >
-                {headerGroup.headers.map((header) => (
-                  <Head key={header.id}>
-                    <SortWrapper
-                      align="center"
-                      $sortable={header.column.getCanSort()}
-                      gap={4}
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      {header.column.getIsSorted() === "asc" ? (
-                        <AscSortIcon />
-                      ) : header.column.getIsSorted() === "desc" ? (
-                        <DescSortIcon />
-                      ) : (
-                        <div />
-                      )}
-                    </SortWrapper>
-                  </Head>
-                ))}
-              </Row>
-            ))}
-          </thead>
-
-          <tbody
-            style={{
-              position: "relative",
-              height: `${rowVirtualizer.getTotalSize()}px`,
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const tableRow = rows[virtualRow.index] as TRow<TData>;
-              return (
-                <Row
-                  key={tableRow.id}
-                  data-index={virtualRow.index}
-                  style={{
-                    // display: "grid",
-                    // gridTemplateColumns: row.gridColumnsStyle,
-                    // width: "100%",
-                    position: "absolute",
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                >
-                  {tableRow.getAllCells().map((cell) => (
-                    <Cell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </Cell>
-                  ))}
-                </Row>
-              );
-            })}
-          </tbody>
-          {showPlaceholder && <Placeholder columns={columns.length} />}
-        </InnerTable>
-        {page.hasNext && !!data.length && (
-          <Waypoint key={data.length} onEnter={page.fetchNext} />
-        )}
-        {isEmpty && (
-          // <DelayedMount>
-          <Empty>{t("No results")}</Empty>
-          // </DelayedMount>
-        )}
-      </Container>
-    );
-  }
-);
-
-function Table({
+function Table<TData>({
   data,
-  isLoading,
-  totalPages,
-  empty,
   columns,
-  page,
-  pageSize = 50,
-  defaultSort = "name",
-  topRef,
+  sort,
   onChangeSort,
-  onChangePage,
-  defaultSortDirection,
-}: Props) {
+  loading,
+  page,
+  rowHeight,
+  gridColumns,
+}: Props<TData>) {
   const { t } = useTranslation();
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    rows,
-    prepareRow,
-    canNextPage,
-    nextPage,
-    canPreviousPage,
-    previousPage,
-    state: { pageIndex, sortBy },
-  } = useTable(
-    {
-      columns,
-      data,
-      manualPagination: true,
-      manualSortBy: true,
-      autoResetSortBy: false,
-      autoResetPage: false,
-      pageCount: totalPages,
-      initialState: {
-        sortBy: [
-          {
-            id: defaultSort,
-            desc: defaultSortDirection === "DESC" ? true : false,
-          },
-        ],
-        pageSize,
-        pageIndex: page,
-      },
-      stateReducer: (newState, action, prevState) => {
-        if (!isEqual(newState.sortBy, prevState.sortBy)) {
-          return { ...newState, pageIndex: 0 };
-        }
+  const containerRef = React.useRef(null);
 
-        return newState;
-      },
+  const columnHelper = createColumnHelper<TData>();
+  const observedColumns = columns.map((column) => {
+    const cell = ({ row }: CellContext<TData, unknown>) => (
+      <ObservedCell data={row.original} render={column.component} />
+    );
+
+    return column.type === "data"
+      ? columnHelper.accessor(column.accessor, {
+          id: column.id,
+          header: column.header,
+          enableSorting: column.sortable ?? true,
+          cell,
+        })
+      : columnHelper.display({
+          id: column.id,
+          header: column.header ?? "",
+          cell,
+        });
+  });
+
+  const handleChangeSort = React.useCallback(
+    (sortState: SortingState) => {
+      const newState = functionalUpdate(sortState, [sort]);
+      const newSort = newState[0];
+      onChangeSort(newSort);
     },
-    useSortBy,
-    usePagination
+    [sort, onChangeSort]
   );
-  const prevSortBy = React.useRef(sortBy);
+
+  const prevSort = usePrevious(sort);
+  const sortChanged = sort !== prevSort;
+
+  const isEmpty = !loading && data.length === 0;
+  const showPlaceholder = loading && data.length === 0;
+
+  const table = useReactTable({
+    data,
+    columns: observedColumns,
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+    enableMultiSort: false,
+    enableSortingRemoval: false,
+    state: {
+      sorting: [sort],
+    },
+    onSortingChange: handleChangeSort,
+  });
+
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    estimateSize: () => rowHeight,
+    getScrollElement: () => containerRef.current,
+    overscan: 5,
+  });
 
   React.useEffect(() => {
-    if (!isEqual(sortBy, prevSortBy.current)) {
-      prevSortBy.current = sortBy;
-      onChangePage(0);
-      onChangeSort(
-        sortBy.length ? sortBy[0].id : undefined,
-        !sortBy.length ? defaultSortDirection : sortBy[0].desc ? "DESC" : "ASC"
-      );
-    }
-  }, [defaultSortDirection, onChangePage, onChangeSort, sortBy]);
-
-  const handleNextPage = () => {
-    nextPage();
-    onChangePage(pageIndex + 1);
-  };
-
-  const handlePreviousPage = () => {
-    previousPage();
-    onChangePage(pageIndex - 1);
-  };
-
-  const isEmpty = !isLoading && data.length === 0;
-  const showPlaceholder = isLoading && data.length === 0;
+    rowVirtualizer.scrollToOffset?.(0, { behavior: "smooth" });
+  }, [sortChanged, rowVirtualizer]);
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <Anchor ref={topRef} />
-      <InnerTable {...getTableProps()}>
-        <thead>
-          {headerGroups.map((headerGroup) => {
-            const groupProps = headerGroup.getHeaderGroupProps();
-            return (
-              <tr {...groupProps} key={groupProps.key}>
-                {headerGroup.headers.map((column) => (
-                  <Head
-                    {...column.getHeaderProps(column.getSortByToggleProps())}
-                    key={column.id}
+    <Container ref={containerRef} $empty={isEmpty}>
+      <InnerTable>
+        <thead
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+          }}
+        >
+          {table.getHeaderGroups().map((headerGroup) => (
+            <Row key={headerGroup.id} $columns={gridColumns}>
+              {headerGroup.headers.map((header) => (
+                <Head key={header.id}>
+                  <SortWrapper
+                    align="center"
+                    gap={4}
+                    onClick={header.column.getToggleSortingHandler()}
+                    $sortable={header.column.getCanSort()}
                   >
-                    <SortWrapper
-                      align="center"
-                      $sortable={!column.disableSortBy}
-                      gap={4}
-                    >
-                      {column.render("Header")}
-                      {column.isSorted &&
-                        (column.isSortedDesc ? (
-                          <DescSortIcon />
-                        ) : (
-                          <AscSortIcon />
-                        ))}
-                    </SortWrapper>
-                  </Head>
-                ))}
-              </tr>
-            );
-          })}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {header.column.getIsSorted() === "asc" ? (
+                      <AscSortIcon />
+                    ) : header.column.getIsSorted() === "desc" ? (
+                      <DescSortIcon />
+                    ) : (
+                      <div />
+                    )}
+                  </SortWrapper>
+                </Head>
+              ))}
+            </Row>
+          ))}
         </thead>
-        <tbody {...getTableBodyProps()}>
-          {rows.map((row) => {
-            prepareRow(row);
+
+        <tbody
+          style={{
+            position: "relative",
+            height: `${rowVirtualizer.getTotalSize()}px`,
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const row = rows[virtualRow.index] as TRow<TData>;
             return (
-              <Row {...row.getRowProps()} key={row.id}>
-                {row.cells.map((cell) => (
-                  <Cell
-                    {...cell.getCellProps([
-                      {
-                        // @ts-expect-error ts-migrate(2339) FIXME: Property 'className' does not exist on type 'Colum... Remove this comment to see the full error message
-                        className: cell.column.className,
-                      },
-                    ])}
-                    key={cell.column.id}
-                  >
-                    {cell.render("Cell")}
+              <Row
+                key={row.id}
+                data-index={virtualRow.index}
+                style={{
+                  position: "absolute",
+                  transform: `translateY(${virtualRow.start}px)`,
+                  height: `${virtualRow.size}px`,
+                }}
+                $columns={gridColumns}
+              >
+                {row.getAllCells().map((cell) => (
+                  <Cell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </Cell>
                 ))}
               </Row>
             );
           })}
         </tbody>
-        {showPlaceholder && <Placeholder columns={columns.length} />}
+        {showPlaceholder && (
+          <Placeholder columns={columns.length} gridColumns={gridColumns} />
+        )}
       </InnerTable>
-      {isEmpty ? (
-        empty || <Empty>{t("No results")}</Empty>
-      ) : (
-        <Pagination
-          justify={canPreviousPage ? "space-between" : "flex-end"}
-          gap={8}
-        >
-          {/* Note: the page > 0 check shouldn't be needed here but is */}
-          {canPreviousPage && page > 0 && (
-            <Button onClick={handlePreviousPage} neutral>
-              {t("Previous page")}
-            </Button>
-          )}
-          {canNextPage && (
-            <Button onClick={handleNextPage} neutral>
-              {t("Next page")}
-            </Button>
-          )}
-        </Pagination>
+      {page.hasNext && (
+        <Waypoint
+          key={data?.length}
+          onEnter={page.fetchNext}
+          bottomOffset={-rowHeight * 5}
+        />
       )}
-    </div>
+      {isEmpty && <Empty>{t("No results")}</Empty>}
+    </Container>
   );
 }
 
-export const Placeholder = ({
+const ObservedCell = observer(function <TData>({
+  data,
+  render,
+}: {
+  data: TData;
+  render: (data: TData) => React.ReactNode;
+}) {
+  return <>{render(data)}</>;
+});
+
+function Placeholder({
   columns,
   rows = 3,
+  gridColumns,
 }: {
   columns: number;
   rows?: number;
-}) => (
-  <DelayedMount>
-    <tbody>
-      {new Array(rows).fill(1).map((_, row) => (
-        <Row key={row}>
-          {new Array(columns).fill(1).map((_, col) => (
-            <Cell key={col}>
-              <PlaceholderText minWidth={25} maxWidth={75} />
-            </Cell>
-          ))}
-        </Row>
-      ))}
-    </tbody>
-  </DelayedMount>
-);
-
-const Anchor = styled.div`
-  top: -32px;
-  position: relative;
-`;
-
-const Pagination = styled(Flex)`
-  margin: 0 0 32px;
-`;
+  gridColumns: string;
+}) {
+  return (
+    <DelayedMount>
+      <tbody>
+        {new Array(rows).fill(1).map((_r, row) => (
+          <Row key={row} $columns={gridColumns}>
+            {new Array(columns).fill(1).map((_c, col) => (
+              <Cell key={col}>
+                <PlaceholderText minWidth={25} maxWidth={75} />
+              </Cell>
+            ))}
+          </Row>
+        ))}
+      </tbody>
+    </DelayedMount>
+  );
+}
 
 const DescSortIcon = styled(CollapsedIcon)`
   margin-left: -2px;
@@ -431,12 +263,13 @@ const AscSortIcon = styled(DescSortIcon)`
 const Container = styled.div<{ $empty: boolean }>`
   overflow: auto;
   height: ${({ $empty }) => !$empty && "max(700px, 70vh)"};
+  width: 100%;
   margin-top: 16px;
 `;
 
 const InnerTable = styled.table`
+  width: 100%;
   border-collapse: collapse;
-  min-width: 100%;
 `;
 
 const SortWrapper = styled(Flex)<{ $sortable: boolean }>`
@@ -457,7 +290,6 @@ const SortWrapper = styled(Flex)<{ $sortable: boolean }>`
 
 const Cell = styled.td`
   padding: 10px 6px;
-  border-bottom: 1px solid ${s("divider")};
   font-size: 14px;
   text-wrap: wrap;
   word-break: break-word;
@@ -487,7 +319,13 @@ const Cell = styled.td`
   }
 `;
 
-const Row = styled.tr`
+const Row = styled.tr<{ $columns: string }>`
+  width: 100%;
+  display: grid;
+  grid-template-columns: ${({ $columns }) => `${$columns}`};
+  align-items: center;
+  border-bottom: 1px solid ${s("divider")};
+
   ${Cell} {
     &:first-child {
       padding-left: 0;
@@ -497,13 +335,12 @@ const Row = styled.tr`
     }
   }
   &:last-child {
-    ${Cell} {
-      border-bottom: 0;
-    }
+    border-bottom: 0;
   }
 `;
 
 const Head = styled.th`
+  height: 100%;
   text-align: left;
   padding: 6px 6px 2px;
   border-bottom: 1px solid ${s("divider")};

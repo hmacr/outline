@@ -14,8 +14,8 @@ import useCurrentTeam from "~/hooks/useCurrentTeam";
 import usePolicy from "~/hooks/usePolicy";
 import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
-import { useTableRequest } from "~/hooks/useTableRequestNew";
-import SharesTable from "./components/SharesTable";
+import { useTableRequest } from "~/hooks/useTableRequest";
+import { SharesTable } from "./components/SharesTable";
 
 function Shares() {
   const team = useCurrentTeam();

@@ -22,8 +22,8 @@ import useCurrentTeam from "~/hooks/useCurrentTeam";
 import usePolicy from "~/hooks/usePolicy";
 import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
-import { useTableRequest } from "~/hooks/useTableRequestNew";
-import PeopleTable from "./components/PeopleTable";
+import { useTableRequest } from "~/hooks/useTableRequest";
+import { PeopleTable } from "./components/PeopleTable";
 import UserRoleFilter from "./components/UserRoleFilter";
 import UserStatusFilter from "./components/UserStatusFilter";
 

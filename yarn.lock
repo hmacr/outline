@@ -5216,28 +5216,13 @@
     "@types/history" "*"
     "@types/react" "*"
 
-"@types/react-table@^7.7.18":
-  version "7.7.18"
-  resolved "https://registry.yarnpkg.com/@types/react-table/-/react-table-7.7.18.tgz#603541083dd01328b576ab4373f7dcbe22033c31"
-  integrity "sha1-YDVBCD3QEyi1dqtDc/fcviIDPDE= sha512-OncztdDERQ35pjcQCpNoQe8KPOE8Rg2Ox4PlZHMGNgHTEaM1JyT2lWfNNbj2sCnOtQOHrOH7SzUnGUAXzqdksg=="
-  dependencies:
-    "@types/react" "*"
-
 "@types/react-virtualized-auto-sizer@^1.0.4":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@types/react-virtualized-auto-sizer/-/react-virtualized-auto-sizer-1.0.4.tgz#42044ef75ac2d2667893a5943e54a9f037f985a3"
   dependencies:
     "@types/react" "*"
 
-"@types/react-window-infinite-loader@^1.0.9":
-  version "1.0.9"
-  resolved "https://registry.yarnpkg.com/@types/react-window-infinite-loader/-/react-window-infinite-loader-1.0.9.tgz#9b24d4e60f20397ff853c6857f7fe0645becbeb9"
-  integrity sha512-gEInTjQwURCnDOFyIEK2+fWB5gTjqwx30O62QfxA9stE5aiB6EWkGj4UMhc0axq7/FV++Gs/TGW8FtgEx0S6Tw==
-  dependencies:
-    "@types/react" "*"
-    "@types/react-window" "*"
-
-"@types/react-window@*", "@types/react-window@^1.8.8":
+"@types/react-window@^1.8.8":
   version "1.8.8"
   resolved "https://registry.yarnpkg.com/@types/react-window/-/react-window-1.8.8.tgz#c20645414d142364fbe735818e1c1e0a145696e3"
   integrity "sha1-wgZFQU0UI2T75zWBjhweChRWluM= sha512-8Ls660bHR1AUA2kuRvVG9D/4XpRC6wjAaPT9dil7Ckc76eP9TKWZwwmgfq8Q1LANX3QNDnoU4Zp48A3w+zK69Q=="
@@ -13369,11 +13354,6 @@ react-style-singleton@^2.2.1:
     invariant "^2.2.4"
     tslib "^2.0.0"
 
-react-table@^7.8.0:
-  version "7.8.0"
-  resolved "https://registry.yarnpkg.com/react-table/-/react-table-7.8.0.tgz#07858c01c1718c09f7f1aed7034fcfd7bda907d2"
-  integrity "sha1-B4WMAcFxjAn38a7XA0/P172pB9I= sha512-hNaz4ygkZO4bESeFfnfOft73iBUj8K5oKi1EcSHPAibEydfsX2MyU6Z8KCr3mv3C9Kqqh71U+DhZkFvibbnPbA=="
-
 react-virtual@^2.8.2:
   version "2.8.2"
   resolved "https://registry.yarnpkg.com/react-virtual/-/react-virtual-2.8.2.tgz#e204b30c57c426bd260ed1ac49f8b1099e92b7cb"
@@ -13381,10 +13361,10 @@ react-virtual@^2.8.2:
   dependencies:
     "@reach/observe-rect" "^1.1.0"
 
-react-virtualized-auto-sizer@^1.0.24:
-  version "1.0.24"
-  resolved "https://registry.yarnpkg.com/react-virtualized-auto-sizer/-/react-virtualized-auto-sizer-1.0.24.tgz#3ebdc92f4b05ad65693b3cc8e7d8dd54924c0227"
-  integrity sha512-3kCn7N9NEb3FlvJrSHWGQ4iVl+ydQObq2fHMn12i5wbtm74zHOPhz/i64OL3c1S1vi9i2GXtZqNqUJTQ+BnNfg==
+react-virtualized-auto-sizer@^1.0.21:
+  version "1.0.25"
+  resolved "https://registry.yarnpkg.com/react-virtualized-auto-sizer/-/react-virtualized-auto-sizer-1.0.25.tgz#b13cbc528ac200be2bd1ffa40c8bb19bcc60ac3f"
+  integrity sha512-YHsksEGDfsHbHuaBVDYwJmcktblcHGafz4ZVuYPQYuSHMUGjpwmUCrAOcvMSGMwwk1eFWj1M/1GwYpNPuyhaBg==
 
 react-waypoint@^10.3.0:
   version "10.3.0"
@@ -13395,11 +13375,6 @@ react-waypoint@^10.3.0:
     consolidated-events "^1.1.0 || ^2.0.0"
     prop-types "^15.0.0"
     react-is "^17.0.1 || ^18.0.0"
-
-react-window-infinite-loader@^1.0.9:
-  version "1.0.9"
-  resolved "https://registry.yarnpkg.com/react-window-infinite-loader/-/react-window-infinite-loader-1.0.9.tgz#d861c03d5cbc550e2f185371af820fd22d46c099"
-  integrity sha512-5Hg89IdU4Vrp0RT8kZYKeTIxWZYhNkVXeI1HbKo01Vm/Z7qztDvXljwx16sMzsa9yapRJQW3ODZfMUw38SOWHw==
 
 react-window@^1.8.10:
   version "1.8.10"

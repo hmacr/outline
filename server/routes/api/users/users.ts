@@ -38,16 +38,6 @@ router.post(
     const { sort, direction, query, role, filter, ids, emails } =
       ctx.input.body;
 
-    // console.log(
-    //   "users.list params",
-    //   sort,
-    //   direction,
-    //   query,
-    //   role,
-    //   filter,
-    //   ctx.state.pagination.offset
-    // );
-
     const actor = ctx.state.auth.user;
     let where: WhereOptions<User> = {
       teamId: actor.teamId,
@@ -177,8 +167,6 @@ router.post(
         replacements,
       }),
     ]);
-
-    // await new Promise((resolve) => setTimeout(resolve, 3000));
 
     ctx.body = {
       pagination: { ...ctx.state.pagination, total },

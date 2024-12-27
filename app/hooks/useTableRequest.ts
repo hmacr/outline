@@ -1,6 +1,4 @@
-import { ColumnSort } from "@tanstack/react-table";
-import orderBy from "lodash/orderBy";
-import uniqBy from "lodash/uniqBy";
+import sortBy from "lodash/sortBy";
 import React from "react";
 import {
   FetchPageParams,
@@ -12,16 +10,10 @@ import useRequest from "./useRequest";
 const INITIAL_OFFSET = 0;
 const PAGE_SIZE = 25;
 
-type Filter<T> = {
-  name: string;
-  value: string;
-  fn: (item: T) => boolean;
-};
-
 type Props<T> = {
-  requestFn: (params: FetchPageParams) => Promise<PaginatedResponse<T>>;
-  sort: ColumnSort;
-  filters?: Filter<T>[];
+  data: T[];
+  reqFn: (params: FetchPageParams) => Promise<PaginatedResponse<T>>;
+  reqParams: Omit<FetchPageParams, "offset" | "limit">;
 };
 
 type Response<T> = {
@@ -31,178 +23,80 @@ type Response<T> = {
   next: (() => void) | undefined;
 };
 
-type State<T> = {
-  data: T[] | undefined;
-  loading: boolean;
-  error: unknown | undefined;
-  offset: number;
-  total: number | undefined;
-};
-
-type Action<T> =
-  | { type: "fetch_next_page" }
-  | { type: "update_sort"; sort: ColumnSort }
-  | { type: "update_filters"; filters: Filter<T>[] };
-
-function reducer<T>(
-  params: FetchPageParams,
-  action: Action<T>
-): FetchPageParams {
-  switch (action.type) {
-    case "fetch_next_page": {
-      return { ...params, offset: (params.offset || 0) + PAGE_SIZE };
-    }
-    case "update_sort": {
-      const sort = action.sort;
-      return {
-        ...params,
-        sort: sort.id,
-        direction: sort.desc ? "DESC" : "ASC",
-        offset: INITIAL_OFFSET,
-      };
-    }
-    case "update_filters": {
-      const filtersObj = action.filters?.reduce((obj, filter) => {
-        obj[filter.name] = filter.value;
-        return obj;
-      }, {} as Record<string, string>);
-      return { ...params, ...filtersObj };
-    }
-  }
-}
-
-export function useTableRequest<T = unknown>({
-  requestFn,
-  sort,
-  filters,
+export function useTableRequest<T extends { id: string }>({
+  data,
+  reqFn,
+  reqParams,
 }: Props<T>): Response<T> {
-  const [data, setData] = React.useState<T[]>();
+  const [dataIds, setDataIds] = React.useState<string[]>();
   const [total, setTotal] = React.useState<number>();
-  const [loading, setLoading] = React.useState<boolean>(false);
-  const [error, setError] = React.useState();
+  const [offset, setOffset] = React.useState({ value: INITIAL_OFFSET });
+  const prevParamsRef = React.useRef(reqParams);
 
-  const params = React.useMemo<FetchPageParams>(() => {
-    const filtersObj = filters?.reduce((obj, filter) => {
-      obj[filter.name] = filter.value;
-      return obj;
-    }, {} as Record<string, string>);
-    return {
-      ...filtersObj,
-      sort: sort.id,
-      direction: sort.desc ? "DESC" : "ASC",
-    };
-  }, [sort, filters]);
-
-  const offset = React.useRef(INITIAL_OFFSET);
-
-  const [offsetState, setOffsetState] = React.useState(INITIAL_OFFSET);
-
-  const loadPage = React.useCallback(
-    async (params: FetchPageParams) => {
-      const response = await requestFn(params);
-      setData((prev) => uniqBy((prev ?? []).concat(response), "id"));
-      setTotal(response[PAGINATION_SYMBOL]?.total);
-    },
-    [requestFn]
+  const fetchPage = React.useCallback(
+    () => reqFn({ ...reqParams, offset: offset.value, limit: PAGE_SIZE }),
+    [reqFn, reqParams, offset]
   );
 
-  const loadNextPage = () => {
-    offset.current += PAGE_SIZE;
-    void loadPage({
-      ...params,
-      offset: offset.current,
-      limit: PAGE_SIZE,
-    });
-  };
+  const { request, loading, error } = useRequest(fetchPage);
 
-  // When filter changes, apply the filter for the available data.
-  // Load the first page if we have less than a page's worth of data.
+  const nextPage = React.useCallback(
+    () =>
+      setOffset((prev) => ({
+        value: prev.value + PAGE_SIZE,
+      })),
+    []
+  );
+
   React.useEffect(() => {
-    let loadMore = false;
-
-    setData((prev) => {
-      if (!prev) {
-        return prev;
-      }
-      const filteredData = prev.filter((item) =>
-        filters?.every((filter) => filter.fn(item))
-      );
-      loadMore = (filteredData.length || 0) < PAGE_SIZE;
-      return orderBy(filteredData, sort.id, sort.desc ? "desc" : "asc");
-    });
-
-    if (loadMore) {
-      offset.current = 0;
-      void loadNextPage();
+    if (prevParamsRef.current !== reqParams) {
+      prevParamsRef.current = reqParams;
+      setOffset({ value: INITIAL_OFFSET });
+      return;
     }
-  }, [loadPage, filters]);
 
-  // When sort changes, fetch the first page of sorted data.
-  React.useEffect(() => {
-    offset.current = 0;
-    void loadPage({
-      ...filters,
-      sort: sort.id,
-      direction: sort.desc ? "DESC" : "ASC",
-      offset: 0,
-      limit: PAGE_SIZE,
-    });
-  }, [loadPage, sort]);
+    let ignore = false;
 
-  React.useEffect(() => {
-    const fetch = async () => {
-      const response = await requestFn(params);
-      setData((prev) => uniqBy((prev ?? []).concat(response), "id"));
+    const handleRequest = async () => {
+      const response = await request();
+      if (!response || ignore) {
+        return;
+      }
+
+      const ids = response.map((item) => item.id);
+
+      if (offset.value === INITIAL_OFFSET) {
+        setDataIds(response.map((item) => item.id));
+      } else {
+        setDataIds((prev) => (prev ?? []).concat(ids));
+      }
+
       setTotal(response[PAGINATION_SYMBOL]?.total);
     };
-    void fetch();
-  }, [state, requestFn]);
 
-  // on mount
-  React.useEffect(() => {
-    let loadMore = false;
+    void handleRequest();
 
-    setData((prev) => {
-      if (!prev) {
-        return prev;
-      }
-      const filteredData = prev.filter((item) =>
-        filters?.every((filter) => filter.fn(item))
-      );
-      loadMore = (filteredData.length || 0) < PAGE_SIZE;
-      return orderBy(filteredData, sort.id, sort.desc ? "desc" : "asc");
-    });
+    return () => {
+      ignore = true;
+    };
+  }, [reqParams, offset, request]);
 
-    if (loadMore) {
-      offset.current = 0;
-      void loadNextPage();
-    }
-  }, []);
+  const filteredData = dataIds
+    ? sortBy(
+        data.filter((item) => dataIds.includes(item.id)),
+        (item) => dataIds.indexOf(item.id)
+      )
+    : undefined;
 
-  // on filter change
-  React.useEffect(() => {
-    setData((prev) => {
-      if (!prev) {
-        return prev;
-      }
-      const filteredData = prev.filter((item) =>
-        filters?.every((filter) => filter.fn(item))
-      );
-      return filteredData;
-    });
-  }, [filters]);
-
-  // on sort change
-  React.useEffect(() => {
-    setOffsetState(INITIAL_OFFSET);
-  }, [sort]);
-
-  // New approach using params
+  const next =
+    !loading && dataIds && total && dataIds.length < total
+      ? nextPage
+      : undefined;
 
   return {
-    data,
+    data: filteredData,
     error,
     loading,
-    next: data && total && data.length < total ? loadNextPage : undefined,
+    next,
   };
 }

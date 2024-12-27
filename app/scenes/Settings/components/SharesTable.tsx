@@ -1,17 +1,16 @@
 import compact from "lodash/compact";
-import { observer } from "mobx-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { unicodeCLDRtoBCP47 } from "@shared/utils/date";
 import Share from "~/models/Share";
 import { Avatar } from "~/components/Avatar";
 import Flex from "~/components/Flex";
-import Time from "~/components/Time";
 import {
-  VirtualTable2,
-  type Column as TableColumn,
   type Props as TableProps,
-} from "~/components/VirtualTable2";
+  SortableTable,
+} from "~/components/SortableTable";
+import { type Column as TableColumn } from "~/components/Table";
+import Time from "~/components/Time";
 import useUserLocale from "~/hooks/useUserLocale";
 import ShareMenu from "~/menus/ShareMenu";
 import { formatNumber } from "~/utils/language";
@@ -23,7 +22,7 @@ type Props = Omit<
   canManage: boolean;
 };
 
-function SharesTable({ canManage, data, ...rest }: Props) {
+export function SharesTable({ data, canManage, ...rest }: Props) {
   const { t } = useTranslation();
   const language = useUserLocale();
   const hasDomain = data.some((share) => share.domain);
@@ -127,7 +126,7 @@ function SharesTable({ canManage, data, ...rest }: Props) {
   );
 
   return (
-    <VirtualTable2
+    <SortableTable
       data={data}
       columns={columns}
       rowHeight={50}
@@ -136,5 +135,3 @@ function SharesTable({ canManage, data, ...rest }: Props) {
     />
   );
 }
-
-export default observer(SharesTable);
