@@ -178,6 +178,10 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
       case "comments.delete":
         await this.handleCommentEvent(subscription, event);
         return;
+      case "comments.add_reaction":
+      case "comments.remove_reaction":
+        // Ignored
+        return;
       case "groups.create":
       case "groups.update":
       case "groups.delete":
@@ -692,7 +696,7 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
         "user-agent": `Outline-Webhooks${
           env.VERSION ? `/${env.VERSION.slice(0, 7)}` : ""
         }`,
-      };
+      } as Record<string, string>;
 
       const signature = subscription.signature(JSON.stringify(requestBody));
       if (signature) {

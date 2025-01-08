@@ -1,3 +1,4 @@
+import { Hour } from "@shared/utils/time";
 import { traceFunction } from "@server/logging/tracing";
 import { Document } from "@server/models";
 import { DocumentHelper } from "@server/models/helpers/DocumentHelper";
@@ -31,7 +32,7 @@ async function presentDocument(
     document,
     options.isPublic
       ? {
-          signedUrls: 60,
+          signedUrls: Hour.seconds,
           teamId: document.teamId,
           removeMarks: ["comment"],
           internalUrlBase: `/s/${options.shareId}`,
@@ -41,7 +42,7 @@ async function presentDocument(
 
   const text =
     !asData || options?.includeText
-      ? DocumentHelper.toMarkdown(data)
+      ? document.text || DocumentHelper.toMarkdown(data)
       : undefined;
 
   const res: Record<string, any> = {

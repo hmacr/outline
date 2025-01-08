@@ -26,7 +26,9 @@ import SmartText from "~/editor/extensions/SmartText";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import useFocusedComment from "~/hooks/useFocusedComment";
+import { useLocationSidebarContext } from "~/hooks/useLocationSidebarContext";
 import usePolicy from "~/hooks/usePolicy";
+import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
 import {
   documentHistoryPath,
@@ -81,6 +83,8 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
   const user = useCurrentUser({ rejectOnEmpty: false });
   const team = useCurrentTeam({ rejectOnEmpty: false });
   const history = useHistory();
+  const sidebarContext = useLocationSidebarContext();
+  const params = useQuery();
   const {
     document,
     onChangeTitle,
@@ -93,7 +97,6 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
     ...rest
   } = props;
   const can = usePolicy(document);
-
   const iconColor = document.color ?? (last(colorPalette) as string);
   const childRef = React.useRef<HTMLDivElement>(null);
   const focusAtStart = React.useCallback(() => {
@@ -104,9 +107,23 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
 
   React.useEffect(() => {
     if (focusedComment) {
-      ui.expandComments(document.id);
+      const viewingResolved = params.get("resolved") === "";
+      if (
+        (focusedComment.isResolved && !viewingResolved) ||
+        (!focusedComment.isResolved && viewingResolved)
+      ) {
+        history.replace({
+          search: focusedComment.isResolved ? "resolved=" : "",
+          pathname: location.pathname,
+          state: {
+            commentId: focusedComment.id,
+            sidebarContext,
+          },
+        });
+      }
+      ui.set({ commentsExpanded: true });
     }
-  }, [focusedComment, ui, document.id]);
+  }, [focusedComment, ui, document.id, history, params, sidebarContext]);
 
   // Save document when blurring title, but delay so that if clicking on a
   // button this is allowed to execute first.
@@ -131,10 +148,10 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
     (commentId: string) => {
       history.replace({
         pathname: window.location.pathname.replace(/\/history$/, ""),
-        state: { commentId },
+        state: { commentId, sidebarContext },
       });
     },
-    [history]
+    [history, sidebarContext]
   );
 
   // Create a Comment model in local store when a comment mark is created, this
@@ -150,6 +167,7 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
           documentId: props.id,
           createdAt: new Date(),
           createdById,
+          reactions: [],
         },
         comments
       );
@@ -158,10 +176,10 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
 
       history.replace({
         pathname: window.location.pathname.replace(/\/history$/, ""),
-        state: { commentId },
+        state: { commentId, sidebarContext },
       });
     },
-    [comments, user?.id, props.id, history]
+    [comments, user?.id, props.id, history, sidebarContext]
   );
 
   // Soft delete the Comment model when associated mark is totally removed.
@@ -175,7 +193,11 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
     [comments]
   );
 
-  const { setEditor, updateState: updateDocState } = useDocumentContext();
+  const {
+    setEditor,
+    setEditorInitialized,
+    updateState: updateDocState,
+  } = useDocumentContext();
   const handleRefChanged = React.useCallback(setEditor, [setEditor]);
   const EditorComponent = multiplayer ? MultiplayerEditor : Editor;
 
@@ -187,6 +209,16 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
       paddingBottom: `calc(50vh - ${childOffsetHeight}px)`,
     }),
     [childOffsetHeight]
+  );
+
+  const handleInit = React.useCallback(
+    () => setEditorInitialized(true),
+    [setEditorInitialized]
+  );
+
+  const handleDestroy = React.useCallback(
+    () => setEditorInitialized(false),
+    [setEditorInitialized]
   );
 
   return (
@@ -211,11 +243,13 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
       {!shareId && (
         <DocumentMeta
           document={document}
-          to={
-            match.path === matchDocumentHistory
-              ? documentPath(document)
-              : documentHistoryPath(document)
-          }
+          to={{
+            pathname:
+              match.path === matchDocumentHistory
+                ? documentPath(document)
+                : documentHistoryPath(document),
+            state: { sidebarContext },
+          }}
           rtl={
             titleRef.current?.getComputedDirection() === "rtl" ? true : false
           }
@@ -241,6 +275,8 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
             ? handleRemoveComment
             : undefined
         }
+        onInit={handleInit}
+        onDestroy={handleDestroy}
         onChange={updateDocState}
         extensions={extensions}
         editorStyle={editorStyle}

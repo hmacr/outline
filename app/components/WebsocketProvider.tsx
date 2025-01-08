@@ -28,6 +28,7 @@ import {
   PartialExcept,
   WebsocketCollectionUpdateIndexEvent,
   WebsocketDocumentMovedEvent,
+  WebsocketCommentReactionEvent,
   WebsocketEntitiesEvent,
   WebsocketEntityDeletedEvent,
 } from "~/types";
@@ -429,12 +430,43 @@ class WebsocketProvider extends React.Component<Props> {
     });
 
     this.socket.on("comments.update", (event: PartialExcept<Comment, "id">) => {
+      const comment = comments.get(event.id);
+
+      // Existing policy becomes invalid when the resolution status has changed and we don't have the latest version.
+      if (comment?.resolvedAt !== event.resolvedAt) {
+        policies.remove(event.id);
+      }
+
       comments.add(event);
     });
 
     this.socket.on("comments.delete", (event: WebsocketEntityDeletedEvent) => {
       comments.remove(event.modelId);
     });
+
+    this.socket.on(
+      "comments.add_reaction",
+      (event: WebsocketCommentReactionEvent) => {
+        const comment = comments.get(event.commentId);
+        comment?.updateReaction({
+          type: "add",
+          emoji: event.emoji,
+          user: event.user,
+        });
+      }
+    );
+
+    this.socket.on(
+      "comments.remove_reaction",
+      (event: WebsocketCommentReactionEvent) => {
+        const comment = comments.get(event.commentId);
+        comment?.updateReaction({
+          type: "remove",
+          emoji: event.emoji,
+          user: event.user,
+        });
+      }
+    );
 
     this.socket.on("groups.create", (event: PartialExcept<Group, "id">) => {
       groups.add(event);
@@ -588,13 +620,6 @@ class WebsocketProvider extends React.Component<Props> {
     this.socket.on("stars.delete", (event: WebsocketEntityDeletedEvent) => {
       stars.remove(event.modelId);
     });
-
-    this.socket.on(
-      "user.typing",
-      (event: { userId: string; documentId: string; commentId: string }) => {
-        comments.setTyping(event);
-      }
-    );
 
     this.socket.on("collections.add_user", async (event: Membership) => {
       memberships.add(event);

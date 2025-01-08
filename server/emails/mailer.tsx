@@ -1,5 +1,4 @@
-import addressparser from "addressparser";
-import invariant from "invariant";
+import { EmailAddress } from "addressparser";
 import nodemailer, { Transporter } from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 import Oy from "oy-vey";
@@ -12,7 +11,7 @@ const useTestEmailService = env.isDevelopment && !env.SMTP_USERNAME;
 
 type SendMailOptions = {
   to: string;
-  fromName?: string;
+  from: EmailAddress;
   replyTo?: string;
   messageId?: string;
   references?: string[];
@@ -126,7 +125,18 @@ export class Mailer {
     if (!transporter) {
       Logger.info(
         "email",
-        `Attempted to send email "${data.subject}" to ${data.to} but no transport configured.`
+        [
+          `Attempted to send email but no transport configured.`,
+          ``,
+          `--------------`,
+          `From:      ${data.from.address}`,
+          `To:        ${data.to}`,
+          `Subject:   ${data.subject}`,
+          `Preview:   ${data.previewText}`,
+          `--------------`,
+          ``,
+          data.text,
+        ].join("\n")
       );
       return;
     }
@@ -143,20 +153,8 @@ export class Mailer {
     try {
       Logger.info("email", `Sending email "${data.subject}" to ${data.to}`);
 
-      invariant(
-        env.SMTP_FROM_EMAIL,
-        "SMTP_FROM_EMAIL is required to send emails"
-      );
-
-      const from = addressparser(env.SMTP_FROM_EMAIL)[0];
-
       const info = await transporter.sendMail({
-        from: data.fromName
-          ? {
-              name: data.fromName,
-              address: from.address,
-            }
-          : env.SMTP_FROM_EMAIL,
+        from: data.from,
         replyTo: data.replyTo ?? env.SMTP_REPLY_EMAIL ?? env.SMTP_FROM_EMAIL,
         to: data.to,
         messageId: data.messageId,

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { NotificationEventType, UserPreference, UserRole } from "@shared/types";
+import { locales } from "@shared/utils/date";
 import User from "@server/models/User";
+import { zodEnumFromObjectKeys, zodTimezone } from "@server/utils/zod";
 import { BaseSchema } from "../schema";
 
 const BaseIdSchema = z.object({
@@ -80,8 +82,9 @@ export const UsersUpdateSchema = BaseSchema.extend({
     id: z.string().uuid().optional(),
     name: z.string().optional(),
     avatarUrl: z.string().nullish(),
-    language: z.string().optional(),
+    language: zodEnumFromObjectKeys(locales).optional(),
     preferences: z.record(z.nativeEnum(UserPreference), z.boolean()).optional(),
+    timezone: zodTimezone().optional(),
   }),
 });
 
@@ -95,6 +98,26 @@ export const UsersDeleteSchema = BaseSchema.extend({
 });
 
 export type UsersDeleteSchemaReq = z.infer<typeof UsersDeleteSchema>;
+
+export const UsersUpdateEmailSchema = BaseSchema.extend({
+  body: z.object({
+    id: z.string().uuid().optional(),
+    email: z.string().email(),
+  }),
+});
+
+export type UsersUpdateEmailReq = z.infer<typeof UsersUpdateEmailSchema>;
+
+export const UsersUpdateEmailConfirmSchema = BaseSchema.extend({
+  query: z.object({
+    code: z.string(),
+    follow: z.string().default(""),
+  }),
+});
+
+export type UsersUpdateEmailConfirmReq = z.infer<
+  typeof UsersUpdateEmailConfirmSchema
+>;
 
 export const UsersInfoSchema = BaseSchema.extend({
   body: z.object({

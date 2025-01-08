@@ -47,6 +47,7 @@ import {
   shareDocument,
   copyDocument,
   searchInDocument,
+  leaveDocument,
   moveTemplate,
 } from "~/actions/definitions/documents";
 import useActionContext from "~/hooks/useActionContext";
@@ -135,14 +136,14 @@ type MenuContentProps = {
   showToggleEmbeds?: boolean;
 };
 
-const MenuContent: React.FC<MenuContentProps> = ({
+const MenuContent: React.FC<MenuContentProps> = observer(function MenuContent_({
   onOpen,
   onClose,
   onFindAndReplace,
   onRename,
   showDisplayOptions,
   showToggleEmbeds,
-}) => {
+}) {
   const user = useCurrentUser();
   const { model: document, menuState } = useMenuContext<Document>();
   const can = usePolicy(document);
@@ -298,6 +299,7 @@ const MenuContent: React.FC<MenuContentProps> = ({
           },
           actionToMenuItem(deleteDocument, context),
           actionToMenuItem(permanentlyDeleteDocument, context),
+          actionToMenuItem(leaveDocument, context),
         ]}
       />
       {(showDisplayOptions || showToggleEmbeds) && can.update && (
@@ -346,7 +348,7 @@ const MenuContent: React.FC<MenuContentProps> = ({
       )}
     </ContextMenu>
   ) : null;
-};
+});
 
 function DocumentMenu({
   document,
@@ -407,6 +409,8 @@ function DocumentMenu({
       } catch (err) {
         toast.error(err.message);
         throw err;
+      } finally {
+        ev.target.value = "";
       }
     },
     [history, collection, documents, document.id]

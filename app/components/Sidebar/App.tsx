@@ -5,6 +5,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
+import { metaDisplay } from "@shared/utils/keyboard";
 import Flex from "~/components/Flex";
 import Scrollable from "~/components/Scrollable";
 import Text from "~/components/Text";
@@ -14,7 +15,6 @@ import useCurrentUser from "~/hooks/useCurrentUser";
 import usePolicy from "~/hooks/usePolicy";
 import useStores from "~/hooks/useStores";
 import OrganizationMenu from "~/menus/OrganizationMenu";
-import { metaDisplay } from "~/utils/keyboard";
 import { homePath, draftsPath, searchPath } from "~/utils/routeHelpers";
 import TeamLogo from "../TeamLogo";
 import Tooltip from "../Tooltip";
@@ -80,7 +80,6 @@ function AppSidebar() {
                 <Tooltip
                   content={t("Toggle sidebar")}
                   shortcut={`${metaDisplay}+.`}
-                  delay={500}
                 >
                   <ToggleButton
                     position="bottom"
@@ -94,38 +93,40 @@ function AppSidebar() {
               </SidebarButton>
             )}
           </OrganizationMenu>
-          <Section>
-            <SidebarLink
-              to={homePath()}
-              icon={<HomeIcon />}
-              exact={false}
-              label={t("Home")}
-            />
-            <SidebarLink
-              to={searchPath()}
-              icon={<SearchIcon />}
-              label={t("Search")}
-              exact={false}
-            />
-            {can.createDocument && (
+          <Overflow>
+            <Section>
               <SidebarLink
-                to={draftsPath()}
-                icon={<DraftsIcon />}
-                label={
-                  <Flex align="center" justify="space-between">
-                    {t("Drafts")}
-                    {documents.totalDrafts > 0 ? (
-                      <Drafts size="xsmall" type="tertiary">
-                        {documents.totalDrafts > 25
-                          ? "25+"
-                          : documents.totalDrafts}
-                      </Drafts>
-                    ) : null}
-                  </Flex>
-                }
+                to={homePath()}
+                icon={<HomeIcon />}
+                exact={false}
+                label={t("Home")}
               />
-            )}
-          </Section>
+              <SidebarLink
+                to={searchPath()}
+                icon={<SearchIcon />}
+                label={t("Search")}
+                exact={false}
+              />
+              {can.createDocument && (
+                <SidebarLink
+                  to={draftsPath()}
+                  icon={<DraftsIcon />}
+                  label={
+                    <Flex align="center" justify="space-between">
+                      {t("Drafts")}
+                      {documents.totalDrafts > 0 ? (
+                        <Drafts size="xsmall" type="tertiary">
+                          {documents.totalDrafts > 25
+                            ? "25+"
+                            : documents.totalDrafts}
+                        </Drafts>
+                      ) : null}
+                    </Flex>
+                  }
+                />
+              )}
+            </Section>
+          </Overflow>
           <Scrollable flex shadow>
             <Section>
               <Starred />
@@ -151,6 +152,11 @@ function AppSidebar() {
     </Sidebar>
   );
 }
+
+const Overflow = styled.div`
+  overflow: hidden;
+  flex-shrink: 0;
+`;
 
 const Drafts = styled(Text)`
   margin: 0 4px;

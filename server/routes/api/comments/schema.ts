@@ -1,3 +1,4 @@
+import emojiRegex from "emoji-regex";
 import { z } from "zod";
 import { CommentStatusFilter } from "@shared/types";
 import { BaseSchema, ProsemirrorSchema } from "@server/routes/api/schema";
@@ -64,13 +65,18 @@ export const CommentsListSchema = BaseSchema.extend({
     parentCommentId: z.string().uuid().optional(),
     /** Comment statuses to include in results */
     statusFilter: z.nativeEnum(CommentStatusFilter).array().optional(),
+    /** Whether to include anchor text, if it exists */
+    includeAnchorText: z.boolean().optional(),
   }),
 });
 
 export type CommentsListReq = z.infer<typeof CommentsListSchema>;
 
 export const CommentsInfoSchema = z.object({
-  body: BaseIdSchema,
+  body: BaseIdSchema.extend({
+    /** Whether to include anchor text, if it exists */
+    includeAnchorText: z.boolean().optional(),
+  }),
 });
 
 export type CommentsInfoReq = z.infer<typeof CommentsInfoSchema>;
@@ -86,3 +92,12 @@ export const CommentsUnresolveSchema = z.object({
 });
 
 export type CommentsUnresolveReq = z.infer<typeof CommentsUnresolveSchema>;
+
+export const CommentsReactionSchema = z.object({
+  body: BaseIdSchema.extend({
+    /**  Emoji that's added to (or) removed from a comment as a reaction. */
+    emoji: z.string().regex(emojiRegex()),
+  }),
+});
+
+export type CommentsReactionReq = z.infer<typeof CommentsReactionSchema>;

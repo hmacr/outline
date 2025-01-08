@@ -12,6 +12,7 @@ import Document from "./models/Document";
 import FileOperation from "./models/FileOperation";
 import Pin from "./models/Pin";
 import Star from "./models/Star";
+import User from "./models/User";
 import UserMembership from "./models/UserMembership";
 
 export type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> &
@@ -166,7 +167,7 @@ export type PaginationParams = {
 export type SearchResult = {
   id: string;
   ranking: number;
-  context: string;
+  context?: string;
   document: Document;
 };
 
@@ -194,6 +195,12 @@ export type WebsocketDocumentMovedEvent = {
   collectionId?: string;
 };
 
+export type WebsocketCommentReactionEvent = {
+  emoji: string;
+  commentId: string;
+  user: User;
+};
+
 export type WebsocketEvent =
   | PartialExcept<Pin, "id">
   | PartialExcept<Star, "id">
@@ -202,7 +209,8 @@ export type WebsocketEvent =
   | WebsocketDocumentMovedEvent
   | WebsocketCollectionUpdateIndexEvent
   | WebsocketEntityDeletedEvent
-  | WebsocketEntitiesEvent;
+  | WebsocketEntitiesEvent
+  | WebsocketCommentReactionEvent;
 
 export type AwarenessChangeEvent = {
   states: { user?: { id: string }; cursor: any; scrollY: number | undefined }[];
@@ -222,3 +230,12 @@ export type Properties<C> = {
     ? Property
     : never]?: C[Property];
 };
+
+export enum CommentSortType {
+  MostRecent = "mostRecent",
+  OrderInDocument = "orderInDocument",
+}
+
+export type CommentSortOption =
+  | { type: CommentSortType.MostRecent }
+  | { type: CommentSortType.OrderInDocument; referencedCommentIds: string[] };

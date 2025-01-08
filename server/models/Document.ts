@@ -10,7 +10,6 @@ import type {
   SaveOptions,
 } from "sequelize";
 import {
-  Sequelize,
   Transaction,
   Op,
   FindOptions,
@@ -101,6 +100,9 @@ type AdditionalFindOptions = {
       },
     },
   },
+  attributes: {
+    exclude: ["state"],
+  },
 }))
 @Scopes(() => ({
   withCollectionPermissions: (userId: string, paranoid = true) => ({
@@ -129,17 +131,6 @@ type AdditionalFindOptions = {
         as: "collection",
       },
     ],
-  },
-  withStateIsEmpty: {
-    attributes: {
-      exclude: ["state"],
-      include: [
-        [
-          Sequelize.literal(`CASE WHEN state IS NULL THEN true ELSE false END`),
-          "stateIsEmpty",
-        ],
-      ],
-    },
   },
   withState: {
     attributes: {
@@ -733,6 +724,55 @@ class Document extends ArchivableModel<
     return null;
   }
 
+  /**
+   * Find many documents by their id, supports filtering by user memberships when `userId`
+   * is specified in the options.
+   *
+   * @param ids An array of document ids
+   * @param options FindOptions
+   * @returns A promise resolving to the list of documents
+   */
+  static async findByIds(
+    ids: string[],
+    options: Omit<FindOptions<Document>, "where"> &
+      Omit<AdditionalFindOptions, "rejectOnEmpty"> = {}
+  ): Promise<Document[]> {
+    const { userId, ...rest } = options;
+
+    const user = userId ? await User.findByPk(userId) : null;
+    const documents = await this.scope([
+      "withDrafts",
+      {
+        method: ["withCollectionPermissions", userId, rest.paranoid],
+      },
+      {
+        method: ["withViews", userId],
+      },
+      {
+        method: ["withMembership", userId],
+      },
+    ]).findAll({
+      where: {
+        ...(user && { teamId: user.teamId }),
+        id: ids,
+      },
+      ...rest,
+    });
+
+    if (!userId) {
+      return documents;
+    }
+
+    return documents.filter(
+      (doc) =>
+        (!doc.collection?.isPrivate && !user?.isGuest) ||
+        (doc.collection?.memberships.length || 0) > 0 ||
+        (doc.collection?.groupMemberships.length || 0) > 0 ||
+        doc.memberships.length > 0 ||
+        doc.groupMemberships.length > 0
+    );
+  }
+
   // instance methods
 
   /**
@@ -1101,30 +1141,27 @@ class Document extends ArchivableModel<
     // Checking if the record is new is a performance optimization – new docs cannot have children
     const childDocuments = this.isNewRecord
       ? []
-      : await (this.constructor as typeof Document)
-          .unscoped()
-          .scope("withoutState")
-          .findAll({
-            where: options?.includeArchived
-              ? {
-                  teamId: this.teamId,
-                  parentDocumentId: this.id,
-                  publishedAt: {
-                    [Op.ne]: null,
-                  },
-                }
-              : {
-                  teamId: this.teamId,
-                  parentDocumentId: this.id,
-                  publishedAt: {
-                    [Op.ne]: null,
-                  },
-                  archivedAt: {
-                    [Op.is]: null,
-                  },
+      : await (this.constructor as typeof Document).unscoped().findAll({
+          where: options?.includeArchived
+            ? {
+                teamId: this.teamId,
+                parentDocumentId: this.id,
+                publishedAt: {
+                  [Op.ne]: null,
                 },
-            transaction: options?.transaction,
-          });
+              }
+            : {
+                teamId: this.teamId,
+                parentDocumentId: this.id,
+                publishedAt: {
+                  [Op.ne]: null,
+                },
+                archivedAt: {
+                  [Op.is]: null,
+                },
+              },
+          transaction: options?.transaction,
+        });
 
     const children = await Promise.all(
       childDocuments.map((child) => child.toNavigationNode(options))
