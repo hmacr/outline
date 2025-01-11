@@ -692,7 +692,7 @@ router.post(
 );
 
 router.post(
-  "documents.child_documents",
+  "documents.documents",
   auth(),
   validate(T.DocumentsChildrenSchema),
   async (ctx: APIContext<T.DocumentsChildrenReq>) => {
@@ -703,11 +703,15 @@ router.post(
     authorize(user, "read", document);
     invariant(document.collectionId, "document not part of a collection");
 
-    const collection = await Collection.findByPk(document.collectionId);
-    const documentTree = collection.getDocumentTree(document.id);
+    let childDocumentTree;
+
+    if (document.collectionId) {
+      const collection = await Collection.findByPk(document.collectionId);
+      childDocumentTree = collection.getDocumentTree(document.id)?.children;
+    }
 
     ctx.body = {
-      data: documentTree?.children,
+      data: childDocumentTree ?? [],
     };
   }
 );

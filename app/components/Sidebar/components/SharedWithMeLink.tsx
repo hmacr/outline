@@ -63,7 +63,7 @@ function SharedWithMeLink({ membership, depth = 0 }: Props) {
   React.useEffect(() => {
     if (documentId) {
       void documents.fetch(documentId);
-      void membership.fetchDocuments();
+      void membership.fetchDocuments(documentId);
     }
   }, [documentId, documents, membership]);
 

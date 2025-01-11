@@ -181,10 +181,10 @@ class WebsocketProvider extends React.Component<Props> {
             for (const parentDoc of parentDocuments) {
               await userMemberships
                 .find({ documentId: parentDoc.id })
-                ?.fetchDocuments({ force: true });
+                ?.fetchDocuments(parentDoc.id, { force: true });
               await groupMemberships
                 .find({ documentId: parentDoc.id })
-                ?.fetchDocuments({ force: true });
+                ?.fetchDocuments(parentDoc.id, { force: true });
             }
           }
         }
@@ -320,10 +320,10 @@ class WebsocketProvider extends React.Component<Props> {
           for (const documentId of documentIdsToRefresh) {
             await userMemberships
               .find({ documentId })
-              ?.fetchDocuments({ force: true });
+              ?.fetchDocuments(documentId, { force: true });
             await groupMemberships
               .find({ documentId })
-              ?.fetchDocuments({ force: true });
+              ?.fetchDocuments(documentId, { force: true });
           }
         }
 
@@ -339,10 +339,10 @@ class WebsocketProvider extends React.Component<Props> {
           for (const documentId of documentIdsToRefresh) {
             await userMemberships
               .find({ documentId })
-              ?.fetchDocuments({ force: true });
+              ?.fetchDocuments(documentId, { force: true });
             await groupMemberships
               .find({ documentId })
-              ?.fetchDocuments({ force: true });
+              ?.fetchDocuments(documentId, { force: true });
           }
         }
 
