@@ -7,9 +7,12 @@ import Logger from "@server/logging/Logger";
 import auth from "@server/middlewares/authentication";
 import { transaction } from "@server/middlewares/transaction";
 import validate from "@server/middlewares/validate";
+import validateWebhook from "@server/middlewares/validateWebhook";
 import { IntegrationAuthentication, Integration, Team } from "@server/models";
+import ProcessIssueSourceWebhookTask from "@server/queues/tasks/ProcessIssueSourceWebhookTask";
 import { APIContext } from "@server/types";
 import { GitHubUtils } from "../../shared/GitHubUtils";
+import env from "../env";
 import { GitHub } from "../github";
 import * as T from "./schema";
 
@@ -111,6 +114,35 @@ router.get(
       },
     });
     ctx.redirect(GitHubUtils.url);
+  }
+);
+
+router.post(
+  "github.webhooks",
+  validateWebhook({
+    secretKey: env.GITHUB_WEBHOOK_SECRET!,
+    getSignatureFromHeader: (ctx) => {
+      const { headers } = ctx.request;
+      const signatureHeader = headers["x-hub-signature-256"];
+      const signature = Array.isArray(signatureHeader)
+        ? signatureHeader[0]
+        : signatureHeader;
+      return signature?.split("=")[1];
+    },
+  }),
+  async (ctx: APIContext) => {
+    const { headers, body } = ctx.request;
+
+    console.log("Received GitHub webhook:", body);
+    console.log("Headers:", headers);
+
+    // await ProcessIssueSourceWebhookTask.schedule({
+    //   service: IntegrationService.GitHub,
+    //   payload: body,
+    //   headers,
+    // });
+
+    ctx.status = 202;
   }
 );
 

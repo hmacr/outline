@@ -24,6 +24,19 @@ type Issue =
   Endpoints["GET /repos/{owner}/{repo}/issues/{issue_number}"]["response"]["data"];
 
 const requestPlugin = (octokit: Octokit) => ({
+  setupReposWebhook: async (orgName: string) =>
+    octokit.request(`POST /orgs/{org}/hooks`, {
+      org: orgName,
+      name: "web",
+      events: ["repository"],
+      active: true,
+      config: {
+        url: GitHubUtils.webhookUrl(),
+        content_type: "json",
+        secret: env.GITHUB_WEBHOOK_SECRET,
+      },
+    }),
+
   requestRepos: () =>
     octokit.paginate.iterator(
       octokit.rest.apps.listReposAccessibleToInstallation,
@@ -101,9 +114,11 @@ const CustomOctokit = Octokit.plugin(requestPlugin);
 
 export class GitHub {
   private static appId = env.GITHUB_APP_ID;
-  private static appKey = env.GITHUB_APP_PRIVATE_KEY
-    ? Buffer.from(env.GITHUB_APP_PRIVATE_KEY, "base64").toString("ascii")
-    : undefined;
+  // private static appKey = env.GITHUB_APP_PRIVATE_KEY
+  //   ? Buffer.from(env.GITHUB_APP_PRIVATE_KEY, "base64").toString("ascii")
+  //   : undefined;
+
+  private static appKey = env.GITHUB_APP_PRIVATE_KEY;
 
   private static clientId = env.GITHUB_CLIENT_ID;
   private static clientSecret = env.GITHUB_CLIENT_SECRET;

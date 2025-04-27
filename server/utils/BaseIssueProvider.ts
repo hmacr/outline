@@ -12,4 +12,16 @@ export abstract class BaseIssueProvider {
   abstract fetchSources(
     integration: Integration<IntegrationType.Embed>
   ): Promise<IssueSource[]>;
+
+  abstract setupSourceWebhook(
+    integration: Integration<IntegrationType.Embed>
+  ): Promise<void>;
+
+  abstract processSourceWebhook({
+    payload,
+    headers,
+  }: {
+    payload: Record<string, unknown>;
+    headers: Record<string, unknown>;
+  }): Promise<void>;
 }
