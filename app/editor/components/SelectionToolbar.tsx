@@ -218,7 +218,7 @@ export default function SelectionToolbar(props: Props) {
 
   // Some extensions may be disabled, remove corresponding items
   items = items.filter((item) => {
-    if (item.name === "separator") {
+    if (item.name === "separator" || item.name === "dimensions") {
       return true;
     }
     if (item.name && !commands[item.name]) {

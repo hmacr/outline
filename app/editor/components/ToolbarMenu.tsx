@@ -11,6 +11,7 @@ import Template from "~/components/ContextMenu/Template";
 import { TooltipProvider } from "~/components/TooltipContext";
 import { MenuItem as TMenuItem } from "~/types";
 import { useEditor } from "./EditorContext";
+import { MediaDimension } from "./MediaDimension";
 import ToolbarButton from "./ToolbarButton";
 import ToolbarSeparator from "./ToolbarSeparator";
 import Tooltip from "./Tooltip";
@@ -101,7 +102,18 @@ function ToolbarMenu(props: Props) {
           if (item.name === "separator" && item.visible !== false) {
             return <ToolbarSeparator key={index} />;
           }
-          if (item.visible === false || !item.icon) {
+          if (item.name === "dimensions" && item.visible !== false) {
+            return (
+              <Tooltip
+                key={index}
+                shortcut={item.shortcut}
+                content={"Width x Height"}
+              >
+                <MediaDimension key={index} />
+              </Tooltip>
+            );
+          }
+          if (item.visible === false) {
             return null;
           }
           const isActive = item.active ? item.active(state) : false;
