@@ -58,19 +58,31 @@ export function MediaDimension() {
       return;
     }
 
+    const aspectRatio =
+      localDimension.changed === "width" ? height / width : width / height;
+
+    const finalWidth =
+      localDimension.changed === "width"
+        ? localDimension.width
+        : aspectRatio * localDimension.height;
+    const finalHeight =
+      localDimension.changed === "height"
+        ? localDimension.height
+        : aspectRatio * localDimension.width;
+
     if (nodeType === "image") {
       commands["resizeImage"]({
-        width: localDimension.width,
-        height: localDimension.height,
+        width: finalWidth,
+        height: finalHeight,
       });
     }
   }, [commands, localDimension, width, height, nodeType]);
 
-  // React.useEffect(() => {
-  //   if (width !== localDimension.width || height !== localDimension.height) {
-  //     setLocalDimension({ width, height }); // Sync drag resize updates
-  //   }
-  // }, [width, height, localDimension]);
+  React.useEffect(() => {
+    if (width !== localDimension.width || height !== localDimension.height) {
+      setLocalDimension({ width, height, changed: "none" }); // Sync drag resize updates
+    }
+  }, [width, height]);
 
   return (
     <StyledFlex align="center">
