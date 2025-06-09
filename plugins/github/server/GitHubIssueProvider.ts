@@ -7,7 +7,7 @@ import {
 import { IssueSource } from "@shared/schema";
 import { IntegrationService, IntegrationType } from "@shared/types";
 import Logger from "@server/logging/Logger";
-import { Integration } from "@server/models";
+import { Integration, IntegrationAuthentication } from "@server/models";
 import { sequelize } from "@server/storage/database";
 import { BaseIssueProvider } from "@server/utils/BaseIssueProvider";
 import { GitHub } from "./github";
@@ -72,7 +72,10 @@ export class GitHubIssueProvider extends BaseIssueProvider {
     const actions = this.interestedActionsForEvent[eventName];
 
     if (!actions || !actions.includes(action)) {
-      Logger.info("task", `Ignoring GitHub event: ${eventName} - ${action}`);
+      Logger.info(
+        "task",
+        `Ignoring GitHub event: ${eventName} - ${action}; hookId: ${hookId}`
+      );
       return;
     }
 
@@ -131,13 +134,16 @@ export class GitHubIssueProvider extends BaseIssueProvider {
     );
 
     await sequelize.transaction(async (transaction) => {
-      await integration.reload({ transaction, lock: transaction.LOCK.UPDATE });
-      integration.issueSources = sources;
-
-      const authentication = await integration.$get("authentication", {
+      await integration.reload({
+        include: {
+          model: IntegrationAuthentication,
+          as: "authentication",
+          required: true,
+        },
         transaction,
         lock: transaction.LOCK.UPDATE,
       });
+      const authentication = integration.authentication;
 
       if (!authentication) {
         Logger.warn(
@@ -147,8 +153,11 @@ export class GitHubIssueProvider extends BaseIssueProvider {
       }
 
       authentication.scopes = scopes;
-      await integration.save({ transaction });
       await authentication.save({ transaction });
+
+      integration.issueSources = sources;
+      integration.changed("issueSources", true);
+      await integration.save({ transaction });
     });
   }
 
