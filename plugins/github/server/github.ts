@@ -22,8 +22,23 @@ type PR =
   Endpoints["GET /repos/{owner}/{repo}/pulls/{pull_number}"]["response"]["data"];
 type Issue =
   Endpoints["GET /repos/{owner}/{repo}/issues/{issue_number}"]["response"]["data"];
+type Installation =
+  Endpoints["GET /app/installations/{installation_id}"]["response"]["data"];
 
 const requestPlugin = (octokit: Octokit) => ({
+  setupReposWebhook: async (orgName: string) =>
+    octokit.request(`POST /orgs/{org}/hooks`, {
+      org: orgName,
+      name: "web",
+      events: ["repository"],
+      active: true,
+      config: {
+        url: GitHubUtils.webhookUrl(),
+        content_type: "json",
+        secret: env.GITHUB_WEBHOOK_SECRET,
+      },
+    }),
+
   requestRepos: () =>
     octokit.paginate.iterator(
       octokit.rest.apps.listReposAccessibleToInstallation,
@@ -87,6 +102,23 @@ const requestPlugin = (octokit: Octokit) => ({
   },
 
   /**
+   * Fetches details of a specific GitHub app installation
+   *
+   * @param installationId Id of the installation to fetch
+   * @returns Response containing installation details
+   */
+  requestAppInstallation: async (
+    installationId: number
+  ): Promise<OctokitResponse<Installation>> =>
+    octokit.request("GET /app/installations/{installation_id}", {
+      installation_id: installationId,
+      headers: {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    }),
+
+  /**
    * Uninstalls the GitHub app from a given target
    *
    * @param installationId Id of the target from where to uninstall
@@ -101,9 +133,11 @@ const CustomOctokit = Octokit.plugin(requestPlugin);
 
 export class GitHub {
   private static appId = env.GITHUB_APP_ID;
-  private static appKey = env.GITHUB_APP_PRIVATE_KEY
-    ? Buffer.from(env.GITHUB_APP_PRIVATE_KEY, "base64").toString("ascii")
-    : undefined;
+  // private static appKey = env.GITHUB_APP_PRIVATE_KEY
+  //   ? Buffer.from(env.GITHUB_APP_PRIVATE_KEY, "base64").toString("ascii")
+  //   : undefined;
+
+  private static appKey = env.GITHUB_APP_PRIVATE_KEY;
 
   private static clientId = env.GITHUB_CLIENT_ID;
   private static clientSecret = env.GITHUB_CLIENT_SECRET;

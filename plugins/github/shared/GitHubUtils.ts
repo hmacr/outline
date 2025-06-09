@@ -22,13 +22,19 @@ export class GitHubUtils {
    */
   public static callbackUrl(
     { baseUrl, params }: { baseUrl: string; params?: string } = {
-      baseUrl: `${env.URL}`,
+      // baseUrl: `${env.URL}`,
+      baseUrl: "https://redirect-cf-worker.hmacr.workers.dev",
       params: undefined,
     }
   ) {
     return params
       ? `${baseUrl}/api/github.callback?${params}`
       : `${baseUrl}/api/github.callback`;
+  }
+
+  static webhookUrl(): string {
+    return "https://smee.io/FD9CCa824T22bn6v";
+    // return `${env.URL}/api/github.webhooks`;
   }
 
   static authUrl(state: string): string {

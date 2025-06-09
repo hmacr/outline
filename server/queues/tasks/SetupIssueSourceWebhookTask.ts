@@ -1,5 +1,4 @@
 import { Integration } from "@server/models";
-import { sequelize } from "@server/storage/database";
 import { Hook, PluginManager } from "@server/utils/PluginManager";
 import BaseTask from "./BaseTask";
 
@@ -7,7 +6,7 @@ type Props = {
   integrationId: string;
 };
 
-export default class CacheIssueSourcesTask extends BaseTask<Props> {
+export default class SetupIssueSourceWebhookTask extends BaseTask<Props> {
   async perform({ integrationId }: Props) {
     const integration = await Integration.findByPk(integrationId);
     if (!integration) {
@@ -20,12 +19,6 @@ export default class CacheIssueSourcesTask extends BaseTask<Props> {
       return;
     }
 
-    const sources = await plugin.value.fetchSources(integration);
-
-    await sequelize.transaction(async (transaction) => {
-      await integration.reload({ transaction, lock: transaction.LOCK.UPDATE });
-      integration.issueSources = sources;
-      await integration.save({ transaction });
-    });
+    await plugin.value.setupSourceWebhook(integration);
   }
 }
