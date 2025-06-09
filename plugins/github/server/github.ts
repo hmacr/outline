@@ -26,19 +26,6 @@ type Installation =
   Endpoints["GET /app/installations/{installation_id}"]["response"]["data"];
 
 const requestPlugin = (octokit: Octokit) => ({
-  setupReposWebhook: async (orgName: string) =>
-    octokit.request(`POST /orgs/{org}/hooks`, {
-      org: orgName,
-      name: "web",
-      events: ["repository"],
-      active: true,
-      config: {
-        url: GitHubUtils.webhookUrl(),
-        content_type: "json",
-        secret: env.GITHUB_WEBHOOK_SECRET,
-      },
-    }),
-
   requestRepos: () =>
     octokit.paginate.iterator(
       octokit.rest.apps.listReposAccessibleToInstallation,

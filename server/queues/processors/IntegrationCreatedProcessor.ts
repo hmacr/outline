@@ -4,7 +4,6 @@ import BaseProcessor from "@server/queues/processors/BaseProcessor";
 import { IntegrationEvent, Event } from "@server/types";
 import { CacheHelper } from "@server/utils/CacheHelper";
 import CacheIssueSourcesTask from "../tasks/CacheIssueSourcesTask";
-import SetupIssueSourceWebhookTask from "../tasks/SetupIssueSourceWebhookTask";
 
 export default class IntegrationCreatedProcessor extends BaseProcessor {
   static applicableEvents: Event["name"][] = ["integrations.create"];
@@ -24,12 +23,6 @@ export default class IntegrationCreatedProcessor extends BaseProcessor {
     await new CacheIssueSourcesTask().schedule({
       integrationId: integration.id,
     });
-
-    // Set up the webhook for reacting to any issue sources add/delete/modify events from external service.
-    // This is needed to keep the issue sources cache in sync with the external service.
-    // await SetupIssueSourceWebhookTask.schedule({
-    //   integrationId: integration.id,
-    // });
 
     // Clear the cache of unfurled data for the team as it may be stale now.
     await CacheHelper.clearData(CacheHelper.getUnfurlKey(integration.teamId));

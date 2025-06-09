@@ -8,7 +8,7 @@ type Props = {
   headers: Record<string, unknown>;
 };
 
-export default class ProcessIssueSourceWebhookTask extends BaseTask<Props> {
+export default class IssueProviderWebhookTask extends BaseTask<Props> {
   async perform({ service, payload, headers }: Props) {
     const plugins = PluginManager.getHooks(Hook.IssueProvider);
     const plugin = plugins.find((p) => p.value.service === service);
@@ -16,6 +16,6 @@ export default class ProcessIssueSourceWebhookTask extends BaseTask<Props> {
       return;
     }
 
-    await plugin.value.processWebhook({ payload, headers });
+    await plugin.value.handleWebhook({ payload, headers });
   }
 }

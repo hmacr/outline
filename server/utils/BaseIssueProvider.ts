@@ -13,11 +13,7 @@ export abstract class BaseIssueProvider {
     integration: Integration<IntegrationType.Embed>
   ): Promise<IssueSource[]>;
 
-  abstract setupSourceWebhook(
-    integration: Integration<IntegrationType.Embed>
-  ): Promise<void>;
-
-  abstract processWebhook({
+  abstract handleWebhook({
     payload,
     headers,
   }: {

@@ -8,7 +8,7 @@ import { transaction } from "@server/middlewares/transaction";
 import validate from "@server/middlewares/validate";
 import validateWebhook from "@server/middlewares/validateWebhook";
 import { IntegrationAuthentication, Integration } from "@server/models";
-import ProcessIssueSourceWebhookTask from "@server/queues/tasks/ProcessIssueSourceWebhookTask";
+import IssueProviderWebhookTask from "@server/queues/tasks/IssueProviderWebhookTask";
 import { APIContext } from "@server/types";
 import { GitHubUtils } from "../../shared/GitHubUtils";
 import env from "../env";
@@ -63,11 +63,16 @@ router.get(
       return ctx.redirect(GitHubUtils.errorUrl("unauthenticated"));
     }
 
+    const scopes = Object.entries(installation.permissions).map(
+      ([name, permission]) => `${name}:${permission}`
+    );
+
     const authentication = await IntegrationAuthentication.create(
       {
         service: IntegrationService.GitHub,
         userId: user.id,
         teamId: user.teamId,
+        scopes,
       },
       { transaction }
     );
@@ -112,12 +117,7 @@ router.post(
   async (ctx: APIContext) => {
     const { headers, body } = ctx.request;
 
-    console.log("Received GitHub webhook");
-
-    console.log("payload", body);
-    console.log("headers", headers);
-
-    await ProcessIssueSourceWebhookTask.schedule({
+    await new IssueProviderWebhookTask().schedule({
       service: IntegrationService.GitHub,
       payload: body,
       headers,

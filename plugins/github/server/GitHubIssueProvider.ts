@@ -51,30 +51,7 @@ export class GitHubIssueProvider extends BaseIssueProvider {
     return sources;
   }
 
-  async setupSourceWebhook(
-    integration: Integration<IntegrationType.Embed>
-  ): Promise<void> {
-    const client = await GitHub.authenticateAsInstallation(
-      integration.settings.github!.installation.id
-    );
-
-    const orgName = integration.settings.github!.installation.account.name;
-
-    try {
-      await client.setupReposWebhook(orgName);
-    } catch (err) {
-      if ("status" in err && err.status === 422) {
-        Logger.info(
-          "task",
-          `GitHub repository webhook already exists for org: ${orgName}`
-        );
-        return;
-      }
-      throw err;
-    }
-  }
-
-  async processWebhook({
+  async handleWebhook({
     payload,
     headers,
   }: {
