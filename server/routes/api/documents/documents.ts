@@ -12,7 +12,12 @@ import uniq from "lodash/uniq";
 import mime from "mime-types";
 import { Op, ScopeOptions, Sequelize, WhereOptions } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
-import { StatusFilter, TeamPreference, UserRole } from "@shared/types";
+import {
+  NavigationNode,
+  StatusFilter,
+  TeamPreference,
+  UserRole,
+} from "@shared/types";
 import { subtractDate } from "@shared/utils/date";
 import slugify from "@shared/utils/slugify";
 import documentCreator from "@server/commands/documentCreator";
@@ -584,6 +589,15 @@ router.post(
       teamFromCtx?.id === document.teamId ? teamFromCtx : document.$get("team"),
     ]);
 
+    let sharedTree: NavigationNode | null = null;
+    if (share) {
+      if (share.collectionId) {
+        sharedTree = share.collection?.toNavigationNode() ?? null;
+      } else if (share.documentId && share.includeChildDocuments) {
+        sharedTree = collection?.getDocumentTree(share.documentId) ?? null;
+      }
+    }
+
     // Passing apiVersion=2 has a single effect, to change the response payload to
     // include top level keys for document, sharedTree, and team.
     const data =
@@ -596,10 +610,7 @@ router.post(
                   !!team?.getPreference(TeamPreference.PublicBranding)
                 )
               : undefined,
-            sharedTree:
-              share && share.includeChildDocuments
-                ? collection?.getDocumentTree(share.documentId)
-                : null,
+            sharedTree,
           }
         : serializedDocument;
     ctx.body = {
@@ -705,8 +716,12 @@ router.get(
     });
 
     let tree;
-    if (share && share.includeChildDocuments && share.allowIndexing) {
-      tree = collection?.getDocumentTree(share.documentId);
+    if (share && share.allowIndexing) {
+      if (share.collectionId) {
+        tree = collection?.toNavigationNode();
+      } else if (share.documentId && share.includeChildDocuments) {
+        tree = collection?.getDocumentTree(share.documentId);
+      }
     }
 
     const baseUrl = `${process.env.URL}/s/${shareId}`;

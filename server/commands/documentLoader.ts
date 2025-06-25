@@ -72,13 +72,16 @@ export default async function loadDocument({
       include: [
         {
           model: Document.scope("withDrafts"),
-          required: true,
           as: "document",
+        },
+        {
+          model: Collection,
+          as: "collection",
         },
       ],
     });
 
-    if (!share || share.document?.archivedAt) {
+    if (!share || share.collection?.archivedAt || share.document?.archivedAt) {
       throw InvalidRequestError("Document could not be found for shareId");
     }
 
@@ -90,10 +93,11 @@ export default async function loadDocument({
       document = await Document.findByPk(id, {
         userId: user ? user.id : undefined,
         paranoid: false,
-      }); // otherwise, if the user has an authenticated session make sure to load
+      });
+    } else if (user && share.documentId) {
+      // otherwise, if the user has an authenticated session make sure to load
       // with their details so that we can return the correct policies, they may
       // be able to edit the shared document
-    } else if (user) {
       document = await Document.findByPk(share.documentId, {
         userId: user.id,
         paranoid: false,
@@ -148,10 +152,17 @@ export default async function loadDocument({
       throw AuthorizationError();
     }
 
-    // If we're attempting to load a document that isn't the document originally
-    // shared then includeChildDocuments must be enabled and the document must
-    // still be active and nested within the shared document
-    if (share.documentId !== document.id) {
+    if (share.collectionId) {
+      // If this is a collection share, we need to ensure that
+      // the document is within the collection.
+      const childDocumentIds = share.collection?.getAllDocumentIds() ?? [];
+      if (!childDocumentIds.includes(document.id)) {
+        throw AuthorizationError();
+      }
+    } else if (share.documentId !== document.id) {
+      // If we're attempting to load a document that isn't the document originally
+      // shared then includeChildDocuments must be enabled and the document must
+      // still be active and nested within the shared document
       if (!share.includeChildDocuments) {
         throw AuthorizationError();
       }

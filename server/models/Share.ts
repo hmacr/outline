@@ -49,6 +49,13 @@ import Length from "./validators/Length";
   withCollectionPermissions: (userId: string) => ({
     include: [
       {
+        attributes: ["id", "permission", "sharing", "teamId", "deletedAt"],
+        model: Collection.scope({
+          method: ["withMembership", userId],
+        }),
+        as: "collection",
+      },
+      {
         model: Document.scope([
           "withDrafts",
           {
@@ -186,12 +193,19 @@ class Share extends IdModel<
   @Column(DataType.UUID)
   teamId: string;
 
+  @BelongsTo(() => Collection, "collectionId")
+  collection: Collection | null;
+
+  @ForeignKey(() => Collection)
+  @Column(DataType.UUID)
+  collectionId: string | null;
+
   @BelongsTo(() => Document, "documentId")
   document: Document | null;
 
   @ForeignKey(() => Document)
   @Column(DataType.UUID)
-  documentId: string;
+  documentId: string | null;
 
   revoke(ctx: APIContext) {
     const { user } = ctx.context.auth;
