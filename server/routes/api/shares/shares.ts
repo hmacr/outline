@@ -1,7 +1,7 @@
 import Router from "koa-router";
 import isUndefined from "lodash/isUndefined";
-import { FindOptions, Op, WhereOptions } from "sequelize";
-import { NotFoundError } from "@server/errors";
+import { FindOptions, Op, ScopeOptions, WhereOptions } from "sequelize";
+import { AuthorizationError, NotFoundError } from "@server/errors";
 import auth from "@server/middlewares/authentication";
 import { transaction } from "@server/middlewares/transaction";
 import validate from "@server/middlewares/validate";
@@ -16,11 +16,31 @@ const router = new Router();
 
 router.post(
   "shares.info",
-  auth(),
+  auth({ optional: true }),
   validate(T.SharesInfoSchema),
   async (ctx: APIContext<T.SharesInfoReq>) => {
-    const { id, documentId } = ctx.input.body;
+    const { id, documentId, isPublic } = ctx.input.body;
     const { user } = ctx.state.auth;
+
+    if (!user && !isPublic) {
+      throw AuthorizationError();
+    }
+
+    // Request from a public share.
+    if (isPublic) {
+      const scope: string | ScopeOptions = user
+        ? { method: ["withCollectionPermissions", user.id] }
+        : "defaultScope";
+      const share = await Share.scope(scope).findOne({
+        where: {
+          id,
+          revokedAt: {
+            [Op.is]: null,
+          },
+        },
+      });
+    }
+
     const shares = [];
     const share = await Share.scope({
       method: ["withCollectionPermissions", user.id],

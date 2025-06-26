@@ -79,6 +79,7 @@ import { RateLimiterStrategy } from "@server/utils/RateLimiter";
 import ZipHelper from "@server/utils/ZipHelper";
 import { getTeamFromContext } from "@server/utils/passport";
 import { navigationNodeToSitemap } from "@server/utils/sitemap";
+import { sleep } from "@server/utils/timers";
 import { assertPresent } from "@server/validation";
 import pagination from "../middlewares/pagination";
 import * as T from "./schema";
@@ -580,6 +581,9 @@ router.post(
       teamId: teamFromCtx?.id,
     });
     const isPublic = cannot(user, "read", document);
+
+    // await sleep(5000);
+
     const [serializedDocument, team] = await Promise.all([
       presentDocument(ctx, document, {
         isPublic,

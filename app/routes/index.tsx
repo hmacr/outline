@@ -11,6 +11,7 @@ import { matchDocumentSlug as slug } from "~/utils/routeHelpers";
 
 const Authenticated = lazy(() => import("~/components/Authenticated"));
 const AuthenticatedRoutes = lazy(() => import("./authenticated"));
+const Shared = lazy(() => import("~/scenes/Share"));
 const SharedDocument = lazy(() => import("~/scenes/Document/Shared"));
 const Login = lazy(() => import("~/scenes/Login"));
 const Logout = lazy(() => import("~/scenes/Logout"));

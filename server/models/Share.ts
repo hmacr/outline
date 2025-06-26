@@ -37,6 +37,10 @@ import Length from "./validators/Length";
       paranoid: false,
     },
     {
+      association: "collection",
+      required: false,
+    },
+    {
       association: "document",
       required: false,
     },
