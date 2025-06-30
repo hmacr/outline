@@ -1,14 +1,21 @@
 import Router from "koa-router";
 import isUndefined from "lodash/isUndefined";
-import { FindOptions, Op, ScopeOptions, WhereOptions } from "sequelize";
-import { AuthorizationError, NotFoundError } from "@server/errors";
+import { FindOptions, Op, WhereOptions } from "sequelize";
+import { TeamPreference } from "@shared/types";
+import { loadShare } from "@server/commands/shareLoader";
+import { NotFoundError } from "@server/errors";
 import auth from "@server/middlewares/authentication";
 import { transaction } from "@server/middlewares/transaction";
 import validate from "@server/middlewares/validate";
 import { Document, User, Share, Team, Collection } from "@server/models";
 import { authorize } from "@server/policies";
-import { presentShare, presentPolicies } from "@server/presenters";
+import {
+  presentShare,
+  presentPolicies,
+  presentPublicTeam,
+} from "@server/presenters";
 import { APIContext } from "@server/types";
+import { getTeamFromContext } from "@server/utils/passport";
 import pagination from "../middlewares/pagination";
 import * as T from "./schema";
 
@@ -19,89 +26,26 @@ router.post(
   auth({ optional: true }),
   validate(T.SharesInfoSchema),
   async (ctx: APIContext<T.SharesInfoReq>) => {
-    const { id, documentId, isPublic } = ctx.input.body;
+    const { id, collectionId, documentId, includeTree } = ctx.input.body;
     const { user } = ctx.state.auth;
+    const teamFromCtx = await getTeamFromContext(ctx);
 
-    if (!user && !isPublic) {
-      throw AuthorizationError();
-    }
-
-    // Request from a public share.
-    if (isPublic) {
-      const scope: string | ScopeOptions = user
-        ? { method: ["withCollectionPermissions", user.id] }
-        : "defaultScope";
-      const share = await Share.scope(scope).findOne({
-        where: {
-          id,
-          revokedAt: {
-            [Op.is]: null,
-          },
-        },
-      });
-    }
-
-    const shares = [];
-    const share = await Share.scope({
-      method: ["withCollectionPermissions", user.id],
-    }).findOne({
-      where: id
-        ? {
-            id,
-            revokedAt: {
-              [Op.is]: null,
-            },
-          }
-        : {
-            documentId,
-            teamId: user.teamId,
-            revokedAt: {
-              [Op.is]: null,
-            },
-          },
+    const { share, parentShare, sharedTree } = await loadShare({
+      id,
+      collectionId,
+      documentId,
+      includeTree,
+      user,
+      teamId: teamFromCtx?.id,
     });
 
-    // We return the response for the current documentId and any parent documents
-    // that are publicly shared and accessible to the user
-    if (share && share.document) {
-      authorize(user, "read", share);
-      shares.push(share);
+    if (id && !share) {
+      throw NotFoundError("Share not found");
     }
 
-    if (documentId) {
-      const document = await Document.findByPk(documentId, {
-        userId: user.id,
-      });
-      authorize(user, "read", document);
+    const team = teamFromCtx?.id === share.teamId ? teamFromCtx : share.team;
 
-      const collection = document.collectionId
-        ? await Collection.findByPk(document.collectionId, {
-            userId: user.id,
-            includeDocumentStructure: true,
-          })
-        : undefined;
-      const parentIds = collection?.getDocumentParents(documentId);
-      const parentShare = parentIds
-        ? await Share.scope({
-            method: ["withCollectionPermissions", user.id],
-          }).findOne({
-            where: {
-              documentId: parentIds,
-              teamId: user.teamId,
-              revokedAt: {
-                [Op.is]: null,
-              },
-              includeChildDocuments: true,
-              published: true,
-            },
-          })
-        : undefined;
-
-      if (parentShare && parentShare.document) {
-        authorize(user, "read", parentShare);
-        shares.push(parentShare);
-      }
-    }
+    const shares = [share, parentShare].filter(Boolean) as Share[];
 
     if (!shares.length) {
       ctx.response.status = 204;
@@ -110,7 +54,12 @@ router.post(
 
     ctx.body = {
       data: {
-        shares: shares.map((share) => presentShare(share, user.isAdmin)),
+        shares: shares.map((s) => presentShare(s, user.isAdmin)),
+        sharedTree,
+        team: presentPublicTeam(
+          team,
+          !!team.getPreference(TeamPreference.PublicBranding)
+        ),
       },
       policies: presentPolicies(user, shares),
     };

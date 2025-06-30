@@ -9,12 +9,21 @@ export const SharesInfoSchema = BaseSchema.extend({
   body: z
     .object({
       id: z.string().uuid().optional(),
+      collectionId: zodIdType().optional(),
       documentId: zodIdType().optional(),
-      isPublic: z.boolean().default(false),
+      includeTree: z.boolean().default(false),
     })
-    .refine((body) => !(isEmpty(body.id) && isEmpty(body.documentId)), {
-      message: "One of id or documentId is required",
-    }),
+    .refine(
+      (body) =>
+        !(
+          isEmpty(body.id) &&
+          isEmpty(body.collectionId) &&
+          isEmpty(body.documentId)
+        ),
+      {
+        message: "One of id, collectionId, or documentId is required",
+      }
+    ),
 });
 
 export type SharesInfoReq = z.infer<typeof SharesInfoSchema>;

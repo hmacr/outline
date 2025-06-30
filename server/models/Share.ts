@@ -17,6 +17,7 @@ import {
   Unique,
   BeforeUpdate,
 } from "sequelize-typescript";
+import { NavigationNode } from "@shared/types";
 import { UrlHelper } from "@shared/utils/UrlHelper";
 import env from "@server/env";
 import { ValidationError } from "@server/errors";
@@ -211,11 +212,49 @@ class Share extends IdModel<
   @Column(DataType.UUID)
   documentId: string | null;
 
+  // methods
+
   revoke(ctx: APIContext) {
     const { user } = ctx.context.auth;
     this.revokedAt = new Date();
     this.revokedById = user.id;
     return this.saveWithCtx(ctx, undefined, { name: "revoke" });
+  }
+
+  async isActive(): Promise<boolean> {
+    if (!this.published || this.isRevoked) {
+      return false;
+    }
+
+    const team = this.team ?? (await this.$get("team"));
+
+    if (!team.sharing) {
+      return false;
+    }
+
+    let collection = this.collection;
+
+    if (!collection) {
+      if (this.collectionId) {
+        collection = await this.$get("collection", {
+          scope: "withDocumentStructure",
+        });
+      } else if (this.documentId) {
+        const document = this.document ?? (await this.$get("document"));
+        collection = document?.collectionId
+          ? await Collection.findByPk(document.collectionId, {
+              includeDocumentStructure: true,
+              rejectOnEmpty: true,
+            })
+          : null;
+      }
+    }
+
+    if (!collection?.sharing) {
+      return false;
+    }
+
+    return true;
   }
 }
 

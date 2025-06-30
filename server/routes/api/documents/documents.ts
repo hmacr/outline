@@ -12,12 +12,7 @@ import uniq from "lodash/uniq";
 import mime from "mime-types";
 import { Op, ScopeOptions, Sequelize, WhereOptions } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
-import {
-  NavigationNode,
-  StatusFilter,
-  TeamPreference,
-  UserRole,
-} from "@shared/types";
+import { StatusFilter, TeamPreference, UserRole } from "@shared/types";
 import { subtractDate } from "@shared/utils/date";
 import slugify from "@shared/utils/slugify";
 import documentCreator from "@server/commands/documentCreator";
@@ -79,7 +74,6 @@ import { RateLimiterStrategy } from "@server/utils/RateLimiter";
 import ZipHelper from "@server/utils/ZipHelper";
 import { getTeamFromContext } from "@server/utils/passport";
 import { navigationNodeToSitemap } from "@server/utils/sitemap";
-import { sleep } from "@server/utils/timers";
 import { assertPresent } from "@server/validation";
 import pagination from "../middlewares/pagination";
 import * as T from "./schema";
@@ -582,8 +576,6 @@ router.post(
     });
     const isPublic = cannot(user, "read", document);
 
-    // await sleep(5000);
-
     const [serializedDocument, team] = await Promise.all([
       presentDocument(ctx, document, {
         isPublic,
@@ -592,15 +584,6 @@ router.post(
       }),
       teamFromCtx?.id === document.teamId ? teamFromCtx : document.$get("team"),
     ]);
-
-    let sharedTree: NavigationNode | null = null;
-    if (share) {
-      if (share.collectionId) {
-        sharedTree = share.collection?.toNavigationNode() ?? null;
-      } else if (share.documentId && share.includeChildDocuments) {
-        sharedTree = collection?.getDocumentTree(share.documentId) ?? null;
-      }
-    }
 
     // Passing apiVersion=2 has a single effect, to change the response payload to
     // include top level keys for document, sharedTree, and team.
@@ -614,7 +597,10 @@ router.post(
                   !!team?.getPreference(TeamPreference.PublicBranding)
                 )
               : undefined,
-            sharedTree,
+            sharedTree:
+              share && share.documentId && share.includeChildDocuments
+                ? collection?.getDocumentTree(share.documentId)
+                : null,
           }
         : serializedDocument;
     ctx.body = {
