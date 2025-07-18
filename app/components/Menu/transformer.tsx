@@ -1,4 +1,11 @@
 import {
+  ContextMenuButton,
+  ContextMenuExternalLink,
+  ContextMenuGroup,
+  ContextMenuInternalLink,
+  ContextMenuSeparator,
+} from "~/components/primitives/ContextMenu";
+import {
   DropdownMenuButton,
   DropdownMenuExternalLink,
   DropdownMenuGroup,
@@ -94,6 +101,91 @@ export function toDropdownMenuItems(items: MenuItem[]) {
 
       case "separator":
         return <DropdownMenuSeparator key={`${item.type}-${index}`} />;
+
+      default:
+        return null;
+    }
+  });
+}
+
+export function toContextMenuItems(items: MenuItem[]) {
+  const filteredItems = filterMenuItems(items);
+
+  if (!filteredItems.length) {
+    return null;
+  }
+
+  const showIcon = filteredItems.find(
+    (item) =>
+      item.type !== "separator" &&
+      item.type !== "heading" &&
+      item.type !== "group" &&
+      !!item.icon
+  );
+
+  return filteredItems.map((item, index) => {
+    const icon = showIcon ? (
+      <MenuIconWrapper aria-hidden>
+        {"icon" in item ? item.icon : null}
+      </MenuIconWrapper>
+    ) : undefined;
+
+    switch (item.type) {
+      case "button":
+        return (
+          <ContextMenuButton
+            key={`${item.type}-${item.title}-${index}`}
+            label={item.title as string}
+            icon={icon}
+            disabled={item.disabled}
+            dangerous={item.dangerous}
+            onClick={item.onClick}
+          />
+        );
+
+      case "route":
+        return (
+          <ContextMenuInternalLink
+            key={`${item.type}-${item.title}-${index}`}
+            label={item.title as string}
+            icon={icon}
+            disabled={item.disabled}
+            to={item.to}
+          />
+        );
+
+      case "link":
+        return (
+          <ContextMenuExternalLink
+            key={`${item.type}-${item.title}-${index}`}
+            label={item.title as string}
+            icon={icon}
+            disabled={item.disabled}
+            href={typeof item.href === "string" ? item.href : item.href.url}
+            target={
+              typeof item.href === "string" ? undefined : item.href.target
+            }
+          />
+        );
+
+      case "group": {
+        const groupItems = toContextMenuItems(item.items);
+
+        if (!groupItems?.length) {
+          return null;
+        }
+
+        return (
+          <ContextMenuGroup
+            key={`${item.type}-${item.title}-${index}`}
+            label={item.title as string}
+            items={groupItems}
+          />
+        );
+      }
+
+      case "separator":
+        return <ContextMenuSeparator key={`${item.type}-${index}`} />;
 
       default:
         return null;
