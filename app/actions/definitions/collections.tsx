@@ -22,7 +22,7 @@ import ConfirmationDialog from "~/components/ConfirmationDialog";
 import DynamicCollectionIcon from "~/components/Icons/CollectionIcon";
 import SharePopover from "~/components/Sharing/Collection/SharePopover";
 import { getHeaderExpandedKey } from "~/components/Sidebar/components/Header";
-import { createAction } from "~/actions";
+import { createAction, createActionV2 } from "~/actions";
 import { ActiveCollectionSection, CollectionSection } from "~/actions/sections";
 import { setPersistedState } from "~/hooks/usePersistedState";
 import history from "~/utils/history";
@@ -179,7 +179,60 @@ export const starCollection = createAction({
   },
 });
 
+export const starCollectionV2 = createActionV2({
+  name: ({ t }) => t("Star"),
+  analyticsName: "Star collection",
+  section: ActiveCollectionSection,
+  icon: <StarredIcon />,
+  keywords: "favorite bookmark",
+  visible: ({ activeCollectionId, stores }) => {
+    if (!activeCollectionId) {
+      return false;
+    }
+    const collection = stores.collections.get(activeCollectionId);
+    return (
+      !collection?.isStarred &&
+      stores.policies.abilities(activeCollectionId).star
+    );
+  },
+  perform: async ({ activeCollectionId, stores }) => {
+    if (!activeCollectionId) {
+      return;
+    }
+
+    const collection = stores.collections.get(activeCollectionId);
+    await collection?.star();
+    setPersistedState(getHeaderExpandedKey("starred"), true);
+  },
+});
+
 export const unstarCollection = createAction({
+  name: ({ t }) => t("Unstar"),
+  analyticsName: "Unstar collection",
+  section: ActiveCollectionSection,
+  icon: <UnstarredIcon />,
+  keywords: "unfavorite unbookmark",
+  visible: ({ activeCollectionId, stores }) => {
+    if (!activeCollectionId) {
+      return false;
+    }
+    const collection = stores.collections.get(activeCollectionId);
+    return (
+      !!collection?.isStarred &&
+      stores.policies.abilities(activeCollectionId).unstar
+    );
+  },
+  perform: async ({ activeCollectionId, stores }) => {
+    if (!activeCollectionId) {
+      return;
+    }
+
+    const collection = stores.collections.get(activeCollectionId);
+    await collection?.unstar();
+  },
+});
+
+export const unstarCollectionV2 = createActionV2({
   name: ({ t }) => t("Unstar"),
   analyticsName: "Unstar collection",
   section: ActiveCollectionSection,
@@ -235,7 +288,67 @@ export const subscribeCollection = createAction({
   },
 });
 
+export const subscribeCollectionV2 = createActionV2({
+  name: ({ t }) => t("Subscribe"),
+  analyticsName: "Subscribe to collection",
+  section: ActiveCollectionSection,
+  icon: <SubscribeIcon />,
+  visible: ({ activeCollectionId, stores }) => {
+    if (!activeCollectionId) {
+      return false;
+    }
+
+    const collection = stores.collections.get(activeCollectionId);
+
+    return (
+      !collection?.isSubscribed &&
+      stores.policies.abilities(activeCollectionId).subscribe
+    );
+  },
+  perform: async ({ activeCollectionId, stores, t }) => {
+    if (!activeCollectionId) {
+      return;
+    }
+
+    const collection = stores.collections.get(activeCollectionId);
+
+    await collection?.subscribe();
+
+    toast.success(t("Subscribed to document notifications"));
+  },
+});
+
 export const unsubscribeCollection = createAction({
+  name: ({ t }) => t("Unsubscribe"),
+  analyticsName: "Unsubscribe from collection",
+  section: ActiveCollectionSection,
+  icon: <UnsubscribeIcon />,
+  visible: ({ activeCollectionId, stores }) => {
+    if (!activeCollectionId) {
+      return false;
+    }
+
+    const collection = stores.collections.get(activeCollectionId);
+
+    return (
+      !!collection?.isSubscribed &&
+      stores.policies.abilities(activeCollectionId).unsubscribe
+    );
+  },
+  perform: async ({ activeCollectionId, currentUserId, stores, t }) => {
+    if (!activeCollectionId || !currentUserId) {
+      return;
+    }
+
+    const collection = stores.collections.get(activeCollectionId);
+
+    await collection?.unsubscribe();
+
+    toast.success(t("Unsubscribed from document notifications"));
+  },
+});
+
+export const unsubscribeCollectionV2 = createActionV2({
   name: ({ t }) => t("Unsubscribe"),
   analyticsName: "Unsubscribe from collection",
   section: ActiveCollectionSection,

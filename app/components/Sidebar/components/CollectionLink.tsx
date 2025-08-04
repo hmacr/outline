@@ -25,6 +25,16 @@ import DropToImport from "./DropToImport";
 import Relative from "./Relative";
 import { SidebarContextType, useSidebarContext } from "./SidebarContext";
 import SidebarLink from "./SidebarLink";
+import { ContextMenu } from "~/components/Menu/ContextMenu";
+import {
+  starCollection,
+  starCollectionV2,
+  subscribeCollectionV2,
+  unstarCollectionV2,
+  unsubscribeCollectionV2,
+} from "~/actions/definitions/collections";
+import { useMenuAction } from "~/hooks/useMenuAction";
+import useActionContext from "~/hooks/useActionContext";
 
 type Props = {
   collection: Collection;
@@ -109,66 +119,89 @@ const CollectionLink: React.FC<Props> = ({
     [user, sidebarContext, closeAddingNewChild, history, collection, documents]
   );
 
+  const actions = React.useMemo(
+    () => [
+      starCollectionV2,
+      unstarCollectionV2,
+      subscribeCollectionV2,
+      unsubscribeCollectionV2,
+    ],
+    []
+  );
+
+  const rootAction = useMenuAction(actions);
+
+  const actionContext = useActionContext({
+    activeCollectionId: collection.id,
+    isContextMenu: true,
+  });
+
   return (
     <>
       <Relative ref={mergeRefs([parentRef, dropRef])}>
         <DropToImport collectionId={collection.id}>
-          <SidebarLink
-            onClick={onClick}
-            to={{
-              pathname: collection.path,
-              state: { sidebarContext },
-            }}
-            expanded={expanded}
-            onDisclosureClick={onDisclosureClick}
-            onClickIntent={handlePrefetch}
-            icon={
-              <CollectionIcon collection={collection} expanded={expanded} />
-            }
-            showActions={menuOpen}
-            isActiveDrop={isOver && canDrop}
-            isActive={(
-              match,
-              location: Location<{ sidebarContext?: SidebarContextType }>
-            ) => !!match && location.state?.sidebarContext === sidebarContext}
-            label={
-              <EditableTitle
-                title={collection.name}
-                onSubmit={handleTitleChange}
-                onEditing={setIsEditing}
-                canUpdate={can.update}
-                maxLength={CollectionValidation.maxNameLength}
-                ref={editableTitleRef}
-              />
-            }
-            exact={false}
-            depth={depth ? depth : 0}
-            menu={
-              !isEditing &&
-              !isDraggingAnyCollection && (
-                <Fade>
-                  {can.createDocument && (
-                    <NudeButton
-                      tooltip={{ content: t("New doc"), delay: 500 }}
-                      onClick={(ev) => {
-                        ev.preventDefault();
-                        setIsAddingNewChild();
-                        handleExpand();
-                      }}
-                    >
-                      <PlusIcon />
-                    </NudeButton>
-                  )}
-                  <CollectionMenu
-                    collection={collection}
-                    onRename={handleRename}
-                    onOpen={handleMenuOpen}
-                    onClose={handleMenuClose}
-                  />
-                </Fade>
-              )
-            }
-          />
+          <ContextMenu
+            action={rootAction}
+            context={actionContext}
+            ariaLabel={t("Collection")}
+          >
+            <SidebarLink
+              onClick={onClick}
+              to={{
+                pathname: collection.path,
+                state: { sidebarContext },
+              }}
+              expanded={expanded}
+              onDisclosureClick={onDisclosureClick}
+              onClickIntent={handlePrefetch}
+              icon={
+                <CollectionIcon collection={collection} expanded={expanded} />
+              }
+              showActions={menuOpen}
+              isActiveDrop={isOver && canDrop}
+              isActive={(
+                match,
+                location: Location<{ sidebarContext?: SidebarContextType }>
+              ) => !!match && location.state?.sidebarContext === sidebarContext}
+              label={
+                <EditableTitle
+                  title={collection.name}
+                  onSubmit={handleTitleChange}
+                  onEditing={setIsEditing}
+                  canUpdate={can.update}
+                  maxLength={CollectionValidation.maxNameLength}
+                  ref={editableTitleRef}
+                />
+              }
+              exact={false}
+              depth={depth ? depth : 0}
+              menu={
+                !isEditing &&
+                !isDraggingAnyCollection && (
+                  <Fade>
+                    {can.createDocument && (
+                      <NudeButton
+                        tooltip={{ content: t("New doc"), delay: 500 }}
+                        onClick={(ev) => {
+                          ev.preventDefault();
+                          setIsAddingNewChild();
+                          handleExpand();
+                        }}
+                      >
+                        <PlusIcon />
+                      </NudeButton>
+                    )}
+                    <CollectionMenu
+                      collection={collection}
+                      onRename={handleRename}
+                      onOpen={handleMenuOpen}
+                      onClose={handleMenuClose}
+                    />
+                  </Fade>
+                )
+              }
+            />
+          </ContextMenu>
         </DropToImport>
       </Relative>
       {isAddingNewChild && (

@@ -7,58 +7,66 @@ import {
 import { actionV2ToMenuItem } from "~/actions";
 import useActionContext from "~/hooks/useActionContext";
 import useMobile from "~/hooks/useMobile";
-import { ActionV2Variant, ActionV2WithChildren } from "~/types";
+import { ActionContext, ActionV2Variant, ActionV2WithChildren } from "~/types";
 import { toContextMenuItems } from "./transformer";
+import { observer } from "mobx-react";
 
 type Props = {
   action: ActionV2WithChildren;
+  context?: ActionContext;
   children: React.ReactNode;
   ariaLabel: string;
 };
 
-export function ContextMenu({ action, children, ariaLabel }: Props) {
-  const isMobile = useMobile();
-  const contentRef =
-    React.useRef<React.ElementRef<typeof ContextMenuContent>>(null);
-  const context = useActionContext({
-    isContextMenu: true,
-  });
-  const menuItems = (action.children as ActionV2Variant[]).map((childAction) =>
-    actionV2ToMenuItem(childAction, context)
-  );
+export const ContextMenu = observer(
+  ({ action, children, ariaLabel, context }: Props) => {
+    const isMobile = useMobile();
+    const contentRef =
+      React.useRef<React.ElementRef<typeof ContextMenuContent>>(null);
+    const actionContext =
+      context ??
+      useActionContext({
+        isContextMenu: true,
+      });
+    const menuItems = (action.children as ActionV2Variant[]).map(
+      (childAction) => actionV2ToMenuItem(childAction, actionContext)
+    );
 
-  const enablePointerEvents = React.useCallback(() => {
-    if (contentRef.current) {
-      contentRef.current.style.pointerEvents = "auto";
+    const enablePointerEvents = React.useCallback(() => {
+      if (contentRef.current) {
+        contentRef.current.style.pointerEvents = "auto";
+      }
+    }, []);
+
+    const disablePointerEvents = React.useCallback(() => {
+      if (contentRef.current) {
+        contentRef.current.style.pointerEvents = "none";
+      }
+    }, []);
+
+    if (isMobile) {
+      return <>{children}</>;
     }
-  }, []);
 
-  const disablePointerEvents = React.useCallback(() => {
-    if (contentRef.current) {
-      contentRef.current.style.pointerEvents = "none";
+    const content = toContextMenuItems(menuItems);
+
+    if (!content) {
+      return <>{children}</>;
     }
-  }, []);
 
-  if (isMobile) {
-    return <>children</>;
+    return (
+      <ContextMenuRoot>
+        <ContextMenuTrigger aria-label={ariaLabel}>
+          {children}
+        </ContextMenuTrigger>
+        <ContextMenuContent
+          aria-label={ariaLabel}
+          onAnimationStart={disablePointerEvents}
+          onAnimationEnd={enablePointerEvents}
+        >
+          {content}
+        </ContextMenuContent>
+      </ContextMenuRoot>
+    );
   }
-
-  const content = toContextMenuItems(menuItems);
-
-  if (!content) {
-    return <>children</>;
-  }
-
-  return (
-    <ContextMenuRoot>
-      <ContextMenuTrigger aria-label={ariaLabel}>{children}</ContextMenuTrigger>
-      <ContextMenuContent
-        aria-label={ariaLabel}
-        onAnimationStart={disablePointerEvents}
-        onAnimationEnd={enablePointerEvents}
-      >
-        {content}
-      </ContextMenuContent>
-    </ContextMenuRoot>
-  );
-}
+);
