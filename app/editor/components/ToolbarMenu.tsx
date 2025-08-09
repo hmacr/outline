@@ -1,19 +1,18 @@
-import { useMemo } from "react";
-import { useMenuState } from "reakit";
-import { MenuButton } from "reakit/Menu";
+import { useCallback, useMemo, useState } from "react";
 import styled from "styled-components";
 import breakpoint from "styled-components-breakpoint";
 import { MenuItem } from "@shared/editor/types";
 import { s } from "@shared/styles";
-import ContextMenu from "~/components/ContextMenu";
-import Template from "~/components/ContextMenu/Template";
 import { TooltipProvider } from "~/components/TooltipContext";
-import { MenuItem as TMenuItem } from "~/types";
+import { DropdownMenu } from "~/components/Menu/DropdownMenu";
 import { useEditor } from "./EditorContext";
 import { MediaDimension } from "./MediaDimension";
 import ToolbarButton from "./ToolbarButton";
 import ToolbarSeparator from "./ToolbarSeparator";
 import Tooltip from "./Tooltip";
+import { ActionV2Separator, createActionV2 } from "~/actions";
+import { useMenuAction } from "~/hooks/useMenuAction";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   items: MenuItem[];
@@ -23,12 +22,17 @@ type Props = {
  * Renders a dropdown menu in the floating toolbar.
  */
 function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
-  const menu = useMenuState();
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
   const { commands, view } = useEditor();
   const { item } = props;
   const { state } = view;
 
-  const items: TMenuItem[] = useMemo(() => {
+  const handleOpen = useCallback(() => setOpen(true), []);
+
+  const handleClose = useCallback(() => setOpen(false), []);
+
+  const actions = useMemo(() => {
     const handleClick = (menuItem: MenuItem) => () => {
       if (!menuItem.name) {
         return;
@@ -44,36 +48,37 @@ function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
     return item.children
       ? item.children.map((child) => {
           if (child.name === "separator") {
-            return { type: "separator", visible: child.visible };
+            return ActionV2Separator;
           }
-          return {
-            type: "button",
-            title: child.label,
+
+          return createActionV2({
+            name: child.label,
+            section: "Toolbar",
             icon: child.icon,
             dangerous: child.dangerous,
             visible: child.visible,
             selected:
               child.active !== undefined ? child.active(state) : undefined,
-            onClick: handleClick(child),
-          };
+            perform: handleClick(child),
+          });
         })
       : [];
   }, [item.children, commands, state]);
 
+  const rootAction = useMenuAction(actions);
+
   return (
-    <>
-      <MenuButton {...menu}>
-        {(buttonProps) => (
-          <ToolbarButton {...buttonProps} hovering={menu.visible}>
-            {item.label && <Label>{item.label}</Label>}
-            {item.icon}
-          </ToolbarButton>
-        )}
-      </MenuButton>
-      <ContextMenu aria-label={item.label} {...menu}>
-        <Template {...menu} items={items} />
-      </ContextMenu>
-    </>
+    <DropdownMenu
+      action={rootAction}
+      ariaLabel={item.label ?? t("Show menu")}
+      onOpen={handleOpen}
+      onClose={handleClose}
+    >
+      <ToolbarButton hovering={open}>
+        {item.label && <Label>{item.label}</Label>}
+        {item.icon}
+      </ToolbarButton>
+    </DropdownMenu>
   );
 }
 
