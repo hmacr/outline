@@ -60,6 +60,8 @@ function TableOfContentsMenu() {
     return i;
   }, [t, headings, minHeading]);
 
+  const actions = useMemo(() => {}, []);
+
   return (
     <>
       <MenuButton {...menu}>
