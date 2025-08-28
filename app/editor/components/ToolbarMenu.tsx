@@ -22,6 +22,9 @@ import {
   SelectedIconWrapper,
 } from "~/components/primitives/components/Menu";
 import { CheckmarkIcon } from "outline-icons";
+import { ActionV2Separator, createActionV2 } from "~/actions";
+import { useMenuAction } from "~/hooks/useMenuAction";
+import { DropdownMenu } from "~/components/Menu/DropdownMenu";
 
 type Props = {
   items: MenuItem[];
@@ -32,6 +35,7 @@ type Props = {
  */
 function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
   const [open, setOpen] = useState(false);
+  const [forceRender, setForceRender] = useState(0);
   const { commands, view } = useEditor();
   const { item } = props;
   const { state } = view;
@@ -42,6 +46,12 @@ function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
 
   const handleClick = useCallback(
     (menuItem: MenuItem) => {
+      setForceRender((prev) => prev + 1);
+      closePopover();
+
+      const { selection } = state;
+      console.log("selection", selection.from, selection.to);
+
       if (!menuItem.name) {
         return;
       }
@@ -51,10 +61,45 @@ function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
           ? menuItem.attrs(state)
           : menuItem.attrs
       );
-
-      closePopover();
     },
     [commands, state, closePopover]
+  );
+
+  const actions = useMemo(
+    () =>
+      (item.children ?? []).map((child) => {
+        if (child.name === "separator") {
+          return ActionV2Separator;
+        }
+
+        return createActionV2({
+          name: child.label,
+          section: "ToolbarDropdown",
+          icon: child.icon,
+          visible: child.visible,
+          selected:
+            child.active !== undefined ? child.active(state) : undefined,
+          dangerous: child.dangerous,
+          perform: () => handleClick(child),
+          // perform: () => console.log("perform", child.label),
+        });
+      }),
+    [item.children, state, handleClick]
+  );
+
+  const rootAction = useMenuAction(actions);
+
+  return (
+    <DropdownMenu
+      key={forceRender}
+      action={rootAction}
+      ariaLabel={item.label ?? ""}
+    >
+      <ToolbarButton hovering={open}>
+        {item.label && <Label>{item.label}</Label>}
+        {item.icon}
+      </ToolbarButton>
+    </DropdownMenu>
   );
 
   const items = useMemo(() => {
@@ -80,7 +125,9 @@ function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
         <MenuButton
           key={child.label}
           $dangerous={child.dangerous}
-          onClick={(e) => {
+          onMouseDown={(e) => {
+            console.log("menu button mouse down", child.label);
+            e.preventDefault();
             e.stopPropagation();
             handleClick(child);
           }}
@@ -88,9 +135,9 @@ function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
           {icon}
           <MenuLabel>{child.label}</MenuLabel>
           {selected !== undefined && (
-            <SelectedIconWrapper aria-hidden>
+            <StyledSelectedIconWrapper aria-hidden>
               {selected ? <CheckmarkIcon /> : null}
-            </SelectedIconWrapper>
+            </StyledSelectedIconWrapper>
           )}
         </MenuButton>
       );
@@ -103,7 +150,7 @@ function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger>
+      <PopoverTrigger onMouseDown={(e) => e.preventDefault()}>
         <ToolbarButton hovering={open}>
           {item.label && <Label>{item.label}</Label>}
           {item.icon}
@@ -113,7 +160,16 @@ function ToolbarDropdown(props: { active: boolean; item: MenuItem }) {
         aria-label={item.label}
         side="bottom"
         align="start"
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        collisionPadding={6}
+        onMouseDown={(e) => {
+          e.preventDefault();
+        }}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+        }}
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+        }}
       >
         {items}
       </StyledPopoverContent>
@@ -221,6 +277,10 @@ const Label = styled.span`
 const StyledPopoverContent = styled(PopoverContent)`
   width: auto;
   padding: 6px;
+`;
+
+const StyledSelectedIconWrapper = styled(SelectedIconWrapper)`
+  margin-left: 6px;
 `;
 
 export default ToolbarMenu;

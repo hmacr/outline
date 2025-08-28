@@ -127,19 +127,25 @@ export default function SelectionToolbar(props: Props) {
         menuRef.current &&
         menuRef.current.contains(ev.target)
       ) {
+        console.log("handleClickOutside - return 1");
         return;
       }
       if (view.dom.contains(ev.target as HTMLElement)) {
+        console.log("handleClickOutside - return 2");
         return;
       }
 
       if (!isActive || document.activeElement?.tagName === "INPUT") {
+        console.log("handleClickOutside - return 3");
         return;
       }
 
       if (!window.getSelection()?.isCollapsed) {
+        console.log("handleClickOutside - return 4");
         return;
       }
+
+      console.log("handleClickOutside - dispatch");
 
       const { dispatch } = view;
       dispatch(
@@ -223,6 +229,8 @@ export default function SelectionToolbar(props: Props) {
   } else {
     items = getFormattingMenuItems(state, isTemplate, isMobile, dictionary);
   }
+
+  // console.log("items", items);
 
   // Some extensions may be disabled, remove corresponding items
   items = items.filter((item) => {

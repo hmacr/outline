@@ -43,17 +43,17 @@ const DropdownMenuContent = React.forwardRef<
   const { children, ...rest } = props;
 
   return (
-    <DropdownMenuPrimitive.Portal>
-      <DropdownMenuPrimitive.Content
-        ref={ref}
-        {...rest}
-        sideOffset={4}
-        collisionPadding={6}
-        asChild
-      >
-        <StyledScrollable hiddenScrollbars>{children}</StyledScrollable>
-      </DropdownMenuPrimitive.Content>
-    </DropdownMenuPrimitive.Portal>
+    // <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Content
+      ref={ref}
+      {...rest}
+      sideOffset={4}
+      collisionPadding={6}
+      asChild
+    >
+      <StyledScrollable hiddenScrollbars>{children}</StyledScrollable>
+    </DropdownMenuPrimitive.Content>
+    // </DropdownMenuPrimitive.Portal>
   );
 });
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
